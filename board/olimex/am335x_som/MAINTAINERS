@@ -1,0 +1,6 @@
+AM3352-SOM BOARD
+M:	Stefan Mavrodiev <stefan.mavrodiev@gmail.com>
+S:	Maintained
+F:	board/olimex/am3352_som
+F:	include/configs/am3352_som.h
+F:	configs/am3352_som_defconfig

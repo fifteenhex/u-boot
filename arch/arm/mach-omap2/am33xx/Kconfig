@@ -103,6 +103,13 @@ config TARGET_AM335X_SL50
 	select DM_SERIAL
 	imply CMD_DM
 
+config TARGET_AM335X_OLIMEX_SOM
+	bool "Support am335x_olimex_som"
+	select BOARD_LATE_INIT
+	select DM
+	select DM_SERIAL
+	select DM_GPIO
+
 config TARGET_BRXRE1
 	bool "Support BRXRE1"
 	select BOARD_LATE_INIT

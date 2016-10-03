@@ -1,0 +1,15 @@
+if TARGET_AM335X_OLIMEX_SOM
+
+config SYS_BOARD
+	default "am335x_som"
+
+config SYS_VENDOR
+	default "olimex"
+
+config SYS_SOC
+	default "am33xx"
+
+config SYS_CONFIG_NAME
+	default "olimex_am335x_som"
+
+endif

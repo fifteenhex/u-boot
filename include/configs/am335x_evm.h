@@ -87,12 +87,13 @@
 	BOOT_TARGET_PXE(func) \
 	BOOT_TARGET_DHCP(func)
 
-#include <config_distro_bootcmd.h>
+//#include <config_distro_bootcmd.h>
 
 #ifndef CONFIG_SPL_BUILD
 #include <environment/ti/dfu.h>
 #include <environment/ti/mmc.h>
 
+#if 0
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	DEFAULT_LINUX_BOOT_ENV \
 	DEFAULT_MMC_TI_ARGS \
@@ -167,6 +168,13 @@
 	NETARGS \
 	DFUARGS \
 	BOOTENV
+#endif
+
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	"loadaddr=0x82000000\0" \
+	"fdtaddr=0x88000000\0" \
+	"bootargs=console=ttyO0,115200n8 rootwait root=/dev/mmcblk0p1\0" \
+	"bootcmd=ext4load mmc 0:1 $loadaddr /boot/zImage; ext4load mmc 0:1 $fdtaddr /boot/am335x-olimex-som.dtb; bootz $loadaddr - $fdtaddr\0"
 #endif
 
 /* NS16550 Configuration */
