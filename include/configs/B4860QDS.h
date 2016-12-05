@@ -10,8 +10,6 @@
 /*
  * B4860 QDS board configuration file
  */
-#define CONFIG_B4860QDS
-
 #ifdef CONFIG_RAMBOOT_PBL
 #define CONFIG_SYS_FSL_PBL_PBI	$(SRCTREE)/board/freescale/b4860qds/b4_pbi.cfg
 #define CONFIG_SYS_FSL_PBL_RCW	$(SRCTREE)/board/freescale/b4860qds/b4_rcw.cfg
@@ -21,7 +19,6 @@
 #else
 #define CONFIG_SPL_FLUSH_IMAGE
 #define CONFIG_SPL_TARGET		"u-boot-with-spl.bin"
-#define CONFIG_FSL_LAW                 /* Use common FSL init code */
 #define CONFIG_SYS_TEXT_BASE		0x00201000
 #define CONFIG_SPL_TEXT_BASE		0xFFFD8000
 #define CONFIG_SPL_PAD_TO		0x40000
@@ -75,14 +72,12 @@
 #define CONFIG_FSL_PCI_INIT		/* Use common FSL init code */
 #define CONFIG_SYS_PCI_64BIT		/* enable 64-bit PCI resources */
 
-#ifndef CONFIG_PPC_B4420
+#ifndef CONFIG_ARCH_B4420
 #define CONFIG_SYS_SRIO
 #define CONFIG_SRIO1			/* SRIO port 1 */
 #define CONFIG_SRIO2			/* SRIO port 2 */
 #define CONFIG_SRIO_PCIE_BOOT_MASTER
 #endif
-
-#define CONFIG_FSL_LAW			/* Use common FSL init code */
 
 /* I2C bus multiplexer */
 #define I2C_MUX_PCA_ADDR                0x77
@@ -790,7 +785,7 @@ unsigned long get_board_ddr_clk(void);
 
 #define __USB_PHY_TYPE	ulpi
 
-#ifdef CONFIG_PPC_B4860
+#ifdef CONFIG_ARCH_B4860
 #define HWCONFIG	"hwconfig=fsl_ddr:ctlr_intlv=null,"	\
 			"bank_intlv=cs0_cs1;"	\
 			"en_cpc:cpc2;"

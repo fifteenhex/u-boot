@@ -38,7 +38,6 @@
  */
 #define CONFIG_BOOKE		1	/* BOOKE */
 #define CONFIG_E500		1	/* BOOKE e500 family */
-#define CONFIG_MPC8548		1	/* MPC8548 specific */
 #define CONFIG_SBC8548		1	/* SBC8548 board specific */
 
 /*
@@ -69,8 +68,6 @@
 #define CONFIG_ENV_OVERWRITE
 
 #define CONFIG_INTERRUPTS		/* enable pci, srio, ddr interrupts */
-
-#define CONFIG_FSL_LAW		1	/* Use common FSL init code */
 
 /*
  * Below assumes that CCB:SYSCLK remains unchanged at 6:1 via SW2:[1-4]

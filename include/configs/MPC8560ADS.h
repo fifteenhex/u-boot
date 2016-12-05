@@ -22,8 +22,6 @@
 #define CONFIG_BOOKE		1	/* BOOKE */
 #define CONFIG_E500		1	/* BOOKE e500 family */
 #define CONFIG_CPM2		1	/* has CPM2 */
-#define CONFIG_MPC8560ADS	1	/* MPC8560ADS board specific */
-#define CONFIG_MPC8560		1
 
 /*
  * default CCARBAR is at 0xff700000
@@ -36,7 +34,6 @@
 #define CONFIG_TSEC_ENET		/* tsec ethernet support */
 #undef CONFIG_ETHER_ON_FCC             /* cpm FCC ethernet support */
 #define CONFIG_ENV_OVERWRITE
-#define CONFIG_FSL_LAW		1	/* Use common FSL init code */
 #define CONFIG_RESET_PHY_R	1	/* Call reset_phy() */
 
 /*

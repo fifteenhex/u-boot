@@ -220,7 +220,9 @@ static int spl_ram_load_image(struct spl_image_info *spl_image,
 
 	return 0;
 }
+#if defined(CONFIG_SPL_RAM_DEVICE)
 SPL_LOAD_IMAGE_METHOD(0, BOOT_DEVICE_RAM, spl_ram_load_image);
+#endif
 #if defined(CONFIG_SPL_DFU_SUPPORT)
 SPL_LOAD_IMAGE_METHOD(0, BOOT_DEVICE_DFU, spl_ram_load_image);
 #endif
@@ -511,6 +513,9 @@ ulong spl_relocate_stack_gd(void)
 	ptr = CONFIG_SPL_STACK_R_ADDR - roundup(sizeof(gd_t),16);
 	new_gd = (gd_t *)ptr;
 	memcpy(new_gd, (void *)gd, sizeof(gd_t));
+#if CONFIG_IS_ENABLED(DM)
+	dm_fixup_for_gd_move(new_gd);
+#endif
 #if !defined(CONFIG_ARM)
 	gd = new_gd;
 #endif

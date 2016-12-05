@@ -37,13 +37,11 @@
 /* High Level Configuration Options */
 #define CONFIG_BOOKE			/* BOOKE */
 #define CONFIG_E500			/* BOOKE e500 family */
-#define CONFIG_P1022
 #define CONFIG_CONTROLCENTERD
 #define CONFIG_MP			/* support multiple processors */
 
 #define CONFIG_SYS_NO_FLASH
 #define CONFIG_ENABLE_36BIT_PHYS
-#define CONFIG_FSL_LAW			/* Use common FSL init code */
 
 #ifdef CONFIG_PHYS_64BIT
 #define CONFIG_ADDR_MAP

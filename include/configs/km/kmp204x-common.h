@@ -8,8 +8,6 @@
 #ifndef _CONFIG_KMP204X_H
 #define _CONFIG_KMP204X_H
 
-#define CONFIG_PPC_P2041
-
 #define CONFIG_SYS_TEXT_BASE	0xfff40000
 
 #define CONFIG_KM_DEF_NETDEV	"netdev=eth0\0"
@@ -47,8 +45,6 @@
 #define CONFIG_SYS_PCI_64BIT		/* enable 64-bit PCI resources */
 
 #define CONFIG_SYS_DPAA_RMAN		/* RMan */
-
-#define CONFIG_FSL_LAW			/* Use common FSL init code */
 
 /* Environment in SPI Flash */
 #define CONFIG_SYS_EXTRA_ENV_RELOC

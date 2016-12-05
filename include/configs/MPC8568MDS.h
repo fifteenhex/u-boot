@@ -13,8 +13,6 @@
 /* High Level Configuration Options */
 #define CONFIG_BOOKE		1	/* BOOKE */
 #define CONFIG_E500		1	/* BOOKE e500 family */
-#define CONFIG_MPC8568		1	/* MPC8568 specific */
-#define CONFIG_MPC8568MDS	1	/* MPC8568MDS board specific */
 
 #define	CONFIG_SYS_TEXT_BASE	0xfff80000
 
@@ -30,7 +28,6 @@
 #define CONFIG_TSEC_ENET		/* tsec ethernet support */
 #define CONFIG_QE			/* Enable QE */
 #define CONFIG_ENV_OVERWRITE
-#define CONFIG_FSL_LAW		1	/* Use common FSL init code */
 
 #ifndef __ASSEMBLY__
 extern unsigned long get_clock_freq(void);

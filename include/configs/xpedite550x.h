@@ -16,7 +16,6 @@
  */
 #define CONFIG_BOOKE		1	/* BOOKE */
 #define CONFIG_E500		1	/* BOOKE e500 family */
-#define CONFIG_P2020		1
 #define CONFIG_XPEDITE550X	1
 #define CONFIG_SYS_BOARD_NAME	"XPedite5500"
 #define CONFIG_SYS_FORM_PMC_XMC	1
@@ -33,7 +32,6 @@
 #define CONFIG_PCI_INDIRECT_BRIDGE 1	/* indirect PCI bridge support */
 #define CONFIG_SYS_PCI_64BIT	1	/* enable 64-bit PCI resources */
 #define CONFIG_FSL_PCIE_RESET	1	/* need PCIe reset errata */
-#define CONFIG_FSL_LAW		1	/* Use common FSL init code */
 #define CONFIG_FSL_ELBC		1
 
 /*

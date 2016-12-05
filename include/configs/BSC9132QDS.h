@@ -11,10 +11,6 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#ifdef CONFIG_BSC9132QDS
-#define CONFIG_BSC9132
-#endif
-
 #define CONFIG_MISC_INIT_R
 
 #ifdef CONFIG_SDCARD
@@ -107,7 +103,6 @@
 #define CONFIG_DOS_PARTITION
 #endif
 
-#define CONFIG_FSL_LAW			/* Use common FSL init code */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_TSEC_ENET /* ethernet */
 

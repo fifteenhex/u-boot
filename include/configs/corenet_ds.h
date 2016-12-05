@@ -24,13 +24,13 @@
 #define CONFIG_RAMBOOT_TEXT_BASE	CONFIG_SYS_TEXT_BASE
 #define CONFIG_RESET_VECTOR_ADDRESS	0xfffffffc
 #define CONFIG_SYS_FSL_PBL_PBI board/freescale/corenet_ds/pbi.cfg
-#if defined(CONFIG_P3041DS)
+#if defined(CONFIG_TARGET_P3041DS)
 #define CONFIG_SYS_FSL_PBL_RCW board/freescale/corenet_ds/rcw_p3041ds.cfg
-#elif defined(CONFIG_P4080DS)
+#elif defined(CONFIG_TARGET_P4080DS)
 #define CONFIG_SYS_FSL_PBL_RCW board/freescale/corenet_ds/rcw_p4080ds.cfg
-#elif defined(CONFIG_P5020DS)
+#elif defined(CONFIG_TARGET_P5020DS)
 #define CONFIG_SYS_FSL_PBL_RCW board/freescale/corenet_ds/rcw_p5020ds.cfg
-#elif defined(CONFIG_P5040DS)
+#elif defined(CONFIG_TARGET_P5040DS)
 #define CONFIG_SYS_FSL_PBL_RCW board/freescale/corenet_ds/rcw_p5040ds.cfg
 #endif
 #endif
@@ -68,8 +68,6 @@
 #define CONFIG_PCIE2			/* PCIE controller 2 */
 #define CONFIG_FSL_PCI_INIT		/* Use common FSL init code */
 #define CONFIG_SYS_PCI_64BIT		/* enable 64-bit PCI resources */
-
-#define CONFIG_FSL_LAW			/* Use common FSL init code */
 
 #define CONFIG_ENV_OVERWRITE
 
@@ -680,7 +678,7 @@
 
 #define CONFIG_BAUDRATE	115200
 
-#ifdef CONFIG_P4080DS
+#ifdef CONFIG_TARGET_P4080DS
 #define __USB_PHY_TYPE	ulpi
 #else
 #define __USB_PHY_TYPE	utmi

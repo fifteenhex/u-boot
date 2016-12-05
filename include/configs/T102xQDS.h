@@ -28,7 +28,6 @@
 #define CONFIG_SYS_NUM_CPC		CONFIG_NUM_DDR_CONTROLLERS
 #define CONFIG_FSL_IFC			/* Enable IFC Support */
 
-#define CONFIG_FSL_LAW			/* Use common FSL init code */
 #define CONFIG_ENV_OVERWRITE
 
 #define CONFIG_DEEP_SLEEP
@@ -42,7 +41,6 @@
 #define CONFIG_SYS_FSL_PBL_PBI board/freescale/t102xqds/t1024_pbi.cfg
 #define CONFIG_SPL_FLUSH_IMAGE
 #define CONFIG_SPL_TARGET		"u-boot-with-spl.bin"
-#define CONFIG_FSL_LAW			/* Use common FSL init code */
 #define CONFIG_SYS_TEXT_BASE		0x00201000
 #define CONFIG_SPL_TEXT_BASE		0xFFFD8000
 #define CONFIG_SPL_PAD_TO		0x40000
@@ -497,7 +495,7 @@ unsigned long get_board_ddr_clk(void);
 #define CONFIG_SYS_NS16550_COM4	(CONFIG_SYS_CCSRBAR+0x11D600)
 
 /* Video */
-#ifdef CONFIG_PPC_T1024		/* no DIU on T1023 */
+#ifdef CONFIG_ARCH_T1024		/* no DIU on T1023 */
 #define CONFIG_FSL_DIU_FB
 #ifdef CONFIG_FSL_DIU_FB
 #define CONFIG_FSL_DIU_CH7301

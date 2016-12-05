@@ -12,7 +12,6 @@
 
 #if defined(CONFIG_TWR_P1025)
 #define CONFIG_BOARDNAME "TWR-P1025"
-#define CONFIG_P1025
 #define CONFIG_PHY_ATHEROS
 #define CONFIG_QE
 #define CONFIG_SYS_LBC_LBCR	0x00080000	/* Conversion of LBC addr */
@@ -53,7 +52,6 @@
 #define CONFIG_FSL_PCIE_RESET	/* need PCIe reset errata */
 #define CONFIG_SYS_PCI_64BIT	/* enable 64-bit PCI resources */
 
-#define CONFIG_FSL_LAW
 #define CONFIG_TSEC_ENET	/* tsec ethernet support */
 #define CONFIG_ENV_OVERWRITE
 

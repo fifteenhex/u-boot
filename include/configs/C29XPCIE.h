@@ -11,10 +11,6 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#ifdef CONFIG_C29XPCIE
-#define CONFIG_PPC_C29X
-#endif
-
 #ifdef CONFIG_SPIFLASH
 #define CONFIG_RAMBOOT_SPIFLASH
 #define CONFIG_SYS_TEXT_BASE		0x11000000
@@ -106,7 +102,6 @@
 #define CONFIG_DOS_PARTITION
 #endif
 
-#define CONFIG_FSL_LAW			/* Use common FSL init code */
 #define CONFIG_TSEC_ENET
 #define CONFIG_ENV_OVERWRITE
 

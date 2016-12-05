@@ -40,8 +40,6 @@
 /* High Level Configuration Options */
 #define CONFIG_BOOKE		1	/* BOOKE */
 #define CONFIG_E500		1	/* BOOKE e500 family */
-#define CONFIG_MPC8536		1
-#define CONFIG_MPC8536DS	1
 
 #define CONFIG_FSL_ELBC		1	/* Has Enhanced localbus controller */
 #define CONFIG_PCI1		1	/* Enable PCI controller 1 */
@@ -53,7 +51,6 @@
 #define CONFIG_FSL_PCIE_RESET	1	/* need PCIe reset errata */
 #define CONFIG_SYS_PCI_64BIT	1	/* enable 64-bit PCI resources */
 
-#define CONFIG_FSL_LAW		1	/* Use common FSL init code */
 
 #define CONFIG_TSEC_ENET		/* tsec ethernet support */
 #define CONFIG_ENV_OVERWRITE

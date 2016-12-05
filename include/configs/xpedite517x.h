@@ -14,7 +14,6 @@
 /*
  * High Level Configuration Options
  */
-#define CONFIG_MPC8641		1	/* MPC8641 specific */
 #define CONFIG_XPEDITE5140	1	/* MPC8641HPCN board specific */
 #define CONFIG_SYS_BOARD_NAME	"XPedite5170"
 #define CONFIG_SYS_FORM_3U_VPX	1
@@ -32,7 +31,6 @@
 #define CONFIG_FSL_PCI_INIT	1	/* Use common FSL init code */
 #define CONFIG_PCI_INDIRECT_BRIDGE 1	/* indirect PCI bridge support */
 #define CONFIG_SYS_PCI_64BIT	1	/* enable 64-bit PCI resources */
-#define CONFIG_FSL_LAW		1	/* Use common FSL init code */
 
 /*
  * DDR config
@@ -77,7 +75,6 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
  * Base addresses -- Note these are effective addresses where the
  * actual resources get mapped (not physical addresses)
  */
-#define CONFIG_SYS_CCSRBAR_DEFAULT	0xff700000	/* CCSRBAR Default */
 #define CONFIG_SYS_CCSRBAR		0xef000000	/* relocated CCSRBAR */
 #define CONFIG_SYS_CCSRBAR_PHYS		CONFIG_SYS_CCSRBAR
 #define CONFIG_SYS_CCSRBAR_PHYS_LOW	CONFIG_SYS_CCSRBAR

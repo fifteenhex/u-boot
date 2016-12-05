@@ -16,8 +16,6 @@
 /* High Level Configuration Options */
 #define CONFIG_BOOKE		1	/* BOOKE */
 #define CONFIG_E500		1	/* BOOKE e500 family */
-#define CONFIG_MPC8548		1	/* MPC8548 specific */
-#define CONFIG_MPC8548CDS	1	/* MPC8548CDS board specific */
 
 #ifndef CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_TEXT_BASE	0xfff80000
@@ -37,7 +35,6 @@
 #define CONFIG_TSEC_ENET		/* tsec ethernet support */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_INTERRUPTS		/* enable pci, srio, ddr interrupts */
-#define CONFIG_FSL_LAW		1	/* Use common FSL init code */
 
 #define CONFIG_FSL_VIA
 

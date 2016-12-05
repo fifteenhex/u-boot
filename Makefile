@@ -5,7 +5,7 @@
 VERSION = 2016
 PATCHLEVEL = 11
 SUBLEVEL =
-EXTRAVERSION = -rc3
+EXTRAVERSION =
 NAME =
 
 # *DOCUMENTATION*
@@ -527,6 +527,15 @@ endif
 endif
 endif
 
+# These are set by the arch-specific config.mk. Make sure they are exported
+# so they can be used when building an EFI application.
+export EFI_LDS		# Filename of EFI link script in arch/$(ARCH)/lib
+export EFI_CRT0		# Filename of EFI CRT0 in arch/$(ARCH)/lib
+export EFI_RELOC	# Filename of EFU relocation code in arch/$(ARCH)/lib
+export CFLAGS_EFI	# Compiler flags to add when building EFI app
+export CFLAGS_NON_EFI	# Compiler flags to remove when building EFI app
+export EFI_TARGET	# binutils target if EFI is natively supported
+
 # If board code explicitly specified LDSCRIPT or CONFIG_SYS_LDSCRIPT, use
 # that (or fail if absent).  Otherwise, search for a linker script in a
 # standard location.
@@ -811,6 +820,8 @@ append = cat $(filter-out $< $(PHONY), $^) >> $@
 
 quiet_cmd_pad_cat = CAT     $@
 cmd_pad_cat = $(cmd_objcopy) && $(append) || rm -f $@
+
+cfg: u-boot.cfg
 
 all:		$(ALL-y)
 ifeq ($(CONFIG_DM_I2C_COMPAT)$(CONFIG_SANDBOX),y)
@@ -1131,7 +1142,7 @@ quiet_cmd_u-boot_payload ?= LD      $@
       cmd_u-boot_payload ?= $(LD) $(LDFLAGS_EFI_PAYLOAD) -o $@ \
       -T u-boot-payload.lds arch/x86/cpu/call32.o \
       lib/efi/efi.o lib/efi/efi_stub.o u-boot.bin.o \
-      $(addprefix arch/$(ARCH)/lib/efi/,$(EFISTUB))
+      $(addprefix arch/$(ARCH)/lib/,$(EFISTUB))
 
 u-boot-payload: u-boot.bin.o u-boot-payload.lds FORCE
 	$(call if_changed,u-boot_payload)
@@ -1518,6 +1529,7 @@ help:
 	@echo  '  cscope	  - Generate cscope index'
 	@echo  '  ubootrelease	  - Output the release version string (use with make -s)'
 	@echo  '  ubootversion	  - Output the version stored in Makefile (use with make -s)'
+	@echo  "  cfg		  - Don't build, just create the .cfg files"
 	@echo  ''
 	@echo  'Static analysers'
 	@echo  '  checkstack      - Generate a list of stack hogs'

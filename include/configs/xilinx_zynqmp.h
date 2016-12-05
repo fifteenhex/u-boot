@@ -80,10 +80,6 @@
 #endif
 #define CONFIG_AUTO_COMPLETE
 
-/* PXE */
-#define CONFIG_CMD_PXE
-#define CONFIG_MENU
-
 #if defined(CONFIG_ZYNQ_SDHCI)
 # define CONFIG_MMC
 # define CONFIG_GENERIC_MMC
@@ -110,7 +106,6 @@
 #define CONFIG_SYS_LOAD_ADDR		0x8000000
 
 #if defined(CONFIG_ZYNQMP_USB)
-#define CONFIG_USB_MAX_CONTROLLER_COUNT         2
 #define CONFIG_SYS_USB_XHCI_MAX_ROOT_PORTS      2
 #define CONFIG_USB_XHCI_ZYNQMP
 

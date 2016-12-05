@@ -20,7 +20,6 @@
 /* High Level Configuration Options */
 #define CONFIG_BOOKE		1	/* BOOKE			*/
 #define CONFIG_E500		1	/* BOOKE e500 family		*/
-#define CONFIG_MPC8544		1
 #define CONFIG_SOCRATES		1
 
 #define	CONFIG_SYS_TEXT_BASE	0xfff80000
@@ -31,8 +30,6 @@
 
 #define CONFIG_MISC_INIT_R	1	/* Call misc_init_r		*/
 #define CONFIG_BOARD_EARLY_INIT_R 1	/* Call board_early_init_r	*/
-
-#define CONFIG_FSL_LAW		1	/* Use common FSL init code */
 
 /*
  * Only possible on E500 Version 2 or newer cores.

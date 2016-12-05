@@ -21,8 +21,6 @@
 /* High Level Configuration Options */
 #define CONFIG_BOOKE		1	/* BOOKE */
 #define CONFIG_E500		1	/* BOOKE e500 family */
-#define CONFIG_MPC8540		1	/* MPC8540 specific */
-#define CONFIG_MPC8540ADS	1	/* MPC8540ADS board specific */
 
 /*
  * default CCARBAR is at 0xff700000
@@ -38,7 +36,6 @@
 #define CONFIG_SYS_PCI_64BIT	1	/* enable 64-bit PCI resources */
 #define CONFIG_TSEC_ENET		/* tsec ethernet support */
 #define CONFIG_ENV_OVERWRITE
-#define CONFIG_FSL_LAW		1	/* Use common FSL init code */
 
 /*
  * sysclk for MPC85xx
