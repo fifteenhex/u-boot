@@ -350,9 +350,9 @@ extern int soft_i2c_gpio_scl;
 #endif
 
 #define CONFIG_ENV_IS_IN_SPI_FLASH
-#define CONFIG_ENV_SIZE    0x10000
+#define CONFIG_ENV_SIZE    0x8000
 #define CONFIG_ENV_OFFSET 0x80000
-#define CONFIG_ENV_SECT_SIZE 0x400
+#define CONFIG_ENV_SECT_SIZE 0x1000
 
 #if !defined CONFIG_ENV_IS_IN_MMC && \
     !defined CONFIG_ENV_IS_IN_NAND && \
