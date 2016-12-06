@@ -143,7 +143,7 @@
 #define CONFIG_GENERIC_MMC
 #define CONFIG_MMC_SUNXI
 #define CONFIG_MMC_SUNXI_SLOT		0
-#define CONFIG_ENV_IS_IN_MMC
+/*#define CONFIG_ENV_IS_IN_MMC*/
 #define CONFIG_SYS_MMC_ENV_DEV		0	/* first detected MMC controller */
 #define CONFIG_SYS_MMC_MAX_DEVICE	4
 #endif
@@ -176,8 +176,8 @@
 
 #define CONFIG_SYS_MONITOR_LEN		(768 << 10)	/* 768 KiB */
 
-#define CONFIG_ENV_OFFSET		(544 << 10) /* (8 + 24 + 512) KiB */
-#define CONFIG_ENV_SIZE			(128 << 10)	/* 128 KiB */
+/*#define CONFIG_ENV_OFFSET		(544 << 10) *//*(8 + 24 + 512) KiB */
+/*#define CONFIG_ENV_SIZE			(128 << 10)*/	/* 128 KiB */
 
 #define CONFIG_FAT_WRITE	/* enable write access */
 
@@ -348,6 +348,11 @@ extern int soft_i2c_gpio_scl;
 #define CONFIG_PREBOOT
 #define CONFIG_SYS_USB_EVENT_POLL_VIA_INT_QUEUE
 #endif
+
+#define CONFIG_ENV_IS_IN_SPI_FLASH
+#define CONFIG_ENV_SIZE    0x10000
+#define CONFIG_ENV_OFFSET 0x80000
+#define CONFIG_ENV_SECT_SIZE 0x400
 
 #if !defined CONFIG_ENV_IS_IN_MMC && \
     !defined CONFIG_ENV_IS_IN_NAND && \
