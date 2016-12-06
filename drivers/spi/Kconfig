@@ -124,6 +124,12 @@ config SANDBOX_SPI
 		};
 	  };
 
+config SUNXI_SPI
+	bool "Allwinner SPI driver"
+	depends on DM
+	help
+	  Enable SPI support for sunxi.
+
 config TEGRA114_SPI
 	bool "nVidia Tegra114 SPI driver"
 	help

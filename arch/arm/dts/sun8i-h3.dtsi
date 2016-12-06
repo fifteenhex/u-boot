@@ -52,6 +52,7 @@
 
 	aliases {
 		ethernet0 = &emac;
+		spi0 = &spi0;
 	};
 
 	cpus {
@@ -383,6 +384,13 @@
 				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
 			};
 
+			spi0_pins: spi0 {
+				allwinner,pins = "PC0", "PC1", "PC2", "PC3";
+				allwinner,function = "spi0";
+				allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+			};
+
 			uart0_pins_a: uart0@0 {
 				allwinner,pins = "PA4", "PA5";
 				allwinner,function = "uart0";
@@ -404,6 +412,22 @@
 			interrupts = <GIC_SPI 18 IRQ_TYPE_LEVEL_HIGH>,
 				     <GIC_SPI 19 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&osc24M>;
+		};
+
+		spi0: spi@01c68000 {
+			compatible = "allwinner,sun8i-h3-spi";
+			reg = <0x01c68000 0x1000>;
+			interrupts = <GIC_SPI 65 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_SPI0>, <&ccu CLK_SPI0>;
+			clock-names = "ahb", "mod";
+			dmas = <&dma 23>, <&dma 23>;
+			dma-names = "rx", "tx";
+			pinctrl-names = "default";
+			pinctrl-0 = <&spi0_pins>;
+			resets = <&ccu RST_BUS_SPI0>;
+			status = "disabled";
+			#address-cells = <1>;
+			#size-cells = <0>;
 		};
 
 		wdt0: watchdog@01c20ca0 {

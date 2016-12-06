@@ -154,3 +154,7 @@
 	/* USB VBUS is always on */
 	status = "okay";
 };
+
+&spi0 {
+	status = "okay";
+};
