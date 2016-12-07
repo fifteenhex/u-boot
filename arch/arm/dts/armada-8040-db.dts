@@ -41,14 +41,14 @@
  */
 
 /*
- * Device Tree file for Marvell Armada 7040 Development board platform
+ * Device Tree file for Marvell Armada 8040 Development board platform
  */
 
-#include "armada-7040.dtsi"
+#include "armada-8040.dtsi"
 
 / {
-	model = "Marvell Armada 7040 DB board";
-	compatible = "marvell,armada7040-db", "marvell,armada7040",
+	model = "Marvell Armada 8040 DB board";
+	compatible = "marvell,armada8040-db", "marvell,armada8040",
 		     "marvell,armada-ap806-quad", "marvell,armada-ap806";
 
 	chosen {
@@ -57,7 +57,7 @@
 
 	aliases {
 		i2c0 = &cpm_i2c0;
-		spi0 = &cpm_spi1;
+		spi0 = &spi0;
 	};
 
 	memory@00000000 {
@@ -98,11 +98,13 @@
 	};
 };
 
+/* Accessible over the mini-USB CON9 connector on the main board */
 &uart0 {
 	status = "okay";
 };
 
 
+/* CON5 on CP0 expansion */
 &cpm_pcie2 {
 	status = "okay";
 };
@@ -112,47 +114,56 @@
 	clock-frequency = <100000>;
 };
 
-&cpm_spi1 {
-	status = "okay";
-
-	spi-flash@0 {
-		#address-cells = <0x1>;
-		#size-cells = <0x1>;
-		compatible = "jedec,spi-nor";
-		reg = <0x0>;
-		spi-max-frequency = <20000000>;
-
-		partitions {
-			compatible = "fixed-partitions";
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			partition@0 {
-				label = "U-Boot";
-				reg = <0x0 0x200000>;
-			};
-
-			partition@400000 {
-				label = "Filesystem";
-				reg = <0x200000 0xe00000>;
-			};
-		};
-	};
-};
-
+/* CON4 on CP0 expansion */
 &cpm_sata0 {
 	status = "okay";
 };
 
+/* CON9 on CP0 expansion */
 &cpm_usb3_0 {
 	status = "okay";
 };
 
+/* CON10 on CP0 expansion */
 &cpm_usb3_1 {
 	status = "okay";
 };
 
+/* CON5 on CP1 expansion */
+&cps_pcie2 {
+	status = "okay";
+};
+
+&cps_i2c0 {
+	status = "okay";
+	clock-frequency = <100000>;
+};
+
+/* CON4 on CP1 expansion */
+&cps_sata0 {
+	status = "okay";
+};
+
+/* CON9 on CP1 expansion */
+&cps_usb3_0 {
+	status = "okay";
+};
+
+/* CON10 on CP1 expansion */
+&cps_usb3_1 {
+	status = "okay";
+};
+
 &cpm_comphy {
+	/*
+	 * Serdes Configuration:
+	 * Lane 0: SGMII2
+	 * Lane 1: USB3_HOST0
+	 * Lane 2: KR (10G)
+	 * Lane 3: SATA1
+	 * Lane 4: USB3_HOST1
+	 * Lane 5: PEX2x1
+	 */
 	phy0 {
 		phy-type = <PHY_TYPE_SGMII2>;
 		phy-speed = <PHY_SPEED_3_125G>;
@@ -160,27 +171,58 @@
 
 	phy1 {
 		phy-type = <PHY_TYPE_USB3_HOST0>;
-		phy-speed = <PHY_SPEED_5G>;
 	};
 
 	phy2 {
-		phy-type = <PHY_TYPE_SGMII0>;
-		phy-speed = <PHY_SPEED_1_25G>;
+		phy-type = <PHY_TYPE_KR>;
 	};
 
 	phy3 {
 		phy-type = <PHY_TYPE_SATA1>;
-		phy-speed = <PHY_SPEED_5G>;
 	};
 
 	phy4 {
 		phy-type = <PHY_TYPE_USB3_HOST1>;
-		phy-speed = <PHY_SPEED_5G>;
 	};
 
 	phy5 {
 		phy-type = <PHY_TYPE_PEX2>;
-		phy-speed = <PHY_SPEED_5G>;
+	};
+};
+
+&cps_comphy {
+	/*
+	 * Serdes Configuration:
+	 * Lane 0: SGMII2
+	 * Lane 1: USB3_HOST0
+	 * Lane 2: KR (10G)
+	 * Lane 3: SATA1
+	 * Lane 4: Unconnected
+	 * Lane 5: PEX2x1
+	 */
+	phy0 {
+		phy-type = <PHY_TYPE_SGMII2>;
+		phy-speed = <PHY_SPEED_3_125G>;
+	};
+
+	phy1 {
+		phy-type = <PHY_TYPE_USB3_HOST0>;
+	};
+
+	phy2 {
+		phy-type = <PHY_TYPE_KR>;
+	};
+
+	phy3 {
+		phy-type = <PHY_TYPE_SATA1>;
+	};
+
+	phy4 {
+		phy-type = <PHY_TYPE_UNCONNECTED>;
+	};
+
+	phy5 {
+		phy-type = <PHY_TYPE_PEX2>;
 	};
 };
 
@@ -189,5 +231,9 @@
 };
 
 &cpm_utmi1 {
+	status = "okay";
+};
+
+&cps_utmi0 {
 	status = "okay";
 };
