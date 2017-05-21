@@ -50,6 +50,7 @@
 
 	aliases {
 		serial0 = &uart0;
+		spi0 = &spi0;
 	};
 
 	chosen {
@@ -63,6 +64,10 @@
 	broken-cd;
 	bus-width = <4>;
 	vmmc-supply = <&reg_vcc3v3>;
+	status = "okay";
+};
+
+&spi0 {
 	status = "okay";
 };
 
