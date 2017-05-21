@@ -221,6 +221,11 @@
 				drive-strength = <30>;
 				bias-pull-up;
 			};
+
+			spi0_pins: spi0 {
+				pins = "PC0", "PC1", "PC2", "PC3";
+				function = "spi0";
+			};
 		};
 
 		timer@01c20c00 {
@@ -268,6 +273,20 @@
 			clocks = <&ccu CLK_BUS_UART2>;
 			resets = <&ccu RST_BUS_UART2>;
 			status = "disabled";
+		};
+
+		spi0: spi@1c68000 {
+			compatible = "allwinner,sun8i-h3-spi";
+			reg = <0x01c68000 0x1000>;
+			interrupts = <GIC_SPI 65 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_SPI0>, <&ccu CLK_SPI0>;
+			clock-names = "ahb", "mod";
+			pinctrl-names = "default";
+			pinctrl-0 = <&spi0_pins>;
+			resets = <&ccu RST_BUS_SPI0>;
+			status = "disabled";
+			#address-cells = <1>;
+			#size-cells = <0>;
 		};
 
 		gic: interrupt-controller@01c81000 {
