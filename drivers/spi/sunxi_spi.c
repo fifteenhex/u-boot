@@ -134,9 +134,9 @@ static int sunxi_spi_ofdata_to_platdata(struct udevice *bus)
 {
 	struct sunxi_spi_platdata *plat = dev_get_platdata(bus);
 	const void *blob = gd->fdt_blob;
-	int node = bus->of_offset;
+	int node = dev_of_offset(bus);
 
-	plat->regs = (struct sunxi_spi_regs *)dev_get_addr(bus);
+	plat->regs = (struct sunxi_spi_regs *)devfdt_get_addr(bus);
 	plat->activate_delay_us = fdtdec_get_int(
 		blob, node, "spi-activate_delay", 0);
 	plat->deactivate_delay_us = fdtdec_get_int(
