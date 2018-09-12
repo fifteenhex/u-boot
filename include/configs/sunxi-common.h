@@ -502,16 +502,12 @@ extern int soft_i2c_gpio_scl;
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONSOLE_ENV_SETTINGS \
 	MEM_LAYOUT_ENV_SETTINGS \
-	DFU_ALT_INFO_RAM \
 	"fdtfile=" FDTFILE "\0" \
 	"console=ttyS0,115200\0" \
 	SUNXI_MTDIDS_DEFAULT \
 	SUNXI_MTDPARTS_DEFAULT \
-	"uuid_gpt_esp=" UUID_GPT_ESP "\0" \
-	"uuid_gpt_system=" UUID_GPT_SYSTEM "\0" \
-	"partitions=" PARTS_DEFAULT "\0" \
-	BOOTCMD_SUNXI_COMPAT
-/*	BOOTENV*/
+	BOOTCMD_SUNXI_COMPAT \
+	"bootcmd=ext4load mmc 0 ${scriptaddr} /boot/boot.scr;source ${scriptaddr}\0"
 
 #else /* ifndef CONFIG_SPL_BUILD */
 #define CONFIG_EXTRA_ENV_SETTINGS
