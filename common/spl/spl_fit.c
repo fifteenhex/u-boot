@@ -257,10 +257,7 @@ static int spl_load_fit_image(struct spl_load_info *info, ulong sector,
 	board_fit_image_post_process(&src, &length);
 #endif
 
-	if (IS_ENABLED(CONFIG_SPL_OS_BOOT)	&&
-	    IS_ENABLED(CONFIG_SPL_GZIP)		&&
-	    image_comp == IH_COMP_GZIP		&&
-	    type == IH_TYPE_KERNEL) {
+	if (IS_ENABLED(CONFIG_SPL_GZIP) && image_comp == IH_COMP_GZIP) {
 		size = length;
 		if (gunzip((void *)load_addr, CONFIG_SYS_BOOTM_LEN,
 			   src, &size)) {
@@ -357,7 +354,7 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 	struct spl_image_info image_info;
 	int node = -1;
 	int images, ret;
-	int base_offset, align_len = ARCH_DMA_MINALIGN - 1;
+	int base_offset, hsize, align_len = ARCH_DMA_MINALIGN - 1;
 	int index = 0;
 
 	/*
@@ -386,8 +383,8 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 	 * For FIT with data embedded, data is loaded as part of FIT image.
 	 * For FIT with external data, data is not loaded in this step.
 	 */
-	fit = (void *)((CONFIG_SYS_TEXT_BASE - size - info->bl_len -
-			align_len) & ~align_len);
+	hsize = (size + info->bl_len + align_len) & ~align_len;
+	fit = spl_get_load_buffer(-hsize, hsize);
 	sectors = get_aligned_image_size(info, size, 0);
 	count = info->read(info, sector, sectors, fit);
 	debug("fit read sector %lx, sectors=%d, dst=%p, count=%lu\n",

@@ -646,6 +646,12 @@ config ARCH_KEYSTONE
 	imply CMD_SAVES
 	imply FIT
 
+config ARCH_K3
+	bool "Texas Instruments' K3 Architecture"
+	select SPL
+	select SUPPORT_SPL
+	select FIT
+
 config ARCH_OMAP2PLUS
 	bool "TI OMAP2+"
 	select CPU_V7A
@@ -741,6 +747,8 @@ config ARCH_QEMU
 	select OF_CONTROL
 	select PL01X_SERIAL
 	imply CMD_DM
+	imply DM_RTC
+	imply RTC_PL031
 
 config ARCH_RMOBILE
 	bool "Renesas ARM SoCs"
@@ -855,7 +863,6 @@ config ARCH_VF610
 config ARCH_ZYNQ
 	bool "Xilinx Zynq based platform"
 	select BOARD_EARLY_INIT_F if WDT
-	select BOARD_LATE_INIT
 	select CLK
 	select CLK_ZYNQ
 	select CPU_V7A
@@ -875,6 +882,7 @@ config ARCH_ZYNQ
 	select SPL_SEPARATE_BSS if SPL
 	select SUPPORT_SPL
 	imply ARCH_EARLY_INIT_R
+	imply BOARD_LATE_INIT
 	imply CMD_CLK
 	imply CMD_DM
 	imply CMD_SPL
@@ -892,7 +900,6 @@ config ARCH_ZYNQMP_R5
 config ARCH_ZYNQMP
 	bool "Xilinx ZynqMP based platform"
 	select ARM64
-	select BOARD_LATE_INIT
 	select CLK
 	select DM
 	select DM_SERIAL
@@ -901,6 +908,7 @@ config ARCH_ZYNQMP
 	select SPL_BOARD_INIT if SPL
 	select SPL_CLK if SPL
 	select SUPPORT_SPL
+	imply BOARD_LATE_INIT
 	imply CMD_DM
 	imply FAT_WRITE
 
@@ -1266,7 +1274,6 @@ config STM32
 	select CPU_V7M
 	select DM
 	select DM_SERIAL
-	select SYS_THUMB_BUILD
 	imply CMD_DM
 
 config ARCH_STI
@@ -1377,6 +1384,8 @@ source "arch/arm/mach-exynos/Kconfig"
 source "arch/arm/mach-highbank/Kconfig"
 
 source "arch/arm/mach-integrator/Kconfig"
+
+source "arch/arm/mach-k3/Kconfig"
 
 source "arch/arm/mach-keystone/Kconfig"
 

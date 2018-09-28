@@ -13,7 +13,6 @@
 #include <usb.h>
 #include <mmc.h>
 #include <efi_loader.h>
-#include <inttypes.h>
 #include <part.h>
 
 /* template END node: */
@@ -22,10 +21,6 @@ static const struct efi_device_path END = {
 	.sub_type = DEVICE_PATH_SUB_TYPE_END,
 	.length   = sizeof(END),
 };
-
-#define U_BOOT_GUID \
-	EFI_GUID(0xe61d73b9, 0xa384, 0x4acc, \
-		 0xae, 0xab, 0x82, 0xe8, 0x28, 0xf3, 0x62, 0x8b)
 
 /* template ROOT node: */
 static const struct efi_device_path_vendor ROOT = {
