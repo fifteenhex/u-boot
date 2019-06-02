@@ -1027,6 +1027,18 @@ config ARCH_ZYNQMP
 	imply MP
 	imply DM_USB_GADGET
 
+config ARCH_MSTAR
+	bool "MStar"
+	select CPU_V7A
+	select SYS_NS16550
+	select DM
+	select DM_SERIAL
+	select CLK
+	select SPL_DM
+	select SPL_LIBCOMMON_SUPPORT
+	select SPL_LIBGENERIC_SUPPORT
+	imply SUPPORT_SPL
+
 config TEGRA
 	bool "NVIDIA Tegra"
 	imply DISTRO_DEFAULTS
@@ -1660,6 +1672,8 @@ source "arch/arm/mach-versal/Kconfig"
 
 source "arch/arm/mach-zynqmp-r5/Kconfig"
 
+source "arch/arm/mach-mstar/Kconfig"
+
 source "arch/arm/cpu/armv7/Kconfig"
 
 source "arch/arm/cpu/armv8/Kconfig"
@@ -1728,6 +1742,7 @@ source "board/xilinx/Kconfig"
 source "board/xilinx/zynq/Kconfig"
 source "board/xilinx/zynqmp/Kconfig"
 source "board/zipitz2/Kconfig"
+source "board/thingyjp/breadbee/Kconfig"
 
 source "arch/arm/Kconfig.debug"
 

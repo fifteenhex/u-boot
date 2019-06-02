@@ -38,7 +38,7 @@
 #include <linux/mii.h>
 #include <asm/io.h>
 #include <asm/dma-mapping.h>
-#include <asm/arch/clk.h>
+//#include <asm/arch/clk.h>
 #include <linux/errno.h>
 
 #include "macb.h"
@@ -46,7 +46,12 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 #define MACB_RX_BUFFER_SIZE		4096
+#ifdef CONFIG_MSC313
+// MSC313 can only handle 9 descriptors according to the linux driver
+#define MACB_RX_RING_SIZE		9
+#else
 #define MACB_RX_RING_SIZE		(MACB_RX_BUFFER_SIZE / 128)
+#endif
 #define MACB_TX_RING_SIZE		16
 #define MACB_TX_TIMEOUT		1000
 #define MACB_AUTONEG_TIMEOUT	5000000
@@ -305,6 +310,36 @@ static inline void macb_invalidate_rx_buffer(struct macb_device *macb)
 }
 
 #if defined(CONFIG_CMD_NET)
+
+#if CONFIG_MSC313
+/*
+ * The MSC313 IP doesn't seem to have tx queues, it looks like it's
+ * the same as the AT91RM9200
+ */
+static int _macb_send_msc313(struct macb_device *macb, const char *name, void *packet,
+		      int length){
+	unsigned long paddr;
+
+	// wait for it to be safe to queue the packet, probably not actually needed...
+	while(!macb_readl(macb, TSR) & MACB_BIT(MSC313_BNQ)){
+	}
+
+	paddr = dma_map_single(packet, length, DMA_TO_DEVICE);
+
+	// make sure the packet is actually in DRAM
+	flush_dcache_range(paddr, paddr + ALIGN(length, ARCH_DMA_MINALIGN));
+
+	macb_writel(macb, MSC313_TAR, paddr);
+	macb_writel(macb, MSC313_TCR, length);
+
+	// wait for the transmitter to finish
+	while(!macb_readl(macb, TSR) & MACB_BIT(TGO)){
+	}
+
+	dma_unmap_single(packet, length, paddr);
+	return 0;
+}
+#endif
 
 static int _macb_send(struct macb_device *macb, const char *name, void *packet,
 		      int length)
@@ -618,7 +653,7 @@ static int macb_phy_init(struct macb_device *macb, const char *name)
 	} else {
 		ret = macb_linkspd_cb(macb->regs, _10BASET);
 	}
-
+	
 	if (ret)
 		return ret;
 
@@ -702,7 +737,11 @@ static int _macb_init(struct macb_device *macb, const char *name)
 #endif
 
 	macb_writel(macb, RBQP, macb->rx_ring_dma);
+#ifdef CONFIG_MSC313
+    // MSC313 doesn't have a TX queue pointer register
+#else
 	macb_writel(macb, TBQP, macb->tx_ring_dma);
+#endif
 
 	if (macb_is_gem(macb)) {
 		/* Check the multi queue and initialize the queue for tx */
@@ -730,7 +769,7 @@ static int _macb_init(struct macb_device *macb, const char *name)
 	} else {
 	/* choose RMII or MII mode. This depends on the board */
 #ifdef CONFIG_DM_ETH
-#ifdef CONFIG_AT91FAMILY
+#if defined(CONFIG_AT91FAMILY) || defined(CONFIG_MSC313)
 		if (macb->phy_interface == PHY_INTERFACE_MODE_RMII) {
 			macb_writel(macb, USRIO,
 				    MACB_BIT(RMII) | MACB_BIT(CLKEN));
@@ -738,20 +777,22 @@ static int _macb_init(struct macb_device *macb, const char *name)
 			macb_writel(macb, USRIO, MACB_BIT(CLKEN));
 		}
 #else
-		if (macb->phy_interface == PHY_INTERFACE_MODE_RMII)
+		if (macb->phy_interface == PHY_INTERFACE_MODE_RMII){
 			macb_writel(macb, USRIO, 0);
-		else
+		}
+		else {
 			macb_writel(macb, USRIO, MACB_BIT(MII));
+		}
 #endif
 #else
 #ifdef CONFIG_RMII
-#ifdef CONFIG_AT91FAMILY
+#if defined(CONFIG_AT91FAMILY) || defined(CONFIG_MSC313)
 	macb_writel(macb, USRIO, MACB_BIT(RMII) | MACB_BIT(CLKEN));
 #else
 	macb_writel(macb, USRIO, 0);
 #endif
 #else
-#ifdef CONFIG_AT91FAMILY
+#if defined(CONFIG_AT91FAMILY) || defined(CONFIG_MSC313);
 	macb_writel(macb, USRIO, MACB_BIT(CLKEN));
 #else
 	macb_writel(macb, USRIO, MACB_BIT(MII));
@@ -765,8 +806,9 @@ static int _macb_init(struct macb_device *macb, const char *name)
 #else
 	ret = macb_phy_init(macb, name);
 #endif
-	if (ret)
+	if (ret){
 		return ret;
+    }
 
 	/* Enable TX and RX */
 	macb_writel(macb, NCR, MACB_BIT(TE) | MACB_BIT(RE));
@@ -783,10 +825,17 @@ static void _macb_halt(struct macb_device *macb)
 	ncr |= MACB_BIT(THALT);
 	macb_writel(macb, NCR, ncr);
 
+#ifdef CONFIG_MSC313
+    // TGO is called idle here and it is set when the mac isn't doing
+    // anything
+    while(!(macb_readl(macb, TSR) & MACB_BIT(TGO)))
+    {
+    }
+#else
 	do {
 		tsr = macb_readl(macb, TSR);
 	} while (tsr & MACB_BIT(TGO));
-
+#endif
 	/* Disable TX and RX, and clear statistics */
 	macb_writel(macb, NCR, MACB_BIT(CLRSTAT));
 }
@@ -900,6 +949,13 @@ static void _macb_eth_initialize(struct macb_device *macb)
 }
 
 #ifndef CONFIG_DM_ETH
+static int macb_send_msc313(struct eth_device *netdev, void *packet, int length)
+{
+	struct macb_device *macb = to_macb(netdev);
+
+	return _macb_send_msc313(macb, netdev->name, packet, length);
+}
+
 static int macb_send(struct eth_device *netdev, void *packet, int length)
 {
 	struct macb_device *macb = to_macb(netdev);
@@ -936,14 +992,12 @@ static int macb_init(struct eth_device *netdev, bd_t *bd)
 static void macb_halt(struct eth_device *netdev)
 {
 	struct macb_device *macb = to_macb(netdev);
-
 	return _macb_halt(macb);
 }
 
 static int macb_write_hwaddr(struct eth_device *netdev)
 {
 	struct macb_device *macb = to_macb(netdev);
-
 	return _macb_write_hwaddr(macb, netdev->enetaddr);
 }
 
@@ -971,7 +1025,11 @@ int macb_eth_initialize(int id, void *regs, unsigned int phy_addr)
 
 	netdev->init = macb_init;
 	netdev->halt = macb_halt;
-	netdev->send = macb_send;
+#ifdef CONFIG_MSC313
+	netdev->send = macb_send_msc313;
+#else
+    netdev->send = macb_send;
+#endif
 	netdev->recv = macb_recv;
 	netdev->write_hwaddr = macb_write_hwaddr;
 
@@ -1007,14 +1065,18 @@ static int macb_start(struct udevice *dev)
 static int macb_send(struct udevice *dev, void *packet, int length)
 {
 	struct macb_device *macb = dev_get_priv(dev);
-
 	return _macb_send(macb, dev->name, packet, length);
+}
+
+static int macb_send_msc313(struct udevice *dev, void *packet, int length)
+{
+	struct macb_device *macb = dev_get_priv(dev);
+	return _macb_send_msc313(macb, dev->name, packet, length);
 }
 
 static int macb_recv(struct udevice *dev, int flags, uchar **packetp)
 {
 	struct macb_device *macb = dev_get_priv(dev);
-
 	macb->next_rx_tail = macb->rx_tail;
 	macb->wrapped = false;
 
@@ -1032,7 +1094,7 @@ static int macb_free_pkt(struct udevice *dev, uchar *packet, int length)
 
 static void macb_stop(struct udevice *dev)
 {
-	struct macb_device *macb = dev_get_priv(dev);
+    struct macb_device *macb = dev_get_priv(dev);
 
 	_macb_halt(macb);
 }
@@ -1041,13 +1103,16 @@ static int macb_write_hwaddr(struct udevice *dev)
 {
 	struct eth_pdata *plat = dev_get_platdata(dev);
 	struct macb_device *macb = dev_get_priv(dev);
-
 	return _macb_write_hwaddr(macb, plat->enetaddr);
 }
 
 static const struct eth_ops macb_eth_ops = {
 	.start	= macb_start,
-	.send	= macb_send,
+#ifdef CONFIG_MSC313
+	.send = macb_send_msc313,
+#else
+    .send = macb_send,
+#endif
 	.recv	= macb_recv,
 	.stop	= macb_stop,
 	.free_pkt	= macb_free_pkt,
@@ -1061,7 +1126,7 @@ static int macb_enable_clk(struct udevice *dev)
 	struct clk clk;
 	ulong clk_rate;
 	int ret;
-
+    
 	ret = clk_get_by_index(dev, 0, &clk);
 	if (ret)
 		return -EINVAL;
@@ -1165,6 +1230,7 @@ static int macb_eth_ofdata_to_platdata(struct udevice *dev)
 
 static const struct udevice_id macb_eth_ids[] = {
 	{ .compatible = "cdns,macb" },
+	{ .compatible = "mstar,msc313-emac" },
 	{ .compatible = "cdns,at91sam9260-macb" },
 	{ .compatible = "atmel,sama5d2-gem" },
 	{ .compatible = "atmel,sama5d3-gem" },
