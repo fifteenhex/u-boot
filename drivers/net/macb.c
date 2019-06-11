@@ -432,9 +432,11 @@ static int _macb_recv_msc313(struct macb_device *macb, uchar **packetp){
 	struct macb_dma_desc *desc;
 	u16 rsr = macb_readl(macb, RSR);
 	void *buffer;
-	macb_writel(macb, RSR, rsr | (BIT(2) | BIT(1) | BIT(0)));
-	if(!(rsr & BIT(1)))
-		return -EAGAIN;
+
+	//doing this actually makes things worse. :D
+	//macb_writel(macb, RSR, rsr | (BIT(2) | BIT(1) | BIT(0)));
+	//if(!(rsr & BIT(1)))
+	//	return -EAGAIN;
 
 	macb_invalidate_ring_desc(macb, RX);
 
