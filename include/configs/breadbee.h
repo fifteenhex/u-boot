@@ -28,5 +28,10 @@
 #define CONFIG_EXTRA_ENV_SETTINGS "loadaddr=0x22000000\0"\
 								  "bootcmd=sf probe; sf read ${loadaddr} 0x80000 0x300000; bootm ${loadaddr}\0"
 
+
+#define CONFIG_ENV_SIZE			0x2000
+#define CONFIG_ENV_OFFSET		0x2000 // 8KB into the rom partition, just in case we need to part something at the start
+#define CONFIG_ENV_SECT_SIZE	4096
+
 #endif
 
