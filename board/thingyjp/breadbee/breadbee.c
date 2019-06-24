@@ -55,37 +55,8 @@ void MHal_EMAC_WritReg8( u32 bank, u32 reg, u8 val )
     *( ( volatile u8* ) address ) = val;
 }
 
-/*
- *
- *     //power down eth
-    //wriu  -w  0x0032fc  0x0102   // Power-down LDO
-    //wriu      0x0032b7  0x17     // Power-down ADC
-    //wriu      0x0032cb  0x13     // Power-down BGAP
-    //wriu      0x0032cc  0x30     // Power-down ADCPL
-    //wriu      0x0032cd  0xd8     // Power-down ADCPL
-    //wriu      0x0032d4  0x20     // Power-down LPF_OP
-    //wriu      0x0032b9  0x41     // Power-down LPF
-    //wriu      0x0032bb  0x84     // Power-down REF
-    //wriu  -w  0x00333a  0x03f3   // PD_TX_IDAC, PD_TX_LD
-    //wriu      0x0033a1  0x20     // PD_SADC, EN_SAR_LOGIC**
-    //wriu      0x0033c5  0x40     // 100gat
-    //wriu      0x003330  0x53     // 200gat
-    OUTREG16(0x1F0065F8, 0x0102);
-    OUTREG8 (0x1F00656D, 0x17);
-    OUTREG8 (0x1F006595, 0x13);
-    OUTREG8 (0x1F006598, 0x30);
-    OUTREG8 (0x1F006599, 0xd8);
-    OUTREG8 (0x1F0065A8, 0x20);
-    OUTREG8 (0x1F006571, 0x41);
-    OUTREG8 (0x1F006575, 0x84);
-    OUTREG16(0x1F006674, 0x03f3);
-    OUTREG8 (0x1F006741, 0x20);
-    OUTREG8 (0x1F006789, 0x40);
-    OUTREG8 (0x1F006660, 0x53);
- */
-
-/*static void emacphypowerup(void){
-	printf("emac power up\n");
+static void emacphypowerup_msc313(void){
+	printf("emac power up, msc313\n");
 
 	//gain shift
 	MHal_EMAC_WritReg8(REG_BANK_ALBANY1, 0xb4, 0x02);
@@ -168,58 +139,108 @@ void MHal_EMAC_WritReg8( u32 bank, u32 reg, u8 val )
 
 	    //set CLKsource to hv
 	       MHal_EMAC_WritReg8(REG_BANK_ALBANY1, 0xC7, 0x80);
-}*/
+}
 
-static void emacphypowerup(){
+static void emacphypowerup_msc313e(){
 	 printf("emac power up\n");
-	     *(int8_t *)0x1f2a2274 = 0x0;
+
+	 	 // this is "switch rx descriptor format to mode 1"
+	 	 *(int8_t *)0x1f2a2274 = 0x0;
 	     *(int8_t *)0x1f2a2275 = 0x1;
+
+	     // RX shift patch
 	     *(int8_t *)0x1f2a2200 = *(int8_t *)0x1f2a2200 | 0x10;
+
+	     // TX underrun patch
 	     *(int8_t *)0x1f2a2271 = *(int8_t *)0x1f2a2271 | 0x1;
+
+	     // clkgen setup
 	     *(int8_t *)0x1f207108 = 0x0;
 	     *(int8_t *)0x1f226688 = 0x0;
 	     *(int8_t *)0x1f22668c = 0x0;
+
+	     // gain shift
 	     *(int8_t *)0x1f006568 = 0x2;
+
+	     // det max
 	     *(int8_t *)0x1f00649d = 0x2;
+
+	     // det min
 	     *(int8_t *)0x1f0064a1 = 0x1;
+
+	     //snr len(emc noise)
 	     *(int8_t *)0x1f0064ed = 0x18;
-	     *(int8_t *)0x1f0062e4 = 0x5f ^ 0xffffffff;
+
+	     // lpbk_enable set to 0
+	     *(int8_t *)0x1f0062e4 = 0xa0;
+
+	     // power on ldo
 	     *(int8_t *)0x1f0065f8 = 0x0;
 	     *(int8_t *)0x1f0065f9 = 0x0;
-	     *(int8_t *)0x1f006741 = 0x7f ^ 0xffffffff;
+	     // power on adc
+	     *(int8_t *)0x1f006741 = 0x80;
+	     // power on bgap
 	     *(int8_t *)0x1f006598 = 0x40;
+	     // power on adcpl
 	     *(int8_t *)0x1f006575 = 0x4;
 	     *(int8_t *)0x1f006674 = 0x0;
+	     // power on lpf_op
 	     *(int8_t *)0x1f0067e1 = 0x0;
+
+	     // lpf
 	     *(int8_t *)0x1f006714 = 0x1;
+
+
 	     *(int8_t *)0x1f006475 = 0x1;
 	     *(int8_t *)0x1f006588 = 0x44;
 	     *(int8_t *)0x1f006700 = 0x30;
 	     *(int8_t *)0x1f006789 = 0x0;
 	     *(int8_t *)0x1f006660 = 0x43;
+
+	     // 100 gat
 	     *(int8_t *)0x1f006671 = 0x41;
-	     *(int8_t *)0x1f0067e4 = 0xa ^ 0xffffffff;
+
+	     // 200 gat
+	     *(int8_t *)0x1f0067e4 = 0xf5;
+
+	     // en_100t_phase
 	     *(int8_t *)0x1f0067e5 = 0xd;
-	     *(int8_t *)0x1f0062f1 = 0x2f ^ 0xffffffff;
+
+	     // prevent packet drop by inverted waveform
+	     *(int8_t *)0x1f0062f1 = 0xd0;
 	     *(int8_t *)0x1f0062ed = 0x5a;
+
+	     // disable eee
 	     *(int8_t *)0x1f006259 = 0x7c;
+
+	     // 10T waveform
 	     *(int8_t *)0x1f0067d0 = 0x6;
 	     *(int8_t *)0x1f006255 = 0x0;
 	     *(int8_t *)0x1f0067d0 = 0x0;
 	     *(int8_t *)0x1f006255 = 0x0;
+
+	     // shadow_ctrl
 	     *(int8_t *)0x1f0067d0 = 0x6;
 	     *(int8_t *)0x1f006354 = 0x1c;
 	     *(int8_t *)0x1f006358 = 0x1c;
 	     *(int8_t *)0x1f006359 = 0x1c;
 	     *(int8_t *)0x1f00635c = 0x1c;
 	     *(int8_t *)0x1f00635d = 0x1c;
+
+
 	     *(int8_t *)0x1f0067d0 = 0x0;
 	     *(int8_t *)0x1f006354 = 0x1c;
 	     *(int8_t *)0x1f006355 = 0x28;
+
+	     // speed up timing recovery
 	     *(int8_t *)0x1f0065e9 = 0x2;
-	     *(int8_t *)0x1f00641d = 0x36 ^ 0xffffffff;
+
+	     // signal_det ket
+	     *(int8_t *)0x1f00641d = 0xc9;
+
+	     // snr h
 	     *(int8_t *)0x1f006511 = 0x50;
-	     *(int8_t *)0x1f006515 = 0x7f ^ 0xffffffff;
+	     *(int8_t *)0x1f006515 = 0x80;
 	     *(int8_t *)0x1f00651c = 0xe;
 	     *(int8_t *)0x1f006520 = 0x4;
 	     *(int8_t *)0x1f203d41 = *(int8_t *)0x1f203d41 & 0x7f;
@@ -318,7 +339,12 @@ void board_init_f(ulong dummy)
 #endif
 	emacpinctrl();
 	emacclocks();
-	emacphypowerup();
+
+	uint8_t* chiprev = (uint8_t*) 0x1f003c00;
+	if(*chiprev == 0xae)
+		emacphypowerup_msc313();
+	else
+		emacphypowerup_msc313e();
 	emac_patches();
 }
 
@@ -328,4 +354,4 @@ struct image_header *spl_get_load_buffer(ssize_t offset, size_t size)
 	return &hdr;
 }
 
-#endif
+#endif // spl
