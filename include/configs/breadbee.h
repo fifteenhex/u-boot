@@ -25,7 +25,7 @@
 
 #define CONFIG_SYS_HZ_CLOCK 6000000
 #define CONFIG_EXTRA_ENV_SETTINGS "loadaddr=0x22000000\0"\
-								  "bootcmd=sf probe; sf read ${loadaddr} 0x80000 0x300000; bootm ${loadaddr} ${bb_config}\0"
+								  "bootcmd=sf probe; sf read ${loadaddr} 0x80000 0x300000; bootm ${loadaddr}${bb_config}\0"
 
 
 #define CONFIG_ENV_SIZE			0x2000

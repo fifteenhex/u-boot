@@ -6,6 +6,12 @@ DECLARE_GLOBAL_DATA_PTR;
 int board_init(void)
 {
 	timer_init();
+
+	// this is needed stop FIQ interrupts bypassing the GIC
+	// mstar had this in their irqchip driver but I've moved
+	// this here to keep the mess out of view.
+	u32 *gicreg = (u32*)(0x16000000 + 0x2000);
+	*gicreg = 0x1e0;
 	return 0;
 }
 
@@ -142,23 +148,7 @@ static void emacphypowerup_msc313(void){
 }
 
 static void emacphypowerup_msc313e(){
-	 printf("emac power up\n");
-
-	 	 // this is "switch rx descriptor format to mode 1"
-	 	 *(int8_t *)0x1f2a2274 = 0x0;
-	     *(int8_t *)0x1f2a2275 = 0x1;
-
-	     // RX shift patch
-	     *(int8_t *)0x1f2a2200 = *(int8_t *)0x1f2a2200 | 0x10;
-
-	     // TX underrun patch
-	     *(int8_t *)0x1f2a2271 = *(int8_t *)0x1f2a2271 | 0x1;
-
-	     // clkgen setup
-	     *(int8_t *)0x1f207108 = 0x0;
-	     *(int8_t *)0x1f226688 = 0x0;
-	     *(int8_t *)0x1f22668c = 0x0;
-
+	 printf("emac power up, msc313e\n");
 	     // gain shift
 	     *(int8_t *)0x1f006568 = 0x2;
 
@@ -249,6 +239,23 @@ static void emacphypowerup_msc313e(){
 
 static void emac_patches(void){
 	printf("emac patches\n");
+
+	// this is "switch rx descriptor format to mode 1"
+	 *(int8_t *)0x1f2a2274 = 0x0;
+   *(int8_t *)0x1f2a2275 = 0x1;
+
+   // RX shift patch
+   *(int8_t *)0x1f2a2200 = *(int8_t *)0x1f2a2200 | 0x10;
+
+   // TX underrun patch
+   *(int8_t *)0x1f2a2271 = *(int8_t *)0x1f2a2271 | 0x1;
+
+   // clkgen setup
+   *(int8_t *)0x1f207108 = 0x0;
+   *(int8_t *)0x1f226688 = 0x0;
+   *(int8_t *)0x1f22668c = 0x0;
+
+
 	*(u16*)(0x1f2a2000 + 0x200) = 0xF051; // mstar call this julian100, magic number, seems to be related to the phy
 	*(u16*)(0x1f2a2000 + 0x204) = 0x0000;
 	*(u16*)(0x1f2a2000 + 0x208) = 0x0001; // mstar call this julian104, this enables software descriptors apparently
@@ -341,6 +348,7 @@ void board_init_f(ulong dummy)
 	emacclocks();
 
 	uint8_t* chiprev = (uint8_t*) 0x1f003c00;
+	emac_patches();
 	if(*chiprev == 0xae)
 		emacphypowerup_msc313();
 	else
