@@ -1,7 +1,20 @@
 #include <common.h>
 #include <spl.h>
+#include <environment.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+
+#define CHIPTYPE_MSC313  1
+#define CHIPTYPE_MSC313E 2
+
+static int breadbee_chiptype(void){
+	uint8_t* chiprev = (uint8_t*) 0x1f003c00;
+	if(*chiprev == 0xae)
+		return CHIPTYPE_MSC313;
+	else
+		return CHIPTYPE_MSC313E;
+}
 
 int board_init(void)
 {
@@ -147,7 +160,7 @@ static void emacphypowerup_msc313(void){
 	       MHal_EMAC_WritReg8(REG_BANK_ALBANY1, 0xC7, 0x80);
 }
 
-static void emacphypowerup_msc313e(){
+static void emacphypowerup_msc313e(void){
 	 printf("emac power up, msc313e\n");
 	     // gain shift
 	     *(int8_t *)0x1f006568 = 0x2;
@@ -343,17 +356,19 @@ void board_init_f(ulong dummy)
 	if((forth << 0x18) < 0x0){
 		printf("-- f\n");
 	}
-#endif
+#endif // MStar IPL
+
 	emacpinctrl();
 	emacclocks();
-
-	uint8_t* chiprev = (uint8_t*) 0x1f003c00;
 	emac_patches();
-	if(*chiprev == 0xae)
-		emacphypowerup_msc313();
-	else
-		emacphypowerup_msc313e();
-	emac_patches();
+	switch(breadbee_chiptype()){
+		case CHIPTYPE_MSC313:
+			emacphypowerup_msc313();
+			break;
+		case CHIPTYPE_MSC313E:
+			emacphypowerup_msc313e();
+			break;
+	}
 }
 
 static struct image_header hdr;
@@ -363,3 +378,70 @@ struct image_header *spl_get_load_buffer(ssize_t offset, size_t size)
 }
 
 #endif // spl
+
+#ifndef CONFIG_BOARD_LATE_INIT
+#error "CONFIG_BOARD_LATE_INIT is required"
+#endif
+
+int board_late_init(void){
+#ifndef CONFIG_SPL_BUILD
+	switch(breadbee_chiptype()){
+		case CHIPTYPE_MSC313:
+			env_set("bb_boardtype", "breadbee_crust");
+			break;
+		case CHIPTYPE_MSC313E:
+			env_set("bb_boardtype", "breadbee");
+			break;
+		default:
+			env_set("bb_boardtype", "unknown");
+			break;
+	}
+#endif
+	return 0;
+}
+
+#ifndef CONFIG_SPL_BUILD
+
+#ifndef CONFIG_OF_BOARD_SETUP
+#error "OF_BOARD_SETUP is required"
+#endif
+
+int ft_board_setup(void *blob, bd_t *bd)
+{
+	int i,j;
+	uint8_t* didreg = (uint8_t*) 0x1f007000;
+	uint8_t mac_addr[6];
+	uint8_t did[6];
+	char ethaddr[16];
+
+	for(i = 0; i < 3; i++){
+		for(j = 0; j < 2; j++){
+			did[(i * 2) + j] = *(didreg + ((i * 4) + j));
+		}
+	}
+
+	// stolen from sunxi
+	for (i = 0; i < 4; i++) {
+		sprintf(ethaddr, "ethernet%d", i);
+		if (!fdt_get_alias(blob, ethaddr))
+			continue;
+
+		if (i == 0)
+			strcpy(ethaddr, "ethaddr");
+		else
+			sprintf(ethaddr, "eth%daddr", i);
+
+		if (env_get(ethaddr))
+			continue;
+		mac_addr[0] = 0xbe;
+		mac_addr[1] = 0xe0 | i;
+		mac_addr[2] = did[0];
+		mac_addr[3] = did[1];
+		mac_addr[4] = did[2];
+		mac_addr[5] = did[3];
+
+		eth_env_set_enetaddr(ethaddr, mac_addr);
+	}
+	return 0;
+}
+#endif
