@@ -1,6 +1,7 @@
 #include <common.h>
 #include <spl.h>
 #include <environment.h>
+#include <u-boot/crc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -412,6 +413,7 @@ int ft_board_setup(void *blob, bd_t *bd)
 	uint8_t* didreg = (uint8_t*) 0x1f007000;
 	uint8_t mac_addr[6];
 	uint8_t did[6];
+	uint32_t didcrc32;
 	char ethaddr[16];
 
 	for(i = 0; i < 3; i++){
@@ -419,6 +421,8 @@ int ft_board_setup(void *blob, bd_t *bd)
 			did[(i * 2) + j] = *(didreg + ((i * 4) + j));
 		}
 	}
+
+	didcrc32 = crc32(0, did, sizeof(did));
 
 	// stolen from sunxi
 	for (i = 0; i < 4; i++) {
@@ -434,11 +438,11 @@ int ft_board_setup(void *blob, bd_t *bd)
 		if (env_get(ethaddr))
 			continue;
 		mac_addr[0] = 0xbe;
-		mac_addr[1] = 0xe0 | i;
-		mac_addr[2] = did[0];
-		mac_addr[3] = did[1];
-		mac_addr[4] = did[2];
-		mac_addr[5] = did[3];
+		mac_addr[1] = 0xe0 | ((didcrc32 >> 28) & 0xf);
+		mac_addr[2] = ((didcrc32 >> 20) & 0xff);
+		mac_addr[3] = ((didcrc32 >> 12) & 0xff);
+		mac_addr[4] = ((didcrc32 >> 4) & 0xff);
+		mac_addr[5] = ((didcrc32 << 4) & 0xf0) | i;
 
 		eth_env_set_enetaddr(ethaddr, mac_addr);
 	}
