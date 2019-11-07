@@ -17,12 +17,12 @@
 
 	aliases {
 		spi0 = &spi_nor;
-		serial = &pm_uart;
+		serial0 = &pm_uart;
 		eth0 = &emac;
 	};
 
 	chosen {
-		stdout-path = &pm_uart;
+		stdout-path = "serial0:115200n8";
 	};
 
 	cpus {
@@ -47,20 +47,20 @@
 			compatible = "mstar,msc313-spinor";
 			#address-cells = <1>;
 			#size-cells = <0>;
-			u-boot,dm-pre-reloc;
+			u-boot,dm-spl;
 			reg-names = "reg_base", "mem_base";
 			reg = <0x1f001000 0x400>, <0x14000000 0x2000000>;
 			spi-half-duplex;
 			spi_flash@0{
-				u-boot,dm-pre-reloc;
 				compatible = "jedec,spi-nor";
+				u-boot,dm-spl;
 				reg = <0>;
 			};
 		};
 
 		pm_uart: uart@1f221000 {
 			compatible = "ns16550a";
-			u-boot,dm-pre-reloc;
+			u-boot,dm-spl;
 			reg = <0x1f221000 0x200>;
 			reg-shift = <3>;
 			clock-frequency = <172000000>;

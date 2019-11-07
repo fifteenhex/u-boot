@@ -11,6 +11,11 @@ __ipl_hdr:
 	// this is the size of the image to load
 	.long	0xa000
 __ipl_init:
+	// output a bang on the console so we know we're alive
+	ldr	r0, =0x1f221000
+	ldr	r1, =0x21
+	strb	r1, [r0]
+
 	// this enables JTAG on spi0 before doing anything
 	// so we can debug the SPL
 	ldr	r0, =0x1f203c3c

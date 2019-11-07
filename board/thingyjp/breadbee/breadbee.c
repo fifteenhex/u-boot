@@ -2,19 +2,29 @@
 #include <spl.h>
 #include <environment.h>
 #include <u-boot/crc.h>
+#include <debug_uart.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 
-#define CHIPTYPE_MSC313  1
-#define CHIPTYPE_MSC313E 2
+#define CHIPTYPE_UNKNOWN	0
+#define CHIPTYPE_MSC313		1
+#define CHIPTYPE_MSC313E	2
+#define CHIPTYPE_SSC8336N	3
 
 static int breadbee_chiptype(void){
-	uint8_t* chiprev = (uint8_t*) 0x1f003c00;
-	if(*chiprev == 0xae)
+	uint8_t* deviceid = (uint8_t*) 0x1f003c00;
+
+	debug("deviceid is %02x\n", (unsigned) *deviceid);
+
+	if(*deviceid == 0xae)
 		return CHIPTYPE_MSC313;
-	else
+	else if(*deviceid ==  0xc2)
 		return CHIPTYPE_MSC313E;
+	else if(*deviceid = 0xee)
+		return CHIPTYPE_SSC8336N;
+	else
+		return CHIPTYPE_UNKNOWN;
 }
 
 int board_init(void)
@@ -255,20 +265,19 @@ static void emac_patches(void){
 	printf("emac patches\n");
 
 	// this is "switch rx descriptor format to mode 1"
-	 *(int8_t *)0x1f2a2274 = 0x0;
-   *(int8_t *)0x1f2a2275 = 0x1;
+	*(int8_t *)0x1f2a2274 = 0x0;
+	*(int8_t *)0x1f2a2275 = 0x1;
 
-   // RX shift patch
-   *(int8_t *)0x1f2a2200 = *(int8_t *)0x1f2a2200 | 0x10;
+	// RX shift patch
+	*(int8_t *)0x1f2a2200 = *(int8_t *)0x1f2a2200 | 0x10;
 
-   // TX underrun patch
-   *(int8_t *)0x1f2a2271 = *(int8_t *)0x1f2a2271 | 0x1;
+	// TX underrun patch
+	*(int8_t *)0x1f2a2271 = *(int8_t *)0x1f2a2271 | 0x1;
 
-   // clkgen setup
-   *(int8_t *)0x1f207108 = 0x0;
-   *(int8_t *)0x1f226688 = 0x0;
-   *(int8_t *)0x1f22668c = 0x0;
-
+	// clkgen setup
+	*(int8_t *)0x1f207108 = 0x0;
+	*(int8_t *)0x1f226688 = 0x0;
+	*(int8_t *)0x1f22668c = 0x0;
 
 	*(u16*)(0x1f2a2000 + 0x200) = 0xF051; // mstar call this julian100, magic number, seems to be related to the phy
 	*(u16*)(0x1f2a2000 + 0x204) = 0x0000;
@@ -278,6 +287,10 @@ static void emac_patches(void){
 
 void board_init_f(ulong dummy)
 {
+	uint32_t cpuid;
+	asm volatile("mrc p15, 0, %0, c0, c0, 0" : "=r"(cpuid));
+	printhex8(cpuid);
+
 	timer_init();
 
 // leave everything as is if we're using the mstar ipl to do the setup
@@ -359,15 +372,20 @@ void board_init_f(ulong dummy)
 	}
 #endif // MStar IPL
 
-	emacpinctrl();
-	emacclocks();
-	emac_patches();
 	switch(breadbee_chiptype()){
 		case CHIPTYPE_MSC313:
+			emacpinctrl();
+			emacclocks();
+			emac_patches();
 			emacphypowerup_msc313();
 			break;
 		case CHIPTYPE_MSC313E:
+			emacpinctrl();
+			emacclocks();
+			emac_patches();
 			emacphypowerup_msc313e();
+			break;
+		default:
 			break;
 	}
 }
