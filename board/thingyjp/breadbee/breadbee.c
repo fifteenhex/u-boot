@@ -402,8 +402,45 @@ struct image_header *spl_get_load_buffer(ssize_t offset, size_t size)
 #error "CONFIG_BOARD_LATE_INIT is required"
 #endif
 
+
+#define ENV_VAR_MSTAR_FAMILY "mstar_family"
+#define COMPAT_I1 "mstar,infinity1"
+#define COMPAT_I3 "mstar,infinity3"
+#define COMPAT_M5 "mstar,mercury5"
+
+
+int board_fit_config_name_match(const char *name)
+{
+	switch(breadbee_chiptype()){
+		case CHIPTYPE_MSC313:
+			return strcmp(name, COMPAT_I1);
+		case CHIPTYPE_MSC313E:
+			return strcmp(name, COMPAT_I3);
+		case CHIPTYPE_SSC8336N:
+			return strcmp(name, COMPAT_M5);
+		default:
+			return -1;
+	}
+}
+
 int board_late_init(void){
 #ifndef CONFIG_SPL_BUILD
+	switch(breadbee_chiptype()){
+		case CHIPTYPE_MSC313:
+			env_set(ENV_VAR_MSTAR_FAMILY, "infinity");
+			break;
+		case CHIPTYPE_MSC313E:
+			env_set(ENV_VAR_MSTAR_FAMILY, "infinity3");
+			break;
+		case CHIPTYPE_SSC8336N:
+			env_set(ENV_VAR_MSTAR_FAMILY, "mercury5");
+			break;
+		default:
+			env_set(ENV_VAR_MSTAR_FAMILY, "unknown");
+			break;
+	}
+
+
 	switch(breadbee_chiptype()){
 		case CHIPTYPE_MSC313:
 			env_set("bb_boardtype", "breadbee_crust");
