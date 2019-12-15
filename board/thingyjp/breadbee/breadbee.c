@@ -13,9 +13,9 @@ DECLARE_GLOBAL_DATA_PTR;
 #define CHIPTYPE_SSC8336	3
 #define CHIPTYPE_SSC8336N	4
 
-static int breadbee_chiptype(void){
-	uint8_t* deviceid = (uint8_t*) 0x1f003c00;
+static const uint8_t* deviceid = (uint8_t*) 0x1f003c00;
 
+static int breadbee_chiptype(void){
 	debug("deviceid is %02x\n", (unsigned) *deviceid);
 
 	if(*deviceid == 0xae)
@@ -260,7 +260,12 @@ static void emacphypowerup_msc313e(void){
 	     *(int8_t *)0x1f006515 = 0x80;
 	     *(int8_t *)0x1f00651c = 0xe;
 	     *(int8_t *)0x1f006520 = 0x4;
+
+	     // pinctrl
 	     *(int8_t *)0x1f203d41 = *(int8_t *)0x1f203d41 & 0x7f;
+
+
+
 	     *(int8_t *)0x1f001ca0 = *(int8_t *)0x1f001ca0 & 0xcf | 0x10;
 }
 
@@ -293,6 +298,8 @@ void board_init_f(ulong dummy)
 	uint32_t cpuid;
 	asm volatile("mrc p15, 0, %0, c0, c0, 0" : "=r"(cpuid));
 	printhex8(cpuid);
+
+	printhex2(*deviceid);
 
 	timer_init();
 
@@ -419,6 +426,7 @@ int board_fit_config_name_match(const char *name)
 			return strcmp(name, COMPAT_I1);
 		case CHIPTYPE_MSC313E:
 			return strcmp(name, COMPAT_I3);
+		case CHIPTYPE_SSC8336:
 		case CHIPTYPE_SSC8336N:
 			return strcmp(name, COMPAT_M5);
 		default:
@@ -435,6 +443,7 @@ int board_late_init(void){
 		case CHIPTYPE_MSC313E:
 			env_set(ENV_VAR_MSTAR_FAMILY, "infinity3");
 			break;
+		case CHIPTYPE_SSC8336:
 		case CHIPTYPE_SSC8336N:
 			env_set(ENV_VAR_MSTAR_FAMILY, "mercury5");
 			break;
