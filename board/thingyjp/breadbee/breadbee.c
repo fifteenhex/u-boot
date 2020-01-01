@@ -6,28 +6,35 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-
 #define CHIPTYPE_UNKNOWN	0
 #define CHIPTYPE_MSC313		1
 #define CHIPTYPE_MSC313E	2
 #define CHIPTYPE_SSC8336	3
 #define CHIPTYPE_SSC8336N	4
+#define CHIPTYPE_SSC325		5
+
+#define CHIPID_MSC313		0xae
+#define CHIPID_MSC313E		0xc2 // this is the same for E and D
+#define CHIPID_SSC8336		0xd9
+#define CHIPID_SSC8336N		0xee
+#define CHIPID_SSC325		0xef
 
 static const uint8_t* deviceid = (uint8_t*) 0x1f003c00;
 
 static int breadbee_chiptype(void){
 	debug("deviceid is %02x\n", (unsigned) *deviceid);
-
-	if(*deviceid == 0xae)
-		return CHIPTYPE_MSC313;
-	else if(*deviceid ==  0xc2)
-		return CHIPTYPE_MSC313E;
-	else if(*deviceid == 0xd9)
-		return CHIPTYPE_SSC8336;
-	else if(*deviceid == 0xee)
-		return CHIPTYPE_SSC8336N;
-	else
-		return CHIPTYPE_UNKNOWN;
+	switch(*deviceid){
+		case CHIPID_MSC313:
+			return CHIPTYPE_MSC313;
+		case CHIPID_MSC313E:
+			return CHIPTYPE_MSC313E;
+		case CHIPID_SSC8336:
+			return CHIPTYPE_SSC8336;
+		case CHIPID_SSC8336N:
+			return CHIPTYPE_SSC8336N;
+		default:
+			return CHIPTYPE_UNKNOWN;
+	}
 }
 
 int board_init(void)
