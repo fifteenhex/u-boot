@@ -421,44 +421,59 @@ struct image_header *spl_get_load_buffer(ssize_t offset, size_t size)
 
 
 #define ENV_VAR_MSTAR_FAMILY "mstar_family"
-#define COMPAT_I1 "mstar,infinity1"
-#define COMPAT_I3 "mstar,infinity3"
-#define COMPAT_M5 "mstar,mercury5"
-
+#define COMPAT_I1 "infinity1"
+#define COMPAT_I3 "infinity3"
+#define COMPAT_I6 "infinity6"
+#define COMPAT_M5 "mercury5"
 
 int board_fit_config_name_match(const char *name)
 {
 	switch(breadbee_chiptype()){
 		case CHIPTYPE_MSC313:
-			return strcmp(name, COMPAT_I1);
+			if(!strcmp(name, COMPAT_I1))
+				return 0;
+			break;
 		case CHIPTYPE_MSC313E:
-			return strcmp(name, COMPAT_I3);
+			if(!strcmp(name, COMPAT_I3)){
+				return 0;
+			}
+			break;
+		case CHIPTYPE_SSC325:
+			if(!strcmp(name, COMPAT_I6))
+				return 0;
+			break;
 		case CHIPTYPE_SSC8336:
 		case CHIPTYPE_SSC8336N:
-			return strcmp(name, COMPAT_M5);
-		default:
-			return -1;
+			if(!strcmp(name, COMPAT_M5))
+				return 0;
+			break;
 	}
+
+	return -1;
 }
 
 int board_late_init(void){
 #ifndef CONFIG_SPL_BUILD
+	const char* family = CHIPTYPE_UNKNOWN;
+
 	switch(breadbee_chiptype()){
 		case CHIPTYPE_MSC313:
-			env_set(ENV_VAR_MSTAR_FAMILY, "infinity");
+			family = COMPAT_I1;
 			break;
 		case CHIPTYPE_MSC313E:
-			env_set(ENV_VAR_MSTAR_FAMILY, "infinity3");
+			family = COMPAT_I3;
 			break;
+		case CHIPTYPE_SSC325:
+
 		case CHIPTYPE_SSC8336:
 		case CHIPTYPE_SSC8336N:
-			env_set(ENV_VAR_MSTAR_FAMILY, "mercury5");
+			family = COMPAT_M5;
 			break;
 		default:
-			env_set(ENV_VAR_MSTAR_FAMILY, "unknown");
 			break;
 	}
 
+	env_set(ENV_VAR_MSTAR_FAMILY, family);
 
 	switch(breadbee_chiptype()){
 		case CHIPTYPE_MSC313:
@@ -479,6 +494,15 @@ int board_late_init(void){
 
 #ifndef CONFIG_OF_BOARD_SETUP
 #error "OF_BOARD_SETUP is required"
+#endif
+
+#ifdef CONFIG_DTB_RESELECT
+int embedded_dtb_select(void)
+{
+	fdtdec_setup();
+
+	return 0;
+}
 #endif
 
 int ft_board_setup(void *blob, bd_t *bd)

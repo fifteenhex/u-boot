@@ -8,7 +8,7 @@
 #include "chenxing-v7.dtsi"
 
 / {
-        compatible = "mstar,infinity3";
+        compatible = "mstar,infinity1";
 };
 
 &aliases {
