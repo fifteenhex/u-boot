@@ -9,25 +9,30 @@ DECLARE_GLOBAL_DATA_PTR;
 #define CHIPTYPE_UNKNOWN	0
 #define CHIPTYPE_MSC313		1
 #define CHIPTYPE_MSC313E	2
-#define CHIPTYPE_SSC8336	3
-#define CHIPTYPE_SSC8336N	4
-#define CHIPTYPE_SSC325		5
+#define CHIPTYPE_MSC313DC	3
+#define CHIPTYPE_SSC8336	4
+#define CHIPTYPE_SSC8336N	5
+#define CHIPTYPE_SSC325		6
 
 #define CHIPID_MSC313		0xae
-#define CHIPID_MSC313E		0xc2 // this is the same for E and D
+#define CHIPID_MSC313ED		0xc2 // this is the same for E and D
 #define CHIPID_SSC8336		0xd9
 #define CHIPID_SSC8336N		0xee
 #define CHIPID_SSC325		0xef
 
 static const uint8_t* deviceid = (uint8_t*) 0x1f003c00;
+static const void* efuse = (void*) EFUSE;
 
 static int breadbee_chiptype(void){
 	debug("deviceid is %02x\n", (unsigned) *deviceid);
 	switch(*deviceid){
 		case CHIPID_MSC313:
 			return CHIPTYPE_MSC313;
-		case CHIPID_MSC313E:
-			return CHIPTYPE_MSC313E;
+		case CHIPID_MSC313ED:
+			if(*(uint16_t*)(efuse + 0x14) == 0x440)
+				return CHIPTYPE_MSC313DC;
+			else
+				return CHIPTYPE_MSC313E;
 		case CHIPID_SSC8336:
 			return CHIPTYPE_SSC8336;
 		case CHIPID_SSC8336N:
@@ -397,6 +402,7 @@ void board_init_f(ulong dummy)
 			emacphypowerup_msc313();
 			break;
 		case CHIPTYPE_MSC313E:
+		case CHIPTYPE_MSC313DC:
 			emacpinctrl();
 			emacclocks();
 			emac_patches();
@@ -434,6 +440,7 @@ int board_fit_config_name_match(const char *name)
 				return 0;
 			break;
 		case CHIPTYPE_MSC313E:
+		case CHIPTYPE_MSC313DC:
 			if(!strcmp(name, COMPAT_I3)){
 				return 0;
 			}
@@ -461,10 +468,12 @@ int board_late_init(void){
 			family = COMPAT_I1;
 			break;
 		case CHIPTYPE_MSC313E:
+		case CHIPTYPE_MSC313DC:
 			family = COMPAT_I3;
 			break;
 		case CHIPTYPE_SSC325:
-
+			family = COMPAT_I6;
+			break;
 		case CHIPTYPE_SSC8336:
 		case CHIPTYPE_SSC8336N:
 			family = COMPAT_M5;
@@ -481,6 +490,9 @@ int board_late_init(void){
 			break;
 		case CHIPTYPE_MSC313E:
 			env_set("bb_boardtype", "breadbee");
+			break;
+		case CHIPTYPE_MSC313DC:
+			env_set("bb_boardtype", "breadbee_super");
 			break;
 		default:
 			env_set("bb_boardtype", "unknown");
