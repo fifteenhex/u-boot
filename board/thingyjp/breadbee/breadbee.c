@@ -20,6 +20,8 @@ DECLARE_GLOBAL_DATA_PTR;
 #define CHIPID_SSC8336N		0xee
 #define CHIPID_SSC325		0xef
 
+#define EFUSE 0x1f004000
+
 static const uint8_t* deviceid = (uint8_t*) 0x1f003c00;
 static const void* efuse = (void*) EFUSE;
 
