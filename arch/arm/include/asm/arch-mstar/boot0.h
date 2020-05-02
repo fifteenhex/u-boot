@@ -9,7 +9,13 @@ __ipl_hdr:
 	.ascii	"IPL_"
 #endif
 	// this is the size of the image to load
-	.long	0xa000
+	.2byte	0xa000
+
+	// this is the CID
+	.byte	0x0
+
+	// this is something to do with auth
+	.byte	0x0
 
 	// this is a checksum of some sort
 	.long	0x0000

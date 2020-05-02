@@ -310,14 +310,19 @@ static void emac_patches(void){
 void board_init_f(ulong dummy)
 {
 	uint32_t cpuid;
+
+#ifdef CONFIG_DEBUG_UART
+	debug_uart_init();
+#endif
+
+	spl_early_init();
+	preloader_console_init();
+
 	asm volatile("mrc p15, 0, %0, c0, c0, 0" : "=r"(cpuid));
-	printhex8(cpuid);
-
-	printhex2(*deviceid);
-
-	timer_init();
+	printf("\ncpuid: %x, mstar chipid: %x\n", (unsigned) cpuid, (unsigned)*deviceid);
 
 // leave everything as is if we're using the mstar ipl to do the setup
+#if 0
 #ifndef CONFIG_MSTAR_IPL
 	u16 *gpioreg = (u8*) (0x1f207800 + 0xc8);
 	*gpioreg = 0x10;
@@ -395,6 +400,7 @@ void board_init_f(ulong dummy)
 		printf("-- f\n");
 	}
 #endif // MStar IPL
+#endif
 
 	switch(breadbee_chiptype()){
 		case CHIPTYPE_MSC313:

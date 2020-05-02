@@ -5,64 +5,8 @@
  */
 /dts-v1/;
 
+#include "chenxing-v7.dtsi"
+
 / {
-	#address-cells = <1>;
-	#size-cells = <1>;
 	compatible = "mstar,mercury5";
-	
-	memory@20000000 {
-		device_type = "memory";
-		reg = <0x20000000 0x4000000>;
-	};
-
-	aliases {
-		spi0 = &spi_nor;
-		serial0 = &pm_uart;
-	};
-
-	chosen {
-		stdout-path = "serial0:115200n8";
-	};
-
-	cpus {
-		#address-cells = <1>;
-		#size-cells = <0>;
-
-		cpu@0 {
-			device_type = "cpu";
-			compatible = "arm,cortex-a7";
-			reg = <0x0>;
-		};
-	};
-
-	soc {
-		compatible = "simple-bus";
-		#address-cells = <1>;
-		#size-cells = <1>;
-		ranges;
-		u-boot,dm-pre-reloc;
-
-		spi_nor: spi_nor@1f001000 {
-			compatible = "mstar,msc313-spinor";
-			#address-cells = <1>;
-			#size-cells = <0>;
-			u-boot,dm-spl;
-			reg-names = "reg_base", "mem_base";
-			reg = <0x1f001000 0x400>, <0x14000000 0x2000000>;
-			spi-half-duplex;
-			spi_flash@0{
-				compatible = "jedec,spi-nor";
-				u-boot,dm-spl;
-				reg = <0>;
-			};
-		};
-
-		pm_uart: uart@1f221000 {
-			compatible = "ns16550a";
-			u-boot,dm-spl;
-			reg = <0x1f221000 0x200>;
-			reg-shift = <3>;
-			clock-frequency = <172000000>;
-		};
-	};
 };

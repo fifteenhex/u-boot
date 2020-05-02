@@ -20,7 +20,7 @@ def calc_chksum(data):
     for i in range(HDRLEN, len(data), step):
         le32 = data[i:i + step]
         n = struct.unpack(LE32FMT, le32)[0]
-        print("%x" % n)
+        #print("%x" % n)
         chksum += n
 
     chksum = chksum & 0xffffffff

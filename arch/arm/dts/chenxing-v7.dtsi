@@ -57,11 +57,12 @@
 		};
 
 		pm_uart: uart@1f221000 {
-			compatible = "ns16550a";
+			compatible = "snps,dw-apb-uart";
 			u-boot,dm-spl;
+			u-boot,dm-preloc;
 			reg = <0x1f221000 0x200>;
 			reg-shift = <3>;
-			clock-frequency = <172000000>;
+			clock-frequency = <12000000>;
 		};
 	};		
 };
