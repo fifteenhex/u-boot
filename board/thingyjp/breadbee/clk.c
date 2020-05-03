@@ -22,17 +22,15 @@ void mstar_early_clksetup()
 	printf("mystery_c0: %04x, mystery_f4: %04x, maybepll_04 %04x, uart clkgen: %04x\n", mystery_c0,
 			mystery_f4, maybepll_04, uartclkgen);
 
+	// this might be power control for the pll?
 	writew_relaxed(0, PMSLEEP + PMSLEEP_F4);
 	// vendor code has a delay here
-	for(i = 0; i < 512; i++)
-		printf(".");
-	printf("\nwoot\n");
+	mdelay(10);
 
+	// this seems to turn the pll on
 	writew_relaxed(0, MAYBEPLL + MAYBEPLL_04);
 	// vendor code has a delay here
-	for(i = 0; i < 10000; i++)
-		printf(".");
-	printf("\nw00t\n");
+	mdelay(10);
 
 	mystery_c0 |= PMSLEEP_C0_BIT4;
 	uartclkgen &= ~CLKGEN_UART_UART0MUX_MASK;
