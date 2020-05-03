@@ -22,10 +22,13 @@ static void mstar_ddr3_init(void)
 
 void mstar_ddr_init()
 {
-	uint32_t efuse_14;
-	printf("doing ddr setup, hold onto your pants...\n");
+	uint16_t pmlock, efuse_14;
 	efuse_14 = readw_relaxed(EFUSE + EFUSE_14);
+	pmlock = readw_relaxed(PMSLEEP + PMSLEEP_LOCK);
+
 	printf("efuse: %04x\n", efuse_14);
+	printf("pmlock: %04x\n", pmlock);
+	printf("doing ddr setup, hold onto your pants...\n");
 
 	mstar_ddr2_init();
 }

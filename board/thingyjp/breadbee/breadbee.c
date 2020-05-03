@@ -6,6 +6,7 @@
 #include <asm/io.h>
 
 #include "chenxingv7.h"
+#include "clk.h"
 #include "emac.h"
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -92,7 +93,10 @@ void board_init_f(ulong dummy)
 	debug_uart_init();
 #endif
 
+	mstar_early_clksetup();
+
 	spl_early_init();
+
 	preloader_console_init();
 
 	asm volatile("mrc p15, 0, %0, c0, c0, 0" : "=r"(cpuid));
