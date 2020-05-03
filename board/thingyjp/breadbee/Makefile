@@ -1,1 +1,1 @@
-obj-y   += breadbee.o
+obj-y   += breadbee.o ddr.o emac.o
