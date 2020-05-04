@@ -8,6 +8,27 @@
 #ifndef BOARD_THINGYJP_BREADBEE_CHENXINGV7_H_
 #define BOARD_THINGYJP_BREADBEE_CHENXINGV7_H_
 
+
+static uint16_t mstar_writew(uint16_t value, uint32_t addr)
+{
+	uint16_t pre = readw(addr);
+	uint16_t post;
+	writew(value, addr);
+	post = readw(addr);
+	printf("wrote %04x to %08x, was %04x, readback %04x\n", value, addr, pre, post);
+	return post;
+}
+
+static uint32_t mstar_writereadback_l(uint32_t value, uint32_t addr)
+{
+	uint32_t pre = readw(addr);
+	uint32_t post;
+	writel(value, addr);
+	post = readl(addr);
+	printf("wrote %08x to %08x, was %08x, readback %08x\n", value, addr, pre, post);
+	return post;
+}
+
 #define CHIPTYPE_UNKNOWN		0
 #define CHIPTYPE_MSC313			1
 #define CHIPTYPE_MSC313E		2
@@ -58,6 +79,7 @@
 #define MIU_ANA_68			0x68
 #define MIU_ANA_6C			0x6c
 #define MIU_ANA_70			0x70
+#define MIU_ANA_74			0x74
 #define MIU_ANA_78			0x78
 #define MIU_ANA_7C			0x7c
 #define MIU_ANA_90			0x90
@@ -68,18 +90,27 @@
 #define MIU_ANA_A4			0xa4
 #define MIU_ANA_A8			0xa8
 #define MIU_ANA_B0			0xb0
+#define MIU_ANA_B4			0xb4
+#define MIU_ANA_B8			0xb8
+#define MIU_ANA_BC			0xbc
 #define MIU_ANA_C0			0xc0
 #define MIU_ANA_C4			0xc4
 #define MIU_ANA_C8			0xc8
 #define MIU_ANA_D8			0xd8
 #define MIU_ANA_DC			0xdc
 #define MIU_ANA_E0			0xe0
+#define MIU_ANA_E8			0xe8
 #define MIU_ANA_F0			0xf0
 #define MIU_ANA_F8			0xf8
 #define MIU_ANA_114			0x114
 #define MIU_ANA_120			0x120
+#define MIU_ANA_128			0x128
 #define MIU_ANA_130			0x130
 #define MIU_ANA_134			0x134
+#define MIU_ANA_140			0x140
+#define MIU_ANA_144			0x144
+#define MIU_ANA_148			0x148
+#define MIU_ANA_14C			0x14C
 #define MIU_ANA_150			0x150
 #define MIU_ANA_154			0x154
 #define MIU_ANA_158			0x158
@@ -118,6 +149,11 @@
 
 #define MIU_DIG				0x1f202400
 #define MIU_DIG_CNTRL0			0x00
+#define MIU_DIG_CNTRL0_INIT_MIU		BIT(0)
+#define MIU_DIG_CNTRL0_CKE		BIT(1)
+#define MIU_DIG_CNTRL0_CS		BIT(2)
+#define MIU_DIG_CNTRL0_RSTZ		BIT(3)
+#define MIU_DIG_CNTRL0_ODT		BIT(4)
 #define MIU_DIG_CONFIG0			0x04
 #define MIU_DIG_CONFIG1			0x08
 #define MIU_DIG_CONFIG2			0x0c
@@ -161,6 +197,12 @@
 #define MAYBEPLL			0x1f206000
 #define MAYBEPLL_04			0x04
 
+#define MAYBEPLL1			0x1f206200
+#define MAYBEPLL1_04			0x4
+#define MAYBEPLL1_0C			0xc
+
 #define SCCLKGEN			0x1f226600
+
+#define MSTAR_DRAM			0x20000000
 
 #endif /* BOARD_THINGYJP_BREADBEE_CHENXINGV7_H_ */
