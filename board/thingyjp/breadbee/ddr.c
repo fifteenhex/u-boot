@@ -420,12 +420,24 @@ void cpu_clk_setup(void)
 	  DAT_1f206448 = 0x88;
 	  delay?(0x4b0);
 	  DAT_1f2041f0 = 1;
-	  DAT_1f204404 = 0x84;
-	  DAT_1f204405 = 4;
+#endif
+	  mstar_writew(0x484, L3BRIDGE + L3BRIDGE_04);
+
+#if 0
 	  _DAT_1f206540 = 0x1eb9;
 	  _DAT_1f206544 = 0x45;
 	  return;
 #endif
+}
+
+void mstar_ddr_unmask_setdone()
+{
+	uint16_t temp;
+
+	mstar_ddr_setrequestmasks(0, 0, 0, 0, 0, 0, 0);
+	temp = readw(MIU_DIG + MIU_DIG_SW_RST);
+	temp |= MIU_DIG_SW_RST_SW_INIT_DONE;
+	mstar_writew(temp, MIU_DIG + MIU_DIG_SW_RST);
 }
 
 void mstar_ddr_init()
@@ -442,6 +454,7 @@ void mstar_ddr_init()
 	mstar_miu_init();
 	mstar_the_return_of_miu();
 	cpu_clk_setup();
+	mstar_ddr_unmask_setdone();
 	mstar_ddr_test();
 }
 

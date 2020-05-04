@@ -167,6 +167,7 @@ static uint32_t mstar_writereadback_l(uint32_t value, uint32_t addr)
 #define MIU_DIG_MR3			0x2c
 #define MIU_DIG_SW_RST			0x3c
 #define MIU_DIG_SW_RST_MIU		BIT(0)
+#define MIU_DIG_SW_RST_SW_INIT_DONE	BIT(3)
 #define MIU_DIG_SW_RST_G0		BIT(4)
 #define MIU_DIG_SW_RST_G1		BIT(5)
 #define MIU_DIG_SW_RST_G2		BIT(6)
@@ -189,6 +190,9 @@ static uint32_t mstar_writereadback_l(uint32_t value, uint32_t addr)
 #define MIU_DIG_MIUSEL0			0x1e0
 #define MIU_DIG_PTN_DATA		0x1f8
 #define MIU_DIG_R_READ_CRC		0x1fc
+
+#define L3BRIDGE			0x1f204400
+#define L3BRIDGE_04			0x04
 
 #define CLKGEN				0x1f207000
 #define CLKGEN_UART			0xc4
