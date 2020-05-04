@@ -7,6 +7,7 @@
 
 #include "chenxingv7.h"
 #include "clk.h"
+#include "ddr.h"
 #include "emac.h"
 
 DECLARE_GLOBAL_DATA_PTR;
