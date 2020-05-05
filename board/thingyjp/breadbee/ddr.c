@@ -213,14 +213,26 @@ static void mstar_ddr2_init(void)
 	  mstar_writew(0x808, MIU_ANA + MIU_ANA_DC);
 	  // reserved m5 0707
 	  mstar_writew(0x808, MIU_ANA + MIU_ANA_D8);
+
+	  // reserved - m5 0200
 	  mstar_writew(0x0, MIU_ANA + MIU_ANA_A4);
+	  // reserved - m5 0
 	  mstar_writew(0x1111, MIU_ANA + MIU_ANA_A0);
+
+
+	  // undocumented
 	  mstar_writew(0x33, MIU_ANA + MIU_ANA_9C);
 	  mstar_writew(0x33, MIU_ANA + MIU_ANA_98);
 	  mstar_writew(0x0, MIU_ANA + MIU_ANA_94);
 	  mstar_writew(0x77, MIU_ANA + MIU_ANA_90);
+
+
+	  // skew - m5 0
 	  mstar_writew(0x1011, MIU_ANA + MIU_ANA_7C);
+	  // skew
 	  mstar_writew(0x9133, MIU_ANA + MIU_ANA_78);
+
+	  // ??
 	  mstar_writew(0x1111, MIU_ANA + MIU_ANA_150);
 	  mstar_writew(0x1111, MIU_ANA + MIU_ANA_154);
 	  mstar_writew(0x1111, MIU_ANA + MIU_ANA_158);
@@ -230,23 +242,24 @@ static void mstar_ddr2_init(void)
 	  mstar_writew(0x111, MIU_ANA + MIU_ANA_174);
 	  mstar_writew(0x111, MIU_ANA + MIU_ANA_178);
 	  mstar_writew(0x111, MIU_ANA + MIU_ANA_17C);
-
 	  mstar_writew(0x4444, MIU_ANA + MIU_ANA_1A0);
 	  mstar_writew(0x4444, MIU_ANA + MIU_ANA_1A4);
 	  mstar_writew(0x5555, MIU_ANA + MIU_ANA_1A8);
 	  mstar_writew(0x5555, MIU_ANA + MIU_ANA_1AC);
-
 	  mstar_writew(0x54, MIU_ANA + MIU_ANA_1B0);
-
-
 	  mstar_writew(0x5555, MIU_ANA + MIU_ANA_1C0);
 	  mstar_writew(0x5555, MIU_ANA + MIU_ANA_1C4);
 	  mstar_writew(0x5555, MIU_ANA + MIU_ANA_1C8);
 	  mstar_writew(0x5555, MIU_ANA + MIU_ANA_1CC);
 	  mstar_writew(0x55, MIU_ANA + MIU_ANA_1D0);
 
+	  // ps cycle
 	  mstar_writew(0x7f, MIU_ANA + MIU_ANA_C4);
+
+	  // dll code
 	  mstar_writew(0xf000, MIU_ANA + MIU_ANA_C8);
+
+	  // dll crap
 	  mstar_writew(0x33c8, MIU_ANA + MIU_ANA_C0);
 
 	  mstar_writew(0x0, MIU_ANA + MIU_ANA_130);
@@ -293,23 +306,41 @@ static void mstar_ddr2_init(void)
 
 	  // hard coded version of the above
 	  // block and the "something to do with ddr" function
+
+	  // not documented
 	  mstar_writew(0x1f1f, MIU_ANA + MIU_ANA_B0);
+	  // not documented
 	  mstar_writew(0x0000, MIU_ANA + MIU_ANA_B4);
+
+	  // drv
 	  mstar_writew(0x0000, MIU_ANA + MIU_ANA_B8);
+
+	  // drv
 	  mstar_writew(0x0010, MIU_ANA + MIU_ANA_BC);
 
+	  // ptn mode m5 8020
 	  mstar_writew(0x8111, MIU_ANA + MIU_ANA_34);
+	  // pattern data
 	  mstar_writew(0x20, MIU_ANA + MIU_ANA_38);
 #if 0
 	  something_to_dowith_ddr();
 #endif
+
+	  // rx en
 	  mstar_writew(0x3f, MIU_ANA + MIU_ANA_10);
 
 	  mstar_writew(0x8c00, MIU_DIG + MIU_DIG_SW_RST);
 
+	  // test register
 	  mstar_writew(0x0, MIU_ANA + MIU_ANA_30);
+
+	  // reserved -
 	  mstar_writew(0x0, MIU_ANA + MIU_ANA_F8);
+
+	  // drv
 	  mstar_writew(0x4000, MIU_ANA + MIU_ANA_A8);
+
+	  // read crc
 	  mstar_writew(0x5, MIU_ANA + MIU_ANA_3C);
 
 	  // power up ana
