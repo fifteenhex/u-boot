@@ -71,22 +71,10 @@ static void emacpinctrl(void){
 	SETU16(PINCTRL, 0x3c, GETU16(PINCTRL, 0x3c) | 1 << 2);
 }
 
-static void dump_reg_block(uint32_t start){
-	uint32_t val;
-	void* reg;
-	int i;
-
-	reg = (void*) start;
-	for(i = 0; i < 0x200; i += 4){
-		val = *(uint32_t*)(reg + i);
-		printf("0x%02x: %04x\n", i, val);
-	}
-}
-
-
 void board_init_f(ulong dummy)
 {
 	uint32_t cpuid;
+	int chiptype;
 
 	void* reg;
 
@@ -109,14 +97,14 @@ void board_init_f(ulong dummy)
 		printf("t %d\n", (int) t);
 	}*/
 
-	printf("pmsleep dump\n");
-	dump_reg_block(PMSLEEP);
-	printf("clkgen dump\n");
-	dump_reg_block(CLKGEN);
+	mstar_dump_reg_block("pmsleep", PMSLEEP);
+	mstar_dump_reg_block("clkgen", CLKGEN);
 
-	mstar_ddr_init();
+	chiptype = breadbee_chiptype();
 
-	switch(breadbee_chiptype()){
+	mstar_ddr_init(chiptype);
+
+	switch(chiptype){
 		case CHIPTYPE_MSC313:
 			emacpinctrl();
 			emacclocks();

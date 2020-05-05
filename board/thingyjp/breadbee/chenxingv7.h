@@ -29,6 +29,24 @@ static uint32_t mstar_writereadback_l(uint32_t value, uint32_t addr)
 	return post;
 }
 
+static void mstar_dump_reg_block(const char* what, uint32_t start){
+	uint32_t val;
+	void* reg;
+	int i, j;
+
+	printf("dump of %s regblock from %08x\n", what, start);
+
+	reg = (void*) start;
+	for(i = 0; i < 0x200; i += (4 * 4)){
+		printf("%08x: ", start + i);
+		for(j = 0; j < 4; j++){
+			val = *(uint32_t*)(reg + i + (j * 4));
+			printf("%04x 0000 ", val & 0xffff);
+		}
+		printf("\n");
+	}
+}
+
 #define CHIPTYPE_UNKNOWN		0
 #define CHIPTYPE_MSC313			1
 #define CHIPTYPE_MSC313E		2
@@ -130,6 +148,7 @@ static uint32_t mstar_writereadback_l(uint32_t value, uint32_t addr)
 #define MIU_ANA_1C8			0x1c8
 #define MIU_ANA_1CC			0x1cc
 #define MIU_ANA_1D0			0x1d0
+#define MIU_ANA_1F0			0x1f0
 
 
 #define MIU_EXTRA			0x1f202200
@@ -144,6 +163,9 @@ static uint32_t mstar_writereadback_l(uint32_t value, uint32_t addr)
 #define MIU_EXTRA_C8			0xc8
 #define MIU_EXTRA_CC			0xcc
 #define MIU_EXTRA_D0			0xd0
+#define MIU_EXTRA_1D0			0x1d0
+#define MIU_EXTRA_1D4			0x1d4
+#define MIU_EXTRA_1D8			0x1d8
 
 #define MIU_EXTRA_GROUP6_REQ_MASK	0x1cc
 
@@ -174,17 +196,45 @@ static uint32_t mstar_writereadback_l(uint32_t value, uint32_t addr)
 #define MIU_DIG_SW_RST_G3		BIT(7)
 #define MIU_DIG_ADDR_BAL_SEL		0x58
 #define MIU_DIG_GROUP0_CTRL		0x80
+#define MIU_DIG_GROUP0_CONFIG0		0x84
+#define MIU_DIG_GROUP0_TIMEOUT		0x88
 #define MIU_DIG_GROUP0_REQ_MASK		0x8c
+#define MIU_DIG_GROUP0_HPMASK		0x90
+#define MIU_DIG_GROUP0_REQ_PRIORITY0	0x94
+#define MIU_DIG_GROUP0_REQ_PRIORITY1	0x98
+#define MIU_DIG_GROUP0_REQ_PRIORITY2	0x9c
+#define MIU_DIG_GROUP0_REQ_PRIORITY3	0xa0
 #define MIU_DIG_GROUP0_REQ_DEADLINE	0xa4
+#define MIU_DIG_GROUP0_REQ_LIMITMASK	0xb8
 #define MIU_DIG_GROUP1_CTRL		0xc0
+#define MIU_DIG_GROUP1_CONFIG0		0xc4
+#define MIU_DIG_GROUP1_TIMEOUT		0xc8
 #define MIU_DIG_GROUP1_REQ_MASK		0xcc
+#define MIU_DIG_GROUP1_HPMASK		0xd0
+#define MIU_DIG_GROUP1_REQ_PRIORITY0	0xd4
+#define MIU_DIG_GROUP1_REQ_PRIORITY1	0xd8
+#define MIU_DIG_GROUP1_REQ_PRIORITY2	0xdc
+#define MIU_DIG_GROUP1_REQ_PRIORITY3	0xe0
 #define MIU_DIG_GROUP1_REQ_DEADLINE	0xe4
 #define MIU_DIG_GROUP2_CTRL		0x100
+#define MIU_DIG_GROUP2_CONFIG0		0x104
+#define MIU_DIG_GROUP2_TIMEOUT		0x108
 #define MIU_DIG_GROUP2_REQ_MASK		0x10c
+#define MIU_DIG_GROUP2_HPMASK		0x110
+#define MIU_DIG_GROUP2_REQ_PRIORITY0	0x114
+#define MIU_DIG_GROUP2_REQ_PRIORITY1	0x118
+#define MIU_DIG_GROUP2_REQ_PRIORITY2	0x11c
+#define MIU_DIG_GROUP2_REQ_PRIORITY3	0x120
 #define MIU_DIG_GROUP2_REQ_DEADLINE	0x124
 #define MIU_DIG_GROUP3_CTRL		0x140
+#define MIU_DIG_GROUP3_CONFIG0		0x144
+#define MIU_DIG_GROUP3_TIMEOUT		0x148
 #define MIU_DIG_GROUP3_REQ_MASK		0x14c
 #define MIU_DIG_GROUP3_HPMASK		0x150
+#define MIU_DIG_GROUP3_REQ_PRIORITY0	0x154
+#define MIU_DIG_GROUP3_REQ_PRIORITY1	0x158
+#define MIU_DIG_GROUP3_REQ_PRIORITY2	0x15c
+#define MIU_DIG_GROUP3_REQ_PRIORITY3	0x160
 #define MIU_DIG_GROUP3_REQ_DEADLINE	0x164
 #define MIU_DIG_PROTECT2_START		0x1a4
 #define MIU_DIG_MIUSEL0			0x1e0
@@ -204,6 +254,9 @@ static uint32_t mstar_writereadback_l(uint32_t value, uint32_t addr)
 #define MAYBEPLL1			0x1f206200
 #define MAYBEPLL1_04			0x4
 #define MAYBEPLL1_0C			0xc
+
+#define GPIO				0x1f207800
+#define GPIO_18				0x18
 
 #define SCCLKGEN			0x1f226600
 
