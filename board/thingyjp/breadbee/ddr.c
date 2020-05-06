@@ -480,7 +480,7 @@ void mstar_ddr_unmask_setdone()
 	mstar_writew(temp, MIU_DIG + MIU_DIG_SW_RST);
 }
 
-static void mstar_ddr_init_i3_ip(void)
+static void mstar_ddr_init_i3_ipl(void)
 {
 	uint16_t pmlock, efuse_14;
 	efuse_14 = readw_relaxed(EFUSE + EFUSE_14);
@@ -499,24 +499,40 @@ static void mstar_ddr_init_i3_ip(void)
 }
 
 struct ddr_config {
-
+	uint32_t size;
 };
 
 static int mstar_ddr_getconfig(int chiptype, struct ddr_config *config)
 {
 	uint16_t type;
 
-	printf("tying to work out DDR config..\n");
+	printf("trying to work out DDR config..\n");
 
 	switch(chiptype){
 	case CHIPTYPE_SSC8336:
 		type = readw(GPIO + GPIO_18);
 		printf("mystery gpio register is %02x\n", type);
+		type &= GPIO_18_D9_DDRMASK;
+		switch(type){
+		case 0:
+			config->size = 0x2000000; // 32MB
+			break;
+		case 1:
+			config->size = 0x4000000; // 64MB
+			break;
+		case 2:
+			config->size = 0x8000000; // 128MB
+			break;
+		case 4:
+			config->size = 0x10000000; // 256MB
+		}
 		break;
 	default:
 		printf("Don't know how to find DRAM config for chiptype %i\n", chiptype);
 		return -EINVAL;
 	}
+
+	printf("Detected DRAM: %08x bytes\n", config->size);
 
 	return 0;
 }

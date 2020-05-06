@@ -257,6 +257,7 @@ static void mstar_dump_reg_block(const char* what, uint32_t start){
 
 #define GPIO				0x1f207800
 #define GPIO_18				0x18
+#define GPIO_18_D9_DDRMASK		0x3
 
 #define SCCLKGEN			0x1f226600
 
