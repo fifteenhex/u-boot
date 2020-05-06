@@ -9,7 +9,7 @@
 #include <asm/io.h>
 
 #include "chenxingv7.h"
-
+#include "ddr.h"
 
 static void mstar_ddr_rst(void)
 {
@@ -500,6 +500,9 @@ static void mstar_ddr_init_i3_ipl(void)
 
 struct ddr_config {
 	uint32_t size;
+	uint16_t pll_magic0;
+	uint16_t pll_magic1;
+	uint16_t pll_magic2;
 };
 
 static int mstar_ddr_getconfig(int chiptype, struct ddr_config *config)
@@ -526,6 +529,11 @@ static int mstar_ddr_getconfig(int chiptype, struct ddr_config *config)
 		case 4:
 			config->size = 0x10000000; // 256MB
 		}
+
+		config->pll_magic0 = 0x0100;
+		config->pll_magic1 = 0x0216;
+		config->pll_magic2 = 0x0010;
+
 		break;
 	default:
 		printf("Don't know how to find DRAM config for chiptype %i\n", chiptype);
@@ -537,26 +545,47 @@ static int mstar_ddr_getconfig(int chiptype, struct ddr_config *config)
 	return 0;
 }
 
+static void mstar_ddr_pll_setup(struct ddr_config *config)
+{
+	// this is done before setting up the ddr in the vendor code.. ddr pll?
+	//i3 value writew_relaxed(0x22c, MAYBEPLL1 + MAYBEPLL1_0C);
+	writew_relaxed(config->pll_magic0, MAYBEPLL1 + MAYBEPLL1_08);
+	writew_relaxed(config->pll_magic1, MAYBEPLL1 + MAYBEPLL1_0C);
+	writew_relaxed(config->pll_magic2, MAYBEPLL1 + MAYBEPLL1_10);
+	// seems to be power on
+	writew_relaxed(0x0, MAYBEPLL1 + MAYBEPLL1_04);
+	// vendor code has a delay
+	mdelay(10);
+}
+
 void mstar_ddr_init(int chiptype)
 {
 	struct ddr_config config;
 
-	mstar_ddr_rst();
+	if (mstar_ddr_getconfig(chiptype, &config))
+		goto out;
 
+	mstar_dump_reg_block("ddr pll", MAYBEPLL1);
 	mstar_dump_reg_block("miu_ana", MIU_ANA);
 	mstar_dump_reg_block("miu_extra", MIU_EXTRA);
 	mstar_dump_reg_block("miu_dig", MIU_DIG);
 
-	if (mstar_ddr_getconfig(chiptype, &config))
-		goto out;
+	mstar_ddr_rst();
+	mstar_ddr_pll_setup(&config);
 
 	mstar_ddr2_init();
 
+	mstar_dump_reg_block("ddr pll+", MAYBEPLL1);
 	mstar_dump_reg_block("miu_ana+", MIU_ANA);
 	mstar_dump_reg_block("miu_extra+", MIU_EXTRA);
 	mstar_dump_reg_block("miu_dig+", MIU_DIG);
 
-	//mstar_ddr_test();
+	mstar_miu_init();
+	mstar_the_return_of_miu();
+	cpu_clk_setup();
+	mstar_ddr_unmask_setdone();
+
+	mstar_ddr_test();
 
 out:
 	return;

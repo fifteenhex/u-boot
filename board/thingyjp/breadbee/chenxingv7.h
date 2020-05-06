@@ -254,7 +254,9 @@ static void mstar_dump_reg_block(const char* what, uint32_t start){
 
 #define MAYBEPLL1			0x1f206200
 #define MAYBEPLL1_04			0x4
+#define MAYBEPLL1_08			0x8
 #define MAYBEPLL1_0C			0xc
+#define MAYBEPLL1_10			0x10
 
 #define GPIO				0x1f207800
 #define GPIO_18				0x18

@@ -28,6 +28,8 @@ static void mstar_clks_dumpreg(void)
 	       mystery_c0, mystery_f4, maybepll_04, maybepll1_04, maybepll1_0c, uartclkgen);
 }
 
+
+
 /* this is a hack */
 void mstar_early_clksetup()
 {
@@ -48,11 +50,7 @@ void mstar_early_clksetup()
 	// this seems to turn the pll that supplies mpll clocks
 	writew_relaxed(0, MAYBEPLL + MAYBEPLL_04);
 
-	// this is done before setting up the ddr in the vendor code.. ddr pll?
-	writew_relaxed(0x22c, MAYBEPLL1 + MAYBEPLL1_0C);
-	writew_relaxed(0x0, MAYBEPLL1 + MAYBEPLL1_04);
-
-	// vendor code has a delay, for both of these "plls".. lets just wait once
+	// vendor code has a delay
 	mdelay(10);
 
 	printf("after:\n");
