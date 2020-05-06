@@ -9,6 +9,7 @@
 #include "clk.h"
 #include "ddr.h"
 #include "emac.h"
+#include "utmi.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -103,6 +104,8 @@ void board_init_f(ulong dummy)
 	chiptype = breadbee_chiptype();
 
 	mstar_ddr_init(chiptype);
+
+	mstar_utmi_setfinetuning();
 
 	switch(chiptype){
 		case CHIPTYPE_MSC313:

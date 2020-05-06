@@ -1,1 +1,5 @@
-obj-y   += breadbee.o clk.o ddr.o emac.o
+obj-y   += breadbee.o \
+		clk.o \
+		utmi.o \
+		ddr.o \
+		emac.o

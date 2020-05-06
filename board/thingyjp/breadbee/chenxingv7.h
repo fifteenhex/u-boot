@@ -73,6 +73,7 @@ static void mstar_dump_reg_block(const char* what, uint32_t start){
 
 #define EFUSE				0x1f004000
 #define EFUSE_14			0x14
+#define EFUSE_20			0x20
 
 #define PINCTRL				0x1f203c00
 
@@ -260,6 +261,11 @@ static void mstar_dump_reg_block(const char* what, uint32_t start){
 #define GPIO_18_D9_DDRMASK		0x3
 
 #define SCCLKGEN			0x1f226600
+
+#define UTMI0				0x1f284200
+#define UTMI0_50			0x50
+#define UTMI1				0x1f285200
+#define UTMI1_50			0x50
 
 #define MSTAR_DRAM			0x20000000
 
