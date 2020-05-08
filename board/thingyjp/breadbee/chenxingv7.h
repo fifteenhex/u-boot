@@ -15,7 +15,7 @@ static uint16_t mstar_writew(uint16_t value, uint32_t addr)
 	uint16_t post;
 	writew(value, addr);
 	post = readw(addr);
-	printf("wrote %04x to %08x, was %04x, readback %04x\n", value, addr, pre, post);
+	printf("wrote %08x <- %04x was %04x, readback %04x\n", addr,value, pre, post);
 	return post;
 }
 
@@ -45,6 +45,12 @@ static void mstar_dump_reg_block(const char* what, uint32_t start){
 		}
 		printf("\n");
 	}
+}
+
+static void mstar_delay(unsigned long msec)
+{
+	printf("delaying for %lu\n", msec);
+	mdelay(msec);
 }
 
 #define CHIPTYPE_UNKNOWN		0
@@ -82,8 +88,9 @@ static void mstar_dump_reg_block(const char* what, uint32_t start){
 #define MIU_ANA_04			0x04
 #define MIU_ANA_08			0x08
 #define MIU_ANA_10			0x10
-#define MIU_ANA_14			0x14
+#define MIU_ANA_RD_PHASE_TIMING		0x14
 #define MIU_ANA_1c			0x1c
+#define MIU_ANA_20			0x20
 #define MIU_ANA_30			0x30
 #define MIU_ANA_34			0x34
 #define MIU_ANA_38			0x38
@@ -91,6 +98,7 @@ static void mstar_dump_reg_block(const char* what, uint32_t start){
 #define MIU_ANA_DDRAT_15_0		0x44
 #define MIU_ANA_DDRAT_23_16		0x48
 #define MIU_ANA_DDRAT_31_24		0x4c
+#define MIU_ANA_50			0x50
 #define MIU_ANA_58			0x58
 #define MIU_ANA_5c			0x5c
 #define MIU_ANA_60			0x60
@@ -119,6 +127,7 @@ static void mstar_dump_reg_block(const char* what, uint32_t start){
 #define MIU_ANA_DC			0xdc
 #define MIU_ANA_E0			0xe0
 #define MIU_ANA_E8			0xe8
+#define MIU_ANA_EC			0xec
 #define MIU_ANA_F0			0xf0
 #define MIU_ANA_F8			0xf8
 #define MIU_ANA_114			0x114
@@ -144,11 +153,17 @@ static void mstar_dump_reg_block(const char* what, uint32_t start){
 #define MIU_ANA_1A8			0x1a8
 #define MIU_ANA_1AC			0x1ac
 #define MIU_ANA_1B0			0x1b0
+#define MIU_ANA_1B8			0x1b8
 #define MIU_ANA_1C0			0x1c0
 #define MIU_ANA_1C4			0x1c4
 #define MIU_ANA_1C8			0x1c8
 #define MIU_ANA_1CC			0x1cc
 #define MIU_ANA_1D0			0x1d0
+#define MIU_ANA_1D4			0x1d4
+#define MIU_ANA_1D8			0x1d8
+#define MIU_ANA_1DC			0x1dc
+#define MIU_ANA_1E0			0x1e0
+#define MIU_ANA_1E4			0x1e4
 #define MIU_ANA_1F0			0x1f0
 
 
@@ -167,7 +182,8 @@ static void mstar_dump_reg_block(const char* what, uint32_t start){
 #define MIU_EXTRA_1D0			0x1d0
 #define MIU_EXTRA_1D4			0x1d4
 #define MIU_EXTRA_1D8			0x1d8
-
+// not sure
+#define MIU_EXTRA_GROUP6_CTRL		0x1c0
 #define MIU_EXTRA_GROUP6_REQ_MASK	0x1cc
 
 #define MIU_DIG				0x1f202400
@@ -177,6 +193,7 @@ static void mstar_dump_reg_block(const char* what, uint32_t start){
 #define MIU_DIG_CNTRL0_CS		BIT(2)
 #define MIU_DIG_CNTRL0_RSTZ		BIT(3)
 #define MIU_DIG_CNTRL0_ODT		BIT(4)
+#define MIU_DIG_CNTRL0_INITDONE		BIT(15)
 #define MIU_DIG_CONFIG0			0x04
 #define MIU_DIG_CONFIG1			0x08
 #define MIU_DIG_CONFIG2			0x0c
@@ -241,6 +258,18 @@ static void mstar_dump_reg_block(const char* what, uint32_t start){
 #define MIU_DIG_MIUSEL0			0x1e0
 #define MIU_DIG_PTN_DATA		0x1f8
 #define MIU_DIG_R_READ_CRC		0x1fc
+
+#define MIU_M5_GROUPS			0x1f202c00
+#define MIU_M5_GROUPS_GROUP0_CTRL	0x0
+#define MIU_M5_GROUPS_GROUP1_CTRL	0x80
+#define MIU_M5_GROUPS_GROUP2_CTRL	0x100
+#define MIU_M5_GROUPS_GROUP3_CTRL	0x180
+#define MIU_M5_GROUPS_GROUP4_CTRL	0x200
+#define MIU_M5_GROUPS_GROUP5_CTRL	0x280
+#define MIU_M5_GROUPS_GROUP6_CTRL	0x300
+
+#define MIU_DIG_GROUP_REG_MASK_OFF	0x0c
+
 
 #define L3BRIDGE			0x1f204400
 #define L3BRIDGE_04			0x04
