@@ -72,10 +72,27 @@ static void emacpinctrl(void){
 	SETU16(PINCTRL, 0x3c, GETU16(PINCTRL, 0x3c) | 1 << 2);
 }
 
+static void m5_misc(void)
+{
+	// the m5 ipl does this before DRAM setup
+	// zero'ing these registers while running
+	// doesn't seem to break anything though.
+
+	mstar_writew(0x2201, 0x1f206700);
+	mstar_writew(0x0420, 0x1f206704);
+	mstar_writew(0x0041, 0x1f206708);
+	mstar_writew(0x0000, 0x1f20670c);
+	mstar_writew(0xdd2f, 0x1f206720);
+	mstar_writew(0x0024, 0x1f206724);
+	mstar_writew(0x0000, 0x1f20672c);
+	mstar_writew(0x0001, 0x1f206728);
+}
+
 void board_init_f(ulong dummy)
 {
 	uint32_t cpuid;
-	int chiptype;
+	int chiptype = breadbee_chiptype();
+	bool wakingup = false;
 
 	void* reg;
 
@@ -84,13 +101,20 @@ void board_init_f(ulong dummy)
 #endif
 
 	mstar_early_clksetup();
-
 	spl_early_init();
-
 	preloader_console_init();
 
 	asm volatile("mrc p15, 0, %0, c0, c0, 0" : "=r"(cpuid));
 	printf("\ncpuid: %x, mstar chipid: %x\n", (unsigned) cpuid, (unsigned)*deviceid);
+
+	if(readw(PMSLEEP + PMSLEEP_LOCK) == PMSLEEP_LOCK_MAGIC){
+		printf("woken from sleep\n");
+		wakingup = true;
+	}
+	else {
+		printf("normal power on\n");
+	}
+
 
 	/* *((u16*)(PMCLKGEN + 0xf4)) = 0;
 	for(int i = 0; i < 1000; i++){
@@ -101,7 +125,11 @@ void board_init_f(ulong dummy)
 	mstar_dump_reg_block("pmsleep", PMSLEEP);
 	mstar_dump_reg_block("clkgen", CLKGEN);
 
-	chiptype = breadbee_chiptype();
+	switch(chiptype){
+		case CHIPTYPE_SSC8336:
+			m5_misc();
+			break;
+	}
 
 	mstar_ddr_init(chiptype);
 

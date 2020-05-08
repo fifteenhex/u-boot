@@ -75,7 +75,13 @@ static void mstar_delay(unsigned long msec)
 #define PMSLEEP_F4			0xf4
 
 #define PMCLKGEN			0x1f001c00
+
 #define TIMER0				0x1f006040
+#define TIMER0_CTRL			0x0
+#define TIMER0_CTRL_EN			BIT(0)
+#define TIMER0_CTRL_CLR			BIT(3)
+#define TIMER0_COUNTER_L		0x10
+#define TIMER0_COUNTER_H		0x14
 
 #define EFUSE				0x1f004000
 #define EFUSE_14			0x14

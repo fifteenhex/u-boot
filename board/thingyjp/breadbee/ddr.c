@@ -170,8 +170,9 @@ static void mstar_ddr_setdigconfig(const struct ddr_config *config)
 
 }
 
-static void mstar_ddr_doinitialcycle(void)
+static int mstar_ddr_doinitialcycle(void)
 {
+	int loops;
 	uint16_t temp;
 
 	// clear
@@ -193,11 +194,16 @@ static void mstar_ddr_doinitialcycle(void)
 	temp |= MIU_DIG_CNTRL0_INIT_MIU | MIU_DIG_CNTRL0_ODT;
 	mstar_writew(temp, MIU_DIG + MIU_DIG_CNTRL0);
 	printf("waiting for init to complete..");
-	do {
+	for(loops = 0; loops < 10; loops++){
 		temp = readw(MIU_DIG + MIU_DIG_CNTRL0);
-		printf("cntrl: %04x\n", temp);
-	} while(!(temp & MIU_DIG_CNTRL0_INITDONE));
-	printf("done\n");
+		if(temp & MIU_DIG_CNTRL0_INITDONE){
+			printf("done\n");
+			return 0;
+		}
+		mdelay(100);
+	}
+	printf("failed\n");
+	return -1;
 }
 
 static void mstar_ddr_test(void)
@@ -758,7 +764,7 @@ void mstar_ddr_init(int chiptype)
 	// --
 	mstar_writew(0x33c8, MIU_ANA + MIU_ANA_C0);
 
-	mstar_writew(0x0000, 0x1f2020e0);
+	/*mstar_writew(0x0000, 0x1f2020e0);
 	mstar_writew(0x0000, 0x1f202130);
 	mstar_writew(0x0000, 0x1f202134);
 	mstar_writew(0xf0f3, 0x1f202120);
@@ -774,7 +780,7 @@ void mstar_ddr_init(int chiptype)
 	mstar_writew(0xc01d, 0x1f202de0);
 	mstar_writew(0xc01d, 0x1f202e60);
 	mstar_writew(0x001d, 0x1f202ee0);
-	mstar_writew(0x001d, 0x1f202f60);
+	mstar_writew(0x001d, 0x1f202f60);*/
 
 
 	printf("-- 4 --\n");
@@ -801,7 +807,8 @@ void mstar_ddr_init(int chiptype)
 
 	printf("-- 5 --\n");
 	mstar_ddr_powerupana();
-	mstar_ddr_doinitialcycle();
+	if(mstar_ddr_doinitialcycle())
+		goto out;
 	mstar_ddr_dig_rst_release();
 	mstar_ddr_unmask_setdone(&config);
 	//mstar_writew(0x6000, 0x1f2025a4);
