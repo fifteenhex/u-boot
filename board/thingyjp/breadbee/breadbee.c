@@ -122,8 +122,8 @@ void board_init_f(ulong dummy)
 		printf("t %d\n", (int) t);
 	}*/
 
-	mstar_dump_reg_block("pmsleep", PMSLEEP);
-	mstar_dump_reg_block("clkgen", CLKGEN);
+	//mstar_dump_reg_block("pmsleep", PMSLEEP);
+	//mstar_dump_reg_block("clkgen", CLKGEN);
 
 	switch(chiptype){
 		case CHIPTYPE_SSC8336:

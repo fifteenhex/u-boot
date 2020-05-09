@@ -216,21 +216,21 @@ static void mstar_ddr_test(void)
 static void mstar_ddr_setrequestmasks(const struct ddr_config *config, int g0, int g1, int g2, int g3,
 		int g4, int g5, int g6, int g7)
 {
-	if (g0 > 0 && config->group0 != NULL)
+	if (g0 >= 0 && config->group0 != NULL)
 		mstar_writew(g0, (uint32_t) config->group0 + MIU_DIG_GROUP_REG_MASK_OFF);
-	if (g1 > 0 && config->group1 != NULL)
+	if (g1 >= 0 && config->group1 != NULL)
 		mstar_writew(g1, (uint32_t) config->group1 + MIU_DIG_GROUP_REG_MASK_OFF);
-	if (g2 > 0 && config->group2 != NULL)
+	if (g2 >= 0 && config->group2 != NULL)
 		mstar_writew(g2, (uint32_t) config->group2 + MIU_DIG_GROUP_REG_MASK_OFF);
-	if (g3 > 0 && config->group3 != NULL)
+	if (g3 >= 0 && config->group3 != NULL)
 		mstar_writew(g3, (uint32_t) config->group3 + MIU_DIG_GROUP_REG_MASK_OFF);
-	if (g4 > 0 && config->group4 != NULL)
+	if (g4 >= 0 && config->group4 != NULL)
 		mstar_writew(g4, (uint32_t) config->group4 + MIU_DIG_GROUP_REG_MASK_OFF);
-	if (g5 > 0 && config->group5 != NULL)
+	if (g5 >= 0 && config->group5 != NULL)
 		mstar_writew(g5, (uint32_t) config->group5 + MIU_DIG_GROUP_REG_MASK_OFF);
-	if (g6 > 0 && config->group6 != NULL)
+	if (g6 >= 0 && config->group6 != NULL)
 		mstar_writew(g6, (uint32_t) config->group6 + MIU_DIG_GROUP_REG_MASK_OFF);
-	if (g7 > 0 && config->group7 != NULL)
+	if (g7 >= 0 && config->group7 != NULL)
 		mstar_writew(g7, (uint32_t) config->group7 + MIU_DIG_GROUP_REG_MASK_OFF);
 }
 
@@ -264,6 +264,9 @@ static void mstar_ddr_setclkfreq(const struct ddr_config *config)
 	mstar_writew(0x0010, MIU_ANA + MIU_ANA_BC);
 
 	mstar_writew(0x4, MIU_ANA + MIU_ANA_DDRAT_15_0);
+
+	mstar_delay(100);
+
 	mstar_writew(0x114, MIU_ANA + MIU_ANA_58);
 }
 
@@ -538,21 +541,32 @@ void cpu_clk_setup(void)
 	  DAT_1f206448 = 0x88;
 	  delay?(0x4b0);
 	  DAT_1f2041f0 = 1;
-#endif
-	  mstar_writew(0x484, L3BRIDGE + L3BRIDGE_04);
-
-#if 0
+	  mstar_writew(0x84, L3BRIDGE + L3BRIDGE_04);
 	  _DAT_1f206540 = 0x1eb9;
 	  _DAT_1f206544 = 0x45;
 	  return;
 #endif
+
+	  //m5
+
+	  /*mstar_writew(0x0088, 0x1f206448);
+	  mstar_writew(0x0100, 0x1f206444);
+	  mstar_writew(0x0043, 0x1f206584);
+	  mstar_writew(0xb3d5, 0x1f206580);
+	  mstar_writew(1, 0x1f206588);
+	  mstar_delay(1000);
+	  mstar_writew(0x0001, 0x1f2041f0);
+	  mstar_writew(0x0084, 0x1f204404);
+	  mstar_delay(1000);*/
+
+
 }
 
 static void mstar_ddr_unmask_setdone(struct ddr_config *config)
 {
 	uint16_t temp;
 
-	mstar_ddr_setrequestmasks(config, 0x7fff, -1, -1, -1, -1, -1, -1, 0xfffa);
+	mstar_ddr_setrequestmasks(config, 0, 0, 0, 0, 0, 0, 0, 0);
 
 	/* if this is not cleared any access to the DDR locks the CPU */
 	temp = readw(MIU_DIG + MIU_DIG_SW_RST);
@@ -709,18 +723,18 @@ static void mstar_ddr_pll_setup(struct ddr_config *config)
 	// seems to be power on
 	mstar_writew(0x0, MAYBEPLL1 + MAYBEPLL1_04);
 	// vendor code has a delay
-	mdelay(10);
+	mstar_delay(1000);
 }
 
 void mstar_ddr_maybeanareset(struct ddr_config *config)
 {
 	// drive cal software mode
 	mstar_writew(1, MIU_ANA + MIU_ANA_F0);
-	mstar_delay(100);
+	mstar_delay(1000);
 	mstar_writew(0x1000, MIU_ANA + MIU_ANA_DDRAT_23_16);
-	mstar_delay(100);
+	mstar_delay(1000);
 	mstar_writew(0, MIU_ANA + MIU_ANA_DDRAT_23_16);
-	mstar_delay(100);
+	mstar_delay(1000);
 }
 
 void mstar_ddr_init(int chiptype)
@@ -730,20 +744,17 @@ void mstar_ddr_init(int chiptype)
 	if (mstar_ddr_getconfig(chiptype, &config))
 		goto out;
 
-	//mstar_dump_reg_block("ddr pll", MAYBEPLL1);
 	mstar_ddr_pll_setup(&config);
-	//mstar_dump_reg_block("ddr pll+", MAYBEPLL1);
-
-	/*mstar_dump_reg_block("miu_ana", MIU_ANA);
-	mstar_dump_reg_block("miu_extra", MIU_EXTRA);
-	mstar_dump_reg_block("miu_dig", MIU_DIG);*/
 
 	printf("-- 0 --\n");
 	mstar_ddr_dig_rst();
+#if 0
 	mstar_ddr_setinitrequestmasks(&config);
 	mstar_ddr_maybeanareset(&config);
 	printf("-- 1 --\n");
+#endif
 	mstar_ddr_setclkfreq(&config);
+#if 0
 	printf("-- 2 --\n");
 	mstar_ddr_setdigconfig(&config);
 	printf("-- 3 -- \n");
@@ -764,7 +775,7 @@ void mstar_ddr_init(int chiptype)
 	// --
 	mstar_writew(0x33c8, MIU_ANA + MIU_ANA_C0);
 
-	/*mstar_writew(0x0000, 0x1f2020e0);
+	mstar_writew(0x0000, 0x1f2020e0);
 	mstar_writew(0x0000, 0x1f202130);
 	mstar_writew(0x0000, 0x1f202134);
 	mstar_writew(0xf0f3, 0x1f202120);
@@ -780,7 +791,7 @@ void mstar_ddr_init(int chiptype)
 	mstar_writew(0xc01d, 0x1f202de0);
 	mstar_writew(0xc01d, 0x1f202e60);
 	mstar_writew(0x001d, 0x1f202ee0);
-	mstar_writew(0x001d, 0x1f202f60);*/
+	mstar_writew(0x001d, 0x1f202f60);
 
 
 	printf("-- 4 --\n");
@@ -807,29 +818,25 @@ void mstar_ddr_init(int chiptype)
 
 	printf("-- 5 --\n");
 	mstar_ddr_powerupana();
+#endif
+	mstar_ddr_dig_rst_release();
 	if(mstar_ddr_doinitialcycle())
 		goto out;
-	mstar_ddr_dig_rst_release();
+
+	printf("-----\n");
+
 	mstar_ddr_unmask_setdone(&config);
-	//mstar_writew(0x6000, 0x1f2025a4);
+	mstar_writew(0x6000, 0x1f2025a4);
 
 	//mstar_ddr_analogconfig(&config);
 	//mstar_ddr_powerupana();
-	/*mstar_dump_reg_block("miu_ana+", MIU_ANA);
-	mstar_dump_reg_block("miu_extra+", MIU_EXTRA);
-	mstar_dump_reg_block("miu_dig+", MIU_DIG);*/
 
 	//mstar_miu_init();
 	//mstar_the_return_of_miu();
-	//cpu_clk_setup();
+	cpu_clk_setup();
 
 
 
-
-	//mstar_dump_reg_block("ddr pll++", MAYBEPLL1);
-	//mstar_dump_reg_block("miu_ana++", MIU_ANA);
-	//mstar_dump_reg_block("miu_extra++", MIU_EXTRA);
-	//mstar_dump_reg_block("miu_dig++", MIU_DIG);
 
 	mstar_ddr_test();
 
