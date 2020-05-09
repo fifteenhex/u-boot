@@ -76,6 +76,9 @@ static void mstar_delay(unsigned long msec)
 
 #define PMCLKGEN			0x1f001c00
 
+#define CHIPID				0x1f003c00
+#define CHIPIDCOPY			0x1f003d98
+
 #define TIMER0				0x1f006040
 #define TIMER0_CTRL			0x0
 #define TIMER0_CTRL_EN			BIT(0)
@@ -265,6 +268,8 @@ static void mstar_delay(unsigned long msec)
 #define MIU_DIG_PTN_DATA		0x1f8
 #define MIU_DIG_R_READ_CRC		0x1fc
 
+
+#define MIU_M5_DIG_PLLSTATUS		0x98
 #define MIU_M5_GROUPS			0x1f202c00
 #define MIU_M5_GROUPS_GROUP0_CTRL	0x0
 #define MIU_M5_GROUPS_GROUP1_CTRL	0x80

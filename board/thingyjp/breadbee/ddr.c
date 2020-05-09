@@ -180,8 +180,13 @@ static int mstar_ddr_doinitialcycle(void)
 	mstar_writew(temp, MIU_DIG + MIU_DIG_CNTRL0);
 	mstar_delay(100);
 
-	// assert cs, deassert rst
-	temp |= MIU_DIG_CNTRL0_CS | MIU_DIG_CNTRL0_RSTZ;
+	// deassert rst
+	temp |= MIU_DIG_CNTRL0_RSTZ;
+	mstar_writew(temp, MIU_DIG + MIU_DIG_CNTRL0);
+	mstar_delay(100);
+
+	// assert cs
+	temp |= MIU_DIG_CNTRL0_CS;
 	mstar_writew(temp, MIU_DIG + MIU_DIG_CNTRL0);
 	mstar_delay(100);
 
@@ -193,7 +198,7 @@ static int mstar_ddr_doinitialcycle(void)
 	// enable odt and trigger init cycle
 	temp |= MIU_DIG_CNTRL0_INIT_MIU | MIU_DIG_CNTRL0_ODT;
 	mstar_writew(temp, MIU_DIG + MIU_DIG_CNTRL0);
-	printf("waiting for init to complete..");
+	printf("waiting for init to complete.. ");
 	for(loops = 0; loops < 10; loops++){
 		temp = readw(MIU_DIG + MIU_DIG_CNTRL0);
 		if(temp & MIU_DIG_CNTRL0_INITDONE){
@@ -245,6 +250,8 @@ static void mstar_ddr_setinitrequestmasks(const struct ddr_config *config)
 
 static void mstar_ddr_setclkfreq(const struct ddr_config *config)
 {
+	uint16_t pllstatus = readw(MIU_DIG + MIU_M5_DIG_PLLSTATUS);
+
 	//ddr clock freq
 	mstar_writew(0x400, MIU_ANA + MIU_ANA_6C);
 	// ddr clock freq
@@ -268,20 +275,19 @@ static void mstar_ddr_setclkfreq(const struct ddr_config *config)
 	mstar_delay(100);
 
 	mstar_writew(0x114, MIU_ANA + MIU_ANA_58);
+
+	printf("pll status before: %04x", pllstatus);
+	pllstatus = readw(MIU_DIG + MIU_M5_DIG_PLLSTATUS);
+	printf(" after: %04x\n", pllstatus);
 }
 
-static void mstar_ddr_analogconfig(const struct ddr_config *config)
-{
-	printf("doing DDR2 init\n");
-
-
-
+void garbage(){
 	//mstar_writew(0x5000, MIU_EXTRA + MIU_EXTRA_D0);
 
 
 	// rd phase timing, m5 is 0
-	mstar_writew(config->rd_phase_timing,
-			MIU_ANA + MIU_ANA_RD_PHASE_TIMING);
+	//mstar_writew(config->rd_phase_timing,
+	//		MIU_ANA + MIU_ANA_RD_PHASE_TIMING);
 
 	// added to match dumps
 	//mstar_writew(0x0, MIU_ANA + MIU_ANA_20);
@@ -317,9 +323,8 @@ static void mstar_ddr_analogconfig(const struct ddr_config *config)
 	// using this block because 20e8 matched
 	// phase select
 	//mstar_writew(0x4040, MIU_ANA + MIU_ANA_74);
-	// rec trig
-	//mstar_writew(0x202, MIU_ANA + MIU_ANA_E8);
-	//mstar_writew(config->ana_ec, MIU_ANA + MIU_ANA_EC);
+
+
 
 	// ???
 	//mstar_writew(0x14, MIU_ANA + MIU_ANA_140);
@@ -389,18 +394,15 @@ static void mstar_ddr_analogconfig(const struct ddr_config *config)
 	// drv
 	//mstar_writew(0x0000, MIU_ANA + MIU_ANA_B8);
 
-	// ptn mode m5 8020
-	//mstar_writew(config->ptn_mode, MIU_ANA + MIU_ANA_34);
 
 	// pattern data
 	// not setting this cases test to lock up
-	mstar_writew(0x20, MIU_ANA + MIU_ANA_38);
-#if 0
-	  something_to_dowith_ddr();
-#endif
 
-	// rx en
-//	mstar_writew(0x3f, MIU_ANA + MIU_ANA_10);
+//#if 0
+//	  something_to_dowith_ddr();
+//#endif
+
+
 
 	// test register
 //	mstar_writew(0x0, MIU_ANA + MIU_ANA_30);
@@ -425,6 +427,38 @@ static void mstar_ddr_analogconfig(const struct ddr_config *config)
 // setting this changes the read back value
 	mstar_writew(0x80e1, MIU_DIG + MIU_DIG_R_READ_CRC);
 
+}
+
+static void mstar_ddr_analogconfig(const struct ddr_config *config)
+{
+	mstar_writew(0x800, MIU_ANA + MIU_ANA_E0);
+
+	// m5 only
+	mstar_writew(0x0404, 0x1f202b40);
+	mstar_writew(0x0404, 0x1f202b44);
+	mstar_writew(0x0404, 0x1f202b48);
+	mstar_writew(0x0404, 0x1f202b4c);
+	mstar_writew(0x0a0a, 0x1f202b50);
+	mstar_writew(0x0404, 0x1f202b54);
+	mstar_writew(0x0404, 0x1f202b58);
+	mstar_writew(0x0404, 0x1f202b5c);
+	mstar_writew(0x0404, 0x1f202b60);
+	mstar_writew(0x0a0a, 0x1f202b64);
+	// reserved m5 0707
+	mstar_writew(config->ana_d8, MIU_ANA + MIU_ANA_D8);
+	// phase delay select, m5 0707
+	mstar_writew(config->ana_dc, MIU_ANA + MIU_ANA_DC);
+
+	// rec trig
+	mstar_writew(0x202, MIU_ANA + MIU_ANA_E8);
+	mstar_writew(config->ana_ec, MIU_ANA + MIU_ANA_EC);
+	mstar_writew(0x20, MIU_ANA + MIU_ANA_38);
+
+	// ptn mode m5 8020
+	mstar_writew(config->ptn_mode, MIU_ANA + MIU_ANA_34);
+
+	// rx en
+	mstar_writew(0x3f, MIU_ANA + MIU_ANA_10);
 }
 
 static void mstar_ddr_powerupana(void)
@@ -562,14 +596,17 @@ void cpu_clk_setup(void)
 
 }
 
-static void mstar_ddr_unmask_setdone(struct ddr_config *config)
+static void mstar_ddr_unmask_bist(struct ddr_config *config)
+{
+	mstar_ddr_setrequestmasks(config, 0x7fff, -1, -1, -1, -1, -1, -1, 0xfffa);
+}
+
+static void mstar_ddr_setdone(struct ddr_config *config)
 {
 	uint16_t temp;
-
-	mstar_ddr_setrequestmasks(config, 0, 0, 0, 0, 0, 0, 0, 0);
-
 	/* if this is not cleared any access to the DDR locks the CPU */
 	temp = readw(MIU_DIG + MIU_DIG_SW_RST);
+	temp |= 0xc00;
 	temp |= MIU_DIG_SW_RST_SW_INIT_DONE;
 	mstar_writew(temp, MIU_DIG + MIU_DIG_SW_RST);
 }
@@ -748,13 +785,10 @@ void mstar_ddr_init(int chiptype)
 
 	printf("-- 0 --\n");
 	mstar_ddr_dig_rst();
-#if 0
 	mstar_ddr_setinitrequestmasks(&config);
 	mstar_ddr_maybeanareset(&config);
 	printf("-- 1 --\n");
-#endif
 	mstar_ddr_setclkfreq(&config);
-#if 0
 	printf("-- 2 --\n");
 	mstar_ddr_setdigconfig(&config);
 	printf("-- 3 -- \n");
@@ -795,45 +829,37 @@ void mstar_ddr_init(int chiptype)
 
 
 	printf("-- 4 --\n");
-	mstar_writew(0x800, MIU_ANA + MIU_ANA_E0);
-
-	// m5 only
-	mstar_writew(0x0404, 0x1f202b40);
-	mstar_writew(0x0404, 0x1f202b44);
-	mstar_writew(0x0404, 0x1f202b48);
-	mstar_writew(0x0404, 0x1f202b4c);
-	mstar_writew(0x0a0a, 0x1f202b50);
-	mstar_writew(0x0404, 0x1f202b54);
-	mstar_writew(0x0404, 0x1f202b58);
-	mstar_writew(0x0404, 0x1f202b5c);
-	mstar_writew(0x0404, 0x1f202b60);
-	mstar_writew(0x0a0a, 0x1f202b64);
-
-	// --
-
-	// reserved m5 0707
-	mstar_writew(config.ana_d8, MIU_ANA + MIU_ANA_D8);
-	// phase delay select, m5 0707
-	mstar_writew(config.ana_dc, MIU_ANA + MIU_ANA_DC);
-
+	mstar_ddr_analogconfig(&config);
+	mstar_ddr_dig_rst_release();
 	printf("-- 5 --\n");
 	mstar_ddr_powerupana();
-#endif
-	mstar_ddr_dig_rst_release();
 	if(mstar_ddr_doinitialcycle())
 		goto out;
 
+	mstar_ddr_setdone(&config);
+	mstar_ddr_unmask_bist(&config);
+
+	mstar_writew(0x8000, 0x1f2025fc);
+	mstar_writew(0x200, 0x1f2025ac);
+	mstar_writew(0x000, 0x1f2025e0);
+
 	printf("-----\n");
 
-	mstar_ddr_unmask_setdone(&config);
-	mstar_writew(0x6000, 0x1f2025a4);
 
-	//mstar_ddr_analogconfig(&config);
-	//mstar_ddr_powerupana();
+	mstar_delay(10000);
+
+	mstar_ddr_setrequestmasks(&config, 0, 0, 0, 0, 0, 0, 0, 0);
+
+	// protection size?
+	//mstar_writew(0x6000, 0x1f2025a4);
+
+	mstar_dump_reg_block("miu_dig", MIU_DIG);
+	mstar_dump_reg_block("miu_dig", MIU_DIG + 0x200);
+
 
 	//mstar_miu_init();
 	//mstar_the_return_of_miu();
-	cpu_clk_setup();
+	//cpu_clk_setup();
 
 
 

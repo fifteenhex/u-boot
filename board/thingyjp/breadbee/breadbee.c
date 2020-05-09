@@ -13,7 +13,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static const uint8_t* deviceid = (uint8_t*) 0x1f003c00;
+static const uint8_t* deviceid = (uint8_t*) CHIPID;
 static const void* efuse = (void*) EFUSE;
 
 static int breadbee_chiptype(void){
