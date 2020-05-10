@@ -563,6 +563,7 @@ void mstar_the_return_of_miu(void)
 
 void cpu_clk_setup(void)
 {
+	uint16_t temp;
 #if 0
 	  DAT_1f206005 = 0;
 	                    /* this is inserting the current frequency */
@@ -583,15 +584,17 @@ void cpu_clk_setup(void)
 
 	  //m5
 
-	  /*mstar_writew(0x0088, 0x1f206448);
-	  mstar_writew(0x0100, 0x1f206444);
+	  mstar_writew(0x0088, 0x1f206448);
+	  temp = readw(0x1f206444);
+	  mstar_writew(temp | 0x0100, 0x1f206444);
 	  mstar_writew(0x0043, 0x1f206584);
 	  mstar_writew(0xb3d5, 0x1f206580);
 	  mstar_writew(1, 0x1f206588);
+	  mstar_writew(temp & ~0x0100, 0x1f206444);
 	  mstar_delay(1000);
 	  mstar_writew(0x0001, 0x1f2041f0);
 	  mstar_writew(0x0084, 0x1f204404);
-	  mstar_delay(1000);*/
+	  mstar_delay(1000);
 
 
 }
@@ -845,8 +848,9 @@ void mstar_ddr_init(int chiptype)
 
 	printf("-----\n");
 
-
 	mstar_delay(10000);
+
+	cpu_clk_setup();
 
 	mstar_ddr_setrequestmasks(&config, 0, 0, 0, 0, 0, 0, 0, 0);
 
@@ -859,7 +863,7 @@ void mstar_ddr_init(int chiptype)
 
 	//mstar_miu_init();
 	//mstar_the_return_of_miu();
-	//cpu_clk_setup();
+
 
 
 

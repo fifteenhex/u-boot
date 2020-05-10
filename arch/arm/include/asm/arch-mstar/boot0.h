@@ -28,9 +28,9 @@ __ipl_init:
 
 	// this enables JTAG on spi0 before doing anything
 	// so we can debug the SPL
-	ldr	r0, =0x1f203c3c
-	ldr	r1, =0x2
-	str	r1, [r0]
+	//ldr	r0, =0x1f203c3c
+	//ldr	r1, =0x2
+	//str	r1, [r0]
 
 	// this can be used to stop the cpu before uboot crashes
 	//bkpt
