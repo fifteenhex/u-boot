@@ -28,7 +28,72 @@ static void mstar_clks_dumpreg(void)
 	       mystery_c0, mystery_f4, maybepll_04, maybepll1_04, maybepll1_0c, uartclkgen);
 }
 
+void cpu_clk_setup(void)
+{
+	uint16_t temp;
+#if 0
+	  DAT_1f206005 = 0;
+	                    /* this is inserting the current frequency */
+	  DAT_1f206580 = 0xb9;
+	  DAT_1f206581 = 0x1e;
+	  DAT_1f206584 = 0x45;
+	  DAT_1f206588 = 1;
+	  DAT_1f206589 = 0;
+	  DAT_1f206445 = 0;
+	  DAT_1f206448 = 0x88;
+	  delay?(0x4b0);
+	  DAT_1f2041f0 = 1;
+	  mstar_writew(0x84, L3BRIDGE + L3BRIDGE_04);
+	  _DAT_1f206540 = 0x1eb9;
+	  _DAT_1f206544 = 0x45;
+	  return;
+#endif
 
+	  //m5
+
+	  mstar_writew(0x0088, 0x1f206448);
+	  temp = readw(0x1f206444);
+	  mstar_writew(temp | 0x0100, 0x1f206444);
+	  mstar_writew(0xb3d5, CPUPLL + CPUPLL_CURFREQ_L);
+	  mstar_writew(0x0043, CPUPLL + CPUPLL_CURFREQ_H);
+	  mstar_writew(1, 0x1f206588);
+	  mstar_writew(temp & ~0x0100, 0x1f206444);
+	  mstar_delay(1000);
+	  mstar_writew(0x0001, 0x1f2041f0);
+	  mstar_writew(0x0484, 0x1f204404);
+	  mstar_delay(1000);
+
+
+}
+
+void mstar_bump_cpufreq()
+{
+	uint16_t temp1, temp2;
+
+	printf("attempting to bump cpufreq to 800mhz\n");
+
+
+	temp1 = readw(CPUPLL + CPUPLL_CURFREQ_L);
+	temp2 = readw(CPUPLL + CPUPLL_CURFREQ_H);
+	mstar_writew(temp1, CPUPLL + CPUPLL_LPF_LOW_L);
+	mstar_writew(temp2, CPUPLL + CPUPLL_LPF_LOW_H);
+
+	mstar_writew(0xd70a, CPUPLL + CPUPLL_LPF_HIGH_BOTTOM);
+	mstar_writew(0x0033, CPUPLL + CPUPLL_LPF_HIGH_TOP);
+
+
+	mstar_writew(0x1, CPUPLL + CPUPLL_LPF_MYSTERYONE);
+	mstar_writew(0x6, CPUPLL + CPUPLL_LPF_MYSTERYTWO);
+	mstar_writew(0x8, CPUPLL + CPUPLL_LPF_UPDATE_COUNT);
+	mstar_writew(BIT(12), CPUPLL + CPUPLL_LPF_TRANSITIONCTRL);
+
+	mstar_writew(0, CPUPLL + CPUPLL_LPF_TOGGLE);
+	mstar_writew(1, CPUPLL + CPUPLL_LPF_TOGGLE);
+
+	while (!(readw(CPUPLL + CPUPLL_LPF_LOCK))) {
+		printf("waiting for cpupll lock\n");
+	}
+}
 
 /* this is a hack */
 void mstar_early_clksetup()

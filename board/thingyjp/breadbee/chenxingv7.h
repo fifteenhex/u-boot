@@ -65,6 +65,7 @@ static void mstar_delay(unsigned long msec)
 #define CHIPID_MSC313ED			0xc2 // this is the same for E and D
 #define CHIPID_SSC8336			0xd9
 #define CHIPID_SSC8336N			0xee
+#define CHIPID_SSC328			0xed
 #define CHIPID_SSC325			0xef
 
 #define PMSLEEP				0x1f001c00
@@ -297,6 +298,20 @@ static void mstar_delay(unsigned long msec)
 #define MAYBEPLL1_08			0x8
 #define MAYBEPLL1_0C			0xc
 #define MAYBEPLL1_10			0x10
+
+#define CPUPLL				0x1f206400
+#define CPUPLL_CURFREQ_L		0x180
+#define CPUPLL_CURFREQ_H		0x184
+#define CPUPLL_LPF_LOW_L		0x140
+#define CPUPLL_LPF_LOW_H		0x144
+#define CPUPLL_LPF_HIGH_BOTTOM		0x148
+#define CPUPLL_LPF_HIGH_TOP		0x14c
+#define CPUPLL_LPF_TOGGLE		0x150
+#define CPUPLL_LPF_MYSTERYTWO		0x154
+#define CPUPLL_LPF_UPDATE_COUNT		0x15c
+#define CPUPLL_LPF_MYSTERYONE		0x160
+#define CPUPLL_LPF_TRANSITIONCTRL	0x164
+#define CPUPLL_LPF_LOCK			0x174
 
 #define GPIO				0x1f207800
 #define GPIO_18				0x18

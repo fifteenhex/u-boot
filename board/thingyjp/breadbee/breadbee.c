@@ -133,6 +133,8 @@ void board_init_f(ulong dummy)
 
 	mstar_ddr_init(chiptype);
 
+	mstar_bump_cpufreq();
+
 	mstar_utmi_setfinetuning();
 
 	switch(chiptype){

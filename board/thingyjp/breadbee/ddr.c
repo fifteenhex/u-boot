@@ -5,6 +5,7 @@
 #include <asm/io.h>
 
 #include "chenxingv7.h"
+#include "clk.h"
 #include "ddr.h"
 
 struct ddr_config {
@@ -561,43 +562,7 @@ void mstar_the_return_of_miu(void)
 #endif
 }
 
-void cpu_clk_setup(void)
-{
-	uint16_t temp;
-#if 0
-	  DAT_1f206005 = 0;
-	                    /* this is inserting the current frequency */
-	  DAT_1f206580 = 0xb9;
-	  DAT_1f206581 = 0x1e;
-	  DAT_1f206584 = 0x45;
-	  DAT_1f206588 = 1;
-	  DAT_1f206589 = 0;
-	  DAT_1f206445 = 0;
-	  DAT_1f206448 = 0x88;
-	  delay?(0x4b0);
-	  DAT_1f2041f0 = 1;
-	  mstar_writew(0x84, L3BRIDGE + L3BRIDGE_04);
-	  _DAT_1f206540 = 0x1eb9;
-	  _DAT_1f206544 = 0x45;
-	  return;
-#endif
 
-	  //m5
-
-	  mstar_writew(0x0088, 0x1f206448);
-	  temp = readw(0x1f206444);
-	  mstar_writew(temp | 0x0100, 0x1f206444);
-	  mstar_writew(0x0043, 0x1f206584);
-	  mstar_writew(0xb3d5, 0x1f206580);
-	  mstar_writew(1, 0x1f206588);
-	  mstar_writew(temp & ~0x0100, 0x1f206444);
-	  mstar_delay(1000);
-	  mstar_writew(0x0001, 0x1f2041f0);
-	  mstar_writew(0x0084, 0x1f204404);
-	  mstar_delay(1000);
-
-
-}
 
 static void mstar_ddr_unmask_bist(struct ddr_config *config)
 {
@@ -848,7 +813,7 @@ void mstar_ddr_init(int chiptype)
 
 	printf("-----\n");
 
-	mstar_delay(10000);
+	mstar_delay(1000);
 
 	cpu_clk_setup();
 
