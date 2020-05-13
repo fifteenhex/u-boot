@@ -50,12 +50,11 @@ void cpu_clk_setup(void)
 #endif
 
 	  //m5
-
 	  mstar_writew(0x0088, 0x1f206448);
 	  temp = readw(0x1f206444);
 	  mstar_writew(temp | 0x0100, 0x1f206444);
-	  mstar_writew(0xb3d5, CPUPLL + CPUPLL_CURFREQ_L);
-	  mstar_writew(0x0043, CPUPLL + CPUPLL_CURFREQ_H);
+	  mstar_writew(0xAE14, CPUPLL + CPUPLL_CURFREQ_L);
+	  mstar_writew(0x0067, CPUPLL + CPUPLL_CURFREQ_H);
 	  mstar_writew(1, 0x1f206588);
 	  mstar_writew(temp & ~0x0100, 0x1f206444);
 	  mstar_delay(1000);
@@ -65,6 +64,11 @@ void cpu_clk_setup(void)
 
 
 }
+
+#define FREQ_400 0x0067AE14
+#define FREQ_800 0x0043b3d5
+#define FREQ_1000 0x002978d4
+#define BUMPFREQ FREQ_400
 
 void mstar_bump_cpufreq()
 {
@@ -78,8 +82,8 @@ void mstar_bump_cpufreq()
 	mstar_writew(temp1, CPUPLL + CPUPLL_LPF_LOW_L);
 	mstar_writew(temp2, CPUPLL + CPUPLL_LPF_LOW_H);
 
-	mstar_writew(0xd70a, CPUPLL + CPUPLL_LPF_HIGH_BOTTOM);
-	mstar_writew(0x0033, CPUPLL + CPUPLL_LPF_HIGH_TOP);
+	mstar_writew(BUMPFREQ & 0xFFFF, CPUPLL + CPUPLL_LPF_HIGH_BOTTOM);
+	mstar_writew((BUMPFREQ >> 16) & 0xFFFF, CPUPLL + CPUPLL_LPF_HIGH_TOP);
 
 
 	mstar_writew(0x1, CPUPLL + CPUPLL_LPF_MYSTERYONE);
