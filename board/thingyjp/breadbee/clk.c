@@ -68,13 +68,13 @@ void cpu_clk_setup(void)
 #define FREQ_400 0x0067AE14
 #define FREQ_800 0x0043b3d5
 #define FREQ_1000 0x002978d4
-#define BUMPFREQ FREQ_400
+#define BUMPFREQ FREQ_1000
 
 void mstar_bump_cpufreq()
 {
 	uint16_t temp1, temp2;
 
-	printf("attempting to bump cpufreq to 800mhz\n");
+	printf("attempting to bump cpu frequency\n");
 
 
 	temp1 = readw(CPUPLL + CPUPLL_CURFREQ_L);

@@ -39,6 +39,8 @@ int board_init(void)
 {
 	timer_init();
 
+	mstar_bump_cpufreq();
+
 	// this is needed stop FIQ interrupts bypassing the GIC
 	// mstar had this in their irqchip driver but I've moved
 	// this here to keep the mess out of view.
