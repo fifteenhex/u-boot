@@ -315,7 +315,7 @@ static void mstar_delay(unsigned long msec)
 
 #define GPIO				0x1f207800
 #define GPIO_18				0x18
-#define GPIO_18_D9_DDRMASK		0x3
+#define GPIO_18_D9_DDRMASK		0xf
 
 #define SCCLKGEN			0x1f226600
 

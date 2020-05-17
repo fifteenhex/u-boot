@@ -10,6 +10,8 @@
 
 struct ddr_config {
 	uint32_t size;
+	enum mstar_dram_type type;
+
 	int pll_magic_08, pll_magic_0c, pll_magic_10;
 	void *group0, *group1, *group2, *group3, *group4, *group5, *group6,
 			*group7;
@@ -637,18 +639,36 @@ static int mstar_ddr_getconfig(int chiptype, struct ddr_config *config)
 		type = readw(GPIO + GPIO_18);
 		printf("mystery gpio register is %02x\n", type);
 		type &= GPIO_18_D9_DDRMASK;
-		switch(type){
-		case 0:
-			config->size = 0x2000000; // 32MB
+
+		switch (chiptype) {
+		case CHIPTYPE_SSC8336:
+			switch (type) {
+			case 0:
+				config->size = 0x2000000; // 32MB
+				break;
+			case 1:
+				config->size = 0x4000000; // 64MB
+				config->type = MSTAR_DRAM_DDR2;
+				break;
+			case 2:
+				config->size = 0x8000000; // 128MB
+				break;
+			case 4:
+				config->size = 0x10000000; // 256MB
+				break;
+			default:
+				printf("Don't know how to workout the DDR size for %02x\n",type);
+				break;
+			}
 			break;
-		case 1:
-			config->size = 0x4000000; // 64MB
+		case CHIPTYPE_SSC8336N:
+			switch (type) {
+			case 0xf:
+				config->size = 0x4000000; // 64MB
+				config->type = MSTAR_DRAM_DDR2;
+				break;
+			}
 			break;
-		case 2:
-			config->size = 0x8000000; // 128MB
-			break;
-		case 4:
-			config->size = 0x10000000; // 256MB
 		}
 
 		config->pll_magic_08 = 0x0100;
