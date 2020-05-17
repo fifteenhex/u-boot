@@ -50,10 +50,6 @@ int board_init(void)
 }
 
 #ifdef CONFIG_SPL_BUILD
-/*void board_boot_order(u32 *spl_boot_list)
-{
-}*/
-
 void board_boot_order(u32 *spl_boot_list)
 {
 	spl_boot_list[0] = BOOT_DEVICE_SPI;

@@ -633,6 +633,7 @@ static int mstar_ddr_getconfig(int chiptype, struct ddr_config *config)
 		break;
 
 	case CHIPTYPE_SSC8336:
+	case CHIPTYPE_SSC8336N:
 		type = readw(GPIO + GPIO_18);
 		printf("mystery gpio register is %02x\n", type);
 		type &= GPIO_18_D9_DDRMASK;

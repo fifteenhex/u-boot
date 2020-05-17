@@ -58,6 +58,13 @@ void cpu_clk_setup(void)
 	  mstar_writew(1, 0x1f206588);
 	  mstar_writew(temp & ~0x0100, 0x1f206444);
 	  mstar_delay(1000);
+
+	  printf("waiting for cpupll lock..");
+
+	  //while (!(readw(CPUPLL + CPUPLL_LPF_LOCK))) {
+	//	  printf("waiting for cpupll lock\n");
+	 // }
+
 	  mstar_writew(0x0001, 0x1f2041f0);
 	  mstar_writew(0x0484, 0x1f204404);
 	  mstar_delay(1000);
@@ -68,7 +75,7 @@ void cpu_clk_setup(void)
 #define FREQ_400 0x0067AE14
 #define FREQ_800 0x0043b3d5
 #define FREQ_1000 0x002978d4
-#define BUMPFREQ FREQ_1000
+#define BUMPFREQ FREQ_800
 
 void mstar_bump_cpufreq()
 {
