@@ -72,10 +72,30 @@ void cpu_clk_setup(void)
 
 }
 
+static void mstar_cpu_clk_readback(void)
+{
+	uint16_t readback;
+
+	mstar_writew(0x0001, 0x1f20442c);
+	mstar_writew(0x0004, 0x1f203ddc);
+	mstar_writew(0x4004, 0x1f203dd4);
+	mstar_writew(0x0001, 0x1f203dd8);
+
+	mstar_writew(0x0000, 0x1f203dc0);
+	mstar_writew(0x8000, 0x1f203dc0);
+
+	mstar_delay(100);
+
+	readback = readw(0x1f203dc4);
+
+	printf("readback: %04x\n", readback);
+
+}
+
 #define FREQ_400 0x0067AE14
 #define FREQ_800 0x0043b3d5
 #define FREQ_1000 0x002978d4
-#define BUMPFREQ FREQ_800
+#define BUMPFREQ FREQ_400
 
 void mstar_bump_cpufreq()
 {
@@ -104,6 +124,8 @@ void mstar_bump_cpufreq()
 	while (!(readw(CPUPLL + CPUPLL_LPF_LOCK))) {
 		printf("waiting for cpupll lock\n");
 	}
+
+	mstar_cpu_clk_readback();
 }
 
 /* this is a hack */
