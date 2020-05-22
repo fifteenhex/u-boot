@@ -9,11 +9,16 @@
 #define CONFIG_SYS_MALLOC_LEN (1024 * 128)
 #define CONFIG_SYS_INIT_SP_ADDR 0xA000FFFC
 #define CONFIG_SYS_UBOOT_BASE 0 // for spl_nor
-#define CONFIG_SPL_LOAD_FIT_ADDRESS CONFIG_SYS_LOAD_ADDR
+
 #define CONFIG_SYS_SDRAM_BASE 0x20000000
 
-#define CONFIG_SPL_MAX_SIZE 0xa000
-#define CONFIG_SPL_STACK 0xa000fff0
+#define MSTAR_SRAM		0xa0000000
+#define MSTAR_SRAM_SZ		0x16000 // 88KB for i1, i3+ seem to have 128KB
+#define CONFIG_SPL_MAX_SIZE	0x10000	// 64KB is the biggest the bootrom can load apparently,
+					// this might be too big for i1 but whatever...
+#define CONFIG_SPL_STACK	(MSTAR_SRAM + MSTAR_SRAM_SZ)
+#define CONFIG_SPL_LOAD_FIT_ADDRESS CONFIG_SYS_LOAD_ADDR
+
 /*#ifdef CONFIG_MSTAR_IPL
 #define CONFIG_SPL_TEXT_BASE 0x23c00000
 #else
