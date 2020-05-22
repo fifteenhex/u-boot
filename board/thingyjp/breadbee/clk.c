@@ -59,14 +59,16 @@ void cpu_clk_setup(void)
 	  mstar_writew(temp & ~0x0100, 0x1f206444);
 	  mstar_delay(1000);
 
-	  printf("waiting for cpupll lock..");
+	 // printf("waiting for cpupll lock..");
 
 	  //while (!(readw(CPUPLL + CPUPLL_LPF_LOCK))) {
 	//	  printf("waiting for cpupll lock\n");
 	 // }
 
 	  mstar_writew(0x0001, 0x1f2041f0);
-	  mstar_writew(0x0484, 0x1f204404);
+	  temp = readw(L3BRIDGE + L3BRIDGE_04);
+	  mstar_writew(temp | L3BRIDGE_04_CLK_MIU2X_SEL, L3BRIDGE + L3BRIDGE_04);
+
 	  mstar_delay(1000);
 
 
@@ -76,7 +78,7 @@ static void mstar_cpu_clk_readback(void)
 {
 	uint16_t readback;
 
-	mstar_writew(0x0001, 0x1f20442c);
+	mstar_writew(0x0001, L3BRIDGE + L3BRIDGE_2C); //test out sel?
 	mstar_writew(0x0004, 0x1f203ddc);
 	mstar_writew(0x4004, 0x1f203dd4);
 	mstar_writew(0x0001, 0x1f203dd8);

@@ -285,6 +285,8 @@ static void mstar_delay(unsigned long msec)
 
 #define L3BRIDGE			0x1f204400
 #define L3BRIDGE_04			0x04
+#define L3BRIDGE_04_CLK_MIU2X_SEL	BIT(7)
+#define L3BRIDGE_2C			0x2c
 
 #define CLKGEN				0x1f207000
 #define CLKGEN_UART			0xc4
