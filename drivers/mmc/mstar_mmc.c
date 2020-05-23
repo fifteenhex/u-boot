@@ -37,20 +37,20 @@ struct regmap_field {
 static int regmap_field_write(struct regmap_field *field, uint value)
 {
 	printf("field write, off %x, mask %x, shift %d, value %x, masked value %x\n", (unsigned) field->offset,
-			(unsigned)field->mask, (unsigned) field->shift, (unsigned) value, (unsigned)(value & field->mask));
+			(unsigned)field->mask, (unsigned) field->shift, (unsigned) value, (unsigned)((value << field->shift) & field->mask));
 	return regmap_update_bits(field->regmap, field->offset, field->mask, value << field->shift);
 }
 
 static int regmap_field_read(struct regmap_field *field, uint* value)
 {
 	uint temp;
-	int ret = 0;
+	int ret;
 
-	printf("field read, off %x, mask %x, shift %d, value %x\n", (unsigned) field->offset,
-			(unsigned) field->mask, (unsigned) field->shift, (unsigned) value);
 	ret = regmap_read(field->regmap, field->offset, &temp);
 	temp &= field->mask;
 	*value = temp >> field->shift;
+	printf("field read, off %x, mask %x, shift %d, value %x\n", (unsigned) field->offset,
+			(unsigned) field->mask, (unsigned) field->shift, (unsigned) *value);
 
 	return ret;
 }
@@ -138,8 +138,46 @@ struct mstar_mmc_priv {
 
 static int mstar_mmc_set_ios(struct udevice *dev)
 {
+	struct mstar_mmc_priv *priv = dev_get_priv(dev);
+	struct mmc *mmc = mmc_get_mmc_dev(dev);
+	int ret = 0;
+	unsigned int bw;
+
 	printf("%s:%d\n", __FUNCTION__, __LINE__);
-	return 1;
+
+	// setup the bus width
+	switch(mmc->bus_width){
+		case 1:
+			bw = 0;
+			break;
+		case 4:
+			bw = 1;
+			break;
+		case 8:
+			bw = 2;
+			break;
+		default:
+			dev_err(dev, "Can't set bus width %d\n", mmc->bus_width);
+			goto clk;
+	}
+
+	printf("setting bus width to %d bits\n", mmc->bus_width);
+	regmap_field_write(priv->bus_width, bw);
+
+clk:
+/*
+	// setup the clock
+	if(mmc->clk_disable){
+		dev_err(dev, "disabling clock\n");
+		regmap_field_write(priv->clk_en, 1);
+	}
+	else {
+		dev_err(dev, "enabling clock\n");
+		regmap_field_write(priv->clk_en, 0);
+	}
+*/
+out:
+	return ret;
 }
 
 static void mstar_mmc_send_cmd_writecmd(struct mstar_mmc_priv* priv, u8 cmd, u32 arg){
@@ -209,20 +247,31 @@ static bool mstar_fcie_parse_and_check_flags(struct mstar_mmc_priv *priv, unsign
 						bool cmd, bool data, bool busy){
 	bool ret = true;
 	msc313_fcie_parse_int_flags(priv, flags);
+	if(priv->error)
+		goto out;
+
 	if(cmd)
 		ret &= priv->cmd_done;
 	if(data)
 		ret &= priv->data_done;
 	if(busy)
 		ret &= priv->busy_done;
+
+out:
 	return ret;
 }
 
 static int mstar_mmc_start_transfer_and_wait(struct mstar_mmc_priv *priv,
-		bool cmd, bool data, bool busy, unsigned int* status){
+		bool cmd, bool data, bool busy, unsigned int* status)
+{
 	unsigned int intflags, poll_timeout;
-
 	unsigned timeout = 100;
+	unsigned tmp;
+	int ret = 0;
+
+	regmap_read(priv->regmap, REG_SD_CTL, &tmp);
+	printf("sdctl %04x\n", tmp);
+
 	if(data)
 		timeout += 1000;
 
@@ -245,14 +294,22 @@ static int mstar_mmc_start_transfer_and_wait(struct mstar_mmc_priv *priv,
 	poll_timeout = regmap_read_poll_timeout(priv->regmap, REG_INT,
 			intflags, mstar_fcie_parse_and_check_flags(priv,intflags,cmd,data,busy), 100, timeout);
 	regmap_write(priv->regmap, REG_INT, ~0);
+
 	if(poll_timeout){
-		printk("timeout while polling\n");
-		return 1;
+		printf("timeout while polling\n");
+		ret = 1;
+		goto out;
 	}
 
-	regmap_field_read(priv->status, status);
+	if(priv->error){
+		printf("error during transfer\n");
+		ret = 1;
+		goto out;
+	}
 
-	return 0;
+out:
+	regmap_field_read(priv->status, status);
+	return ret;
 }
 
 static int mstar_mmc_readrsp(struct mstar_mmc_priv *priv, u8 cmd, u32* rsp, int len, bool hasopcode){
@@ -347,8 +404,7 @@ static int mstar_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 		printf("no data or is write, running command\n");
 		ret = mstar_mmc_send_cmd_prepcmd_and_tx(priv, cmd);
 	}
-
-	if(data){
+	else if(data){
 		printf("data flags %x\n", data->flags);
 		dataread = data->flags & MMC_DATA_READ;
 		if(dataread){
@@ -368,17 +424,19 @@ static int mstar_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 		}
 
 		// setup for data tx/rx
+		printf("configuring data transfer, %d x %d blocks\n", data->blocksize, data->blocks);
 		regmap_field_write(priv->dtrf_en, 1);
 		regmap_field_write(priv->blk_sz, data->blocksize);
+		regmap_field_write(priv->blk_cnt, data->blocks);
 
 		chkcmddone = dataread;
-		dmaaddr = ((uint32_t) data->dest) - 0x20000000;
+		dmaaddr = ((uint32_t) data->dest);
 		dmalen = data->blocks * data->blocksize;
 		regmap_field_write(priv->dmaaddr_h, dmaaddr >> 16);
 		regmap_field_write(priv->dmaaddr_l, dmaaddr);
 		regmap_field_write(priv->dmalen_h, dmalen >> 16);
 		regmap_field_write(priv->dmalen_l, dmalen);
-		regmap_field_write(priv->blk_cnt, data->blocks);
+
 		if(mstar_mmc_start_transfer_and_wait(priv, chkcmddone, true, false, &status)){
 			//mrq->data->error = ETIMEDOUT;
 			ret = 1;
@@ -421,7 +479,11 @@ static int mstar_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 		}
 	}
 
+	ret = 0;
+	return ret;
+
 tfr_err:
+	dev_err(dev, "send command failed, status %04x\n", status);
 	return ret;
 }
 
