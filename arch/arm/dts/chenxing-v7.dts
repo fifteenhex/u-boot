@@ -8,5 +8,5 @@
 #include "chenxing-v7.dtsi"
 
 / {
-        compatible = "mstar,unknown";
+        compatible = "mstar,chenxing-v7";
 };

@@ -315,6 +315,10 @@ static void mstar_delay(unsigned long msec)
 #define CPUPLL_LPF_TRANSITIONCTRL	0x164
 #define CPUPLL_LPF_LOCK			0x174
 
+#define DID				0x1f007000
+#define DID_BOOTSOURCE			0x1c0
+#define DID_BOOTSOURCE_M5_SD		BIT(14)
+
 #define GPIO				0x1f207800
 #define GPIO_18				0x18
 #define GPIO_18_D9_DDRMASK		0xf

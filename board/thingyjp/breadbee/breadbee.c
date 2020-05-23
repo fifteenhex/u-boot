@@ -11,6 +11,31 @@
 #include "emac.h"
 #include "utmi.h"
 
+/* check that some required config options are selected */
+
+#ifndef CONFIG_BOARD_LATE_INIT
+#error "BOARD_LATE_INIT is required"
+#endif
+
+#ifndef CONFIG_DTB_RESELECT
+#error "DTB_RESELECT is required"
+#endif
+
+#ifndef CONFIG_OF_BOARD_SETUP
+#error "OF_BOARD_SETUP is required"
+#endif
+
+#ifndef CONFIG_MULTI_DTB_FIT
+#error "MULTI_DTB_FIT is required"
+#endif
+
+//#ifdef CONFIG_SPL_BUILD
+//#ifndef CONFIG_SPL_LOAD_FIT
+//#error "CONFIG_SPL_LOAD_FIT is required"
+//#endif
+//#endif
+
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static const uint8_t* deviceid = (uint8_t*) CHIPID;
@@ -37,8 +62,6 @@ static int breadbee_chiptype(void){
 
 int board_init(void)
 {
-	timer_init();
-
 	mstar_bump_cpufreq();
 
 	// this is needed stop FIQ interrupts bypassing the GIC
@@ -52,9 +75,23 @@ int board_init(void)
 #ifdef CONFIG_SPL_BUILD
 void board_boot_order(u32 *spl_boot_list)
 {
-	spl_boot_list[0] = BOOT_DEVICE_SPI;
-	spl_boot_list[1] = BOOT_DEVICE_UART;
-	spl_boot_list[2] = BOOT_DEVICE_NONE;
+	int index = 0;
+
+	uint16_t bootsource = readw(DID + DID_BOOTSOURCE);
+	switch(breadbee_chiptype()){
+		case CHIPTYPE_SSC8336:
+		case CHIPTYPE_SSC8336N:
+			if(bootsource & DID_BOOTSOURCE_M5_SD)
+				printk("will try sd first\n");
+			break;
+	}
+
+#ifdef CONFIG_MMC_MSTAR
+	spl_boot_list[index++] = BOOT_DEVICE_MMC1;
+#endif
+	spl_boot_list[index++] = BOOT_DEVICE_SPI;
+	spl_boot_list[index++] = BOOT_DEVICE_UART;
+	spl_boot_list[index++] = BOOT_DEVICE_NONE;
 }
 
 #define GETU16(b,r)		(*((u16*)(b + r)))
@@ -100,6 +137,7 @@ void board_init_f(ulong dummy)
 
 	mstar_early_clksetup();
 	spl_early_init();
+	printf("here!\n");
 	preloader_console_init();
 
 	asm volatile("mrc p15, 0, %0, c0, c0, 0" : "=r"(cpuid));
@@ -162,16 +200,12 @@ struct image_header *spl_get_load_buffer(ssize_t offset, size_t size)
 
 #endif // spl
 
-#ifndef CONFIG_BOARD_LATE_INIT
-#error "CONFIG_BOARD_LATE_INIT is required"
-#endif
-
-
-#define ENV_VAR_MSTAR_FAMILY "mstar_family"
-#define COMPAT_I1 "infinity1"
-#define COMPAT_I3 "infinity3"
-#define COMPAT_I6 "infinity6"
-#define COMPAT_M5 "mercury5"
+#define ENV_VAR_MSTAR_FAMILY	"mstar_family"
+#define COMPAT_I1		"infinity1"
+#define COMPAT_I3		"infinity3"
+#define COMPAT_I6		"infinity6"
+#define COMPAT_M5		"mercury5"
+#define COMPAT_GENERIC		"chenxing-v7"
 
 int board_fit_config_name_match(const char *name)
 {
@@ -197,8 +231,19 @@ int board_fit_config_name_match(const char *name)
 			break;
 	}
 
+	//if(!strcmp(name, COMPAT_GENERIC))
+	//	return 0;
+
 	return -1;
 }
+
+
+int embedded_dtb_select(void)
+{
+	fdtdec_setup();
+	return 0;
+}
+
 
 int board_late_init(void){
 #ifndef CONFIG_SPL_BUILD
@@ -244,24 +289,10 @@ int board_late_init(void){
 }
 
 #ifndef CONFIG_SPL_BUILD
-
-#ifndef CONFIG_OF_BOARD_SETUP
-#error "OF_BOARD_SETUP is required"
-#endif
-
-#ifdef CONFIG_DTB_RESELECT
-int embedded_dtb_select(void)
-{
-	fdtdec_setup();
-
-	return 0;
-}
-#endif
-
 int ft_board_setup(void *blob, bd_t *bd)
 {
 	int i,j;
-	uint8_t* didreg = (uint8_t*) 0x1f007000;
+	uint8_t* didreg = (uint8_t*) DID;
 	uint8_t mac_addr[6];
 	uint8_t did[6];
 	uint32_t didcrc32;

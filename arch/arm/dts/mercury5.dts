@@ -8,5 +8,15 @@
 #include "chenxing-v7.dtsi"
 
 / {
-	compatible = "mstar,mercury5";
+	compatible = "mstar,mercury5", "mstar,chenxing-v7";
+};
+
+&soc {
+	sd: sd@1f282600 {
+		compatible = "mstar,msc313-sdio";
+		reg = <0x1f282600 0x200>;
+		no-1-8-v;
+		cap-sd-highspeed;
+		bus-width = <4>;
+	};
 };

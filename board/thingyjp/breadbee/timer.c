@@ -12,7 +12,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #include "chenxingv7.h"
 
-static uint32_t mstar_timer_get_count()
+static uint32_t mstar_timer_get_count(void)
 {
 	uint32_t count;
 	count = readw(TIMER0 + TIMER0_COUNTER_H);
