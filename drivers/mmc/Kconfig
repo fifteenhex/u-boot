@@ -657,6 +657,7 @@ config MMC_MSTAR
 	depends on ARCH_MSTAR
 	depends on DM_MMC
 	depends on OF_CONTROL
+	depends on REGMAP
 	help
 	  If unsure, say N.
 
