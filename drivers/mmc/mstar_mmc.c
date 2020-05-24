@@ -41,8 +41,6 @@ struct regmap_field {
 
 static int regmap_field_write(struct regmap_field *field, uint value)
 {
-	//printf("field write, off %x, mask %x, shift %d, value %x, masked value %x\n", (unsigned) field->offset,
-	//		(unsigned)field->mask, (unsigned) field->shift, (unsigned) value, (unsigned)((value << field->shift) & field->mask));
 	return regmap_update_bits(field->regmap, field->offset, field->mask, value << field->shift);
 }
 
@@ -54,9 +52,6 @@ static int regmap_field_read(struct regmap_field *field, uint* value)
 	ret = regmap_read(field->regmap, field->offset, &temp);
 	temp &= field->mask;
 	*value = temp >> field->shift;
-	//printf("field read, off %x, mask %x, shift %d, value %x\n", (unsigned) field->offset,
-	//		(unsigned) field->mask, (unsigned) field->shift, (unsigned) *value);
-
 	return ret;
 }
 
@@ -411,6 +406,9 @@ static int mstar_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 
 #ifdef CONFIG_MMC_TRACE
 		dev_err("data <- %u x %u\n", data->blocksize, data->blocks);
+		/* clear the destination, so you can see if the sd controller
+		 * actually doing anything...
+		 */
 		dev_err(dev, "clearing destination memory\n");
 		memset(data->dest, 0xff, data->blocksize * data->blocks);
 #endif
@@ -423,7 +421,7 @@ static int mstar_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 			regmap_field_write(priv->errdet_en, 0);
 			regmap_field_write(priv->jobdir, 1);
 #ifdef CONFIG_MMC_TRACE
-		dev_err(dev,"data -> %u x %u\n", data->blocksize, data->blocks);
+		dev_info(dev,"data -> %u x %u\n", data->blocksize, data->blocks);
 #endif
 		}
 
@@ -436,13 +434,17 @@ static int mstar_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 		chkcmddone = dataread;
 
 		dmaaddr = ((uint32_t) data->dest);
-		printf("dmaaddr = %08x\n", dmaaddr);
 		if(data->dest >= 0xa0000000){
-			printf("using imi\n");
+#ifdef CONFIG_MMC_TRACE
+			dev_info(dev, "using imi\n");
+#endif
 			//dmaaddr -= 0xa0000000;
 			regmap_field_write(priv->imisel, 1);
 		}
 		else {
+#ifdef CONFIG_MMC_TRACE
+			dev_info(dev, "using miu\n");
+#endif
 			dmaaddr -= 0x20000000;
 			regmap_field_write(priv->imisel, 0);
 		}
@@ -496,9 +498,11 @@ static int mstar_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 					!cardbusy, 0, 1000);
 		}
 
+#ifdef CONFIG_MMC_TRACE
 #ifdef CONFIG_HEXDUMP
 		print_hex_dump_bytes("", DUMP_PREFIX_OFFSET, data->dest,
 						     data->blocksize * data->blocks);
+#endif
 #endif
 	}
 
@@ -527,8 +531,6 @@ static int mstar_mmc_probe(struct udevice *dev)
 	struct mstar_mmc_priv *priv = dev_get_priv(dev);
 	struct mstar_mmc_platdata *plat = dev_get_platdata(dev);
 	int ret;
-
-	printf("here!\n");
 
 	ret = regmap_init_mem(dev_ofnode(dev), &priv->regmap);
 	if(ret){
@@ -582,8 +584,6 @@ static int mstar_mmc_ofdata_to_platdata(struct udevice *dev)
 	struct mmc_config *cfg;
 	int ret;
 
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
-
 	cfg = &plat->cfg;
 	cfg->name = "MSC";
 	cfg->host_caps = MMC_MODE_HS_52MHz | MMC_MODE_HS;
@@ -606,7 +606,6 @@ static int mstar_mmc_ofdata_to_platdata(struct udevice *dev)
 static int mstar_mmc_bind(struct udevice *dev)
 {
 	struct mstar_mmc_platdata *plat = dev_get_platdata(dev);
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
 	return mmc_bind(dev, &plat->mmc, &plat->cfg);
 }
 
