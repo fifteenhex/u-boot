@@ -9,6 +9,10 @@
 #include <asm/armv7.h>
 #include <asm/utils.h>
 
+#ifdef CONFIG_ARCH_MSTAR
+#include <chenxingv7.h>
+#endif
+
 #define ARMV7_DCACHE_INVAL_RANGE	1
 #define ARMV7_DCACHE_CLEAN_INVAL_RANGE	2
 
@@ -110,18 +114,6 @@ void flush_dcache_all(void)
 	v7_outer_cache_flush_all();
 }
 
-static inline void flushmiu(void){
-    #if CONFIG_MSC313
-    void* miu_flush = (void*) 0x1f204414;
-	void* miu_status = (void*) 0x1f204440;
-    writel_relaxed(0, miu_flush);
-	writel_relaxed(0x1, miu_flush);
-	while(!(readl(miu_status) & BIT(12))){
-		// wait for flush to complete
-	}
-    #endif
-}
-
 /*
  * Invalidates range in all levels of D-cache/unified cache used:
  * Affects the range [start, stop - 1]
@@ -148,7 +140,9 @@ void flush_dcache_range(unsigned long start, unsigned long stop)
 
 	v7_outer_cache_flush_range(start, stop);
 
-    flushmiu();
+#ifdef CONFIG_ARCH_MSTAR
+	chenxingv7_miu_flush();
+#endif
 }
 
 void arm_init_before_mmu(void)
