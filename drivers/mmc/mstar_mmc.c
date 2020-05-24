@@ -36,8 +36,8 @@ struct regmap_field {
 
 static int regmap_field_write(struct regmap_field *field, uint value)
 {
-	printf("field write, off %x, mask %x, shift %d, value %x, masked value %x\n", (unsigned) field->offset,
-			(unsigned)field->mask, (unsigned) field->shift, (unsigned) value, (unsigned)((value << field->shift) & field->mask));
+	//printf("field write, off %x, mask %x, shift %d, value %x, masked value %x\n", (unsigned) field->offset,
+	//		(unsigned)field->mask, (unsigned) field->shift, (unsigned) value, (unsigned)((value << field->shift) & field->mask));
 	return regmap_update_bits(field->regmap, field->offset, field->mask, value << field->shift);
 }
 
@@ -49,8 +49,8 @@ static int regmap_field_read(struct regmap_field *field, uint* value)
 	ret = regmap_read(field->regmap, field->offset, &temp);
 	temp &= field->mask;
 	*value = temp >> field->shift;
-	printf("field read, off %x, mask %x, shift %d, value %x\n", (unsigned) field->offset,
-			(unsigned) field->mask, (unsigned) field->shift, (unsigned) *value);
+	//printf("field read, off %x, mask %x, shift %d, value %x\n", (unsigned) field->offset,
+	//		(unsigned) field->mask, (unsigned) field->shift, (unsigned) *value);
 
 	return ret;
 }
@@ -125,6 +125,9 @@ struct mstar_mmc_priv {
 	struct regmap_field *status;
 	struct regmap_field *card_busy;
 
+	// boot mode
+	struct regmap_field *imisel;
+
 	// reset
 	struct regmap_field *nrst;
 	struct regmap_field *rst_status;
@@ -143,10 +146,9 @@ static int mstar_mmc_set_ios(struct udevice *dev)
 	int ret = 0;
 	unsigned int bw;
 
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
-
 	// setup the bus width
 	switch(mmc->bus_width){
+		case 0:
 		case 1:
 			bw = 0;
 			break;
@@ -161,21 +163,15 @@ static int mstar_mmc_set_ios(struct udevice *dev)
 			goto clk;
 	}
 
-	printf("setting bus width to %d bits\n", mmc->bus_width);
 	regmap_field_write(priv->bus_width, bw);
 
 clk:
-/*
 	// setup the clock
-	if(mmc->clk_disable){
-		dev_err(dev, "disabling clock\n");
-		regmap_field_write(priv->clk_en, 1);
-	}
-	else {
-		dev_err(dev, "enabling clock\n");
+	if(mmc->clk_disable)
 		regmap_field_write(priv->clk_en, 0);
-	}
-*/
+	else
+		regmap_field_write(priv->clk_en, 1);
+
 out:
 	return ret;
 }
@@ -228,7 +224,7 @@ static int mstar_mmc_setupcmd(struct mstar_mmc_priv* priv, struct mmc_cmd *cmd){
 }
 
 static void msc313_fcie_parse_int_flags(struct mstar_mmc_priv *priv, unsigned int flags){
-	printf("int flags %x\n", flags);
+	//printf("int flags %x\n", flags);
 	if(flags & INT_CMD_END){
 		priv->cmd_done = true;
 	}
@@ -270,7 +266,7 @@ static int mstar_mmc_start_transfer_and_wait(struct mstar_mmc_priv *priv,
 	int ret = 0;
 
 	regmap_read(priv->regmap, REG_SD_CTL, &tmp);
-	printf("sdctl %04x\n", tmp);
+	//printf("sdctl %04x\n", tmp);
 
 	if(data)
 		timeout += 1000;
@@ -321,7 +317,6 @@ static int mstar_mmc_readrsp(struct mstar_mmc_priv *priv, u8 cmd, u32* rsp, int 
 
 	for(i = 0; i < words; i++){
 		regmap_read(priv->regmap, REG_FIFO + (i * 4), &value);
-		printk("fifo <- %04x\n", value);
 		for(j = 0; j < 2 && ((i * 2) + j) < len; j++){
 			if(i == 0 && j == 0){
 				// if the first byte is the opcode
@@ -350,8 +345,8 @@ static int mstar_mmc_capturecmdresult(struct mstar_mmc_priv *priv,
 		struct mmc_cmd *cmd, unsigned int status, int rspsz){
 	int err;
 
-
 	if(status & SD_STS_NORSP){
+		printf("No response\n");
 		err = ETIMEDOUT;
 		return 1;
 	}
@@ -361,6 +356,7 @@ static int mstar_mmc_capturecmdresult(struct mstar_mmc_priv *priv,
 		// this is for anything without a CRC.
 		if(cmd->cmdarg & MMC_RSP_CRC){
 			//cmd->error = EILSEQ;
+			printf("CRC error\n");
 			return 1;
 		}
 	}
@@ -398,42 +394,43 @@ static int mstar_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 	int ret = 1;
 	unsigned int status, cardbusy;
 
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
-
 	if(data == NULL || (data->flags & MMC_DATA_WRITE)){
-		printf("no data or is write, running command\n");
 		ret = mstar_mmc_send_cmd_prepcmd_and_tx(priv, cmd);
 	}
 	else if(data){
-		printf("data flags %x\n", data->flags);
+		//printf("data flags %x\n", data->flags);
 		dataread = data->flags & MMC_DATA_READ;
 		if(dataread){
 			// we're doing a read so setup the command
 			rspsz = mstar_mmc_setupcmd(priv, cmd);
 			regmap_field_write(priv->jobdir, 0);
-			printk("data <- %u x %u\n", data->blocksize, data->blocks);
+			//printk("data <- %u x %u\n", data->blocksize, data->blocks);
 		}
 		else {
-			mdelay(100); // this should flush the caches
+			barrier();
 			regmap_write(priv->regmap, REG_SD_CTL, 0);
 			// turning on errdet for a write stops the
 			// trigger happening.
 			regmap_field_write(priv->errdet_en, 0);
 			regmap_field_write(priv->jobdir, 1);
-			printk("data -> %u x %u\n", data->blocksize, data->blocks);
+			//printk("data -> %u x %u\n", data->blocksize, data->blocks);
 		}
 
 		// setup for data tx/rx
-		printf("configuring data transfer, %d x %d blocks\n", data->blocksize, data->blocks);
+		//printf("configuring data transfer, %d x %d blocks\n", data->blocksize, data->blocks);
 		regmap_field_write(priv->dtrf_en, 1);
 		regmap_field_write(priv->blk_sz, data->blocksize);
 		regmap_field_write(priv->blk_cnt, data->blocks);
 
 		chkcmddone = dataread;
-		dmaaddr = ((uint32_t) data->dest);
+		dmaaddr = ((uint32_t) data->dest) - 0x20000000;
 		dmalen = data->blocks * data->blocksize;
 		regmap_field_write(priv->dmaaddr_h, dmaaddr >> 16);
 		regmap_field_write(priv->dmaaddr_l, dmaaddr);
+		//The bootrom sets this to load into SRAM
+		//and it needs to be cleared to load to DRAM
+		regmap_field_write(priv->imisel, 0);
+
 		regmap_field_write(priv->dmalen_h, dmalen >> 16);
 		regmap_field_write(priv->dmalen_l, dmalen);
 
@@ -489,7 +486,6 @@ tfr_err:
 
 static int mstar_mmc_getcd(struct udevice *dev)
 {
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
 	return 1;
 }
 
@@ -504,8 +500,6 @@ static int mstar_mmc_probe(struct udevice *dev)
 	struct mmc_uclass_priv *upriv = dev_get_uclass_priv(dev);
 	struct mstar_mmc_priv *priv = dev_get_priv(dev);
 	struct mstar_mmc_platdata *plat = dev_get_platdata(dev);
-
-	printf("%s:%d\n", __FUNCTION__, __LINE__);
 
 	plat->mmc.priv = priv;
 	upriv->mmc = &plat->mmc;
@@ -531,6 +525,8 @@ static int mstar_mmc_probe(struct udevice *dev)
 
 	priv->status = regmap_field_alloc(priv->regmap, sd_sts_status_field);
 	priv->card_busy = regmap_field_alloc(priv->regmap, sd_sts_cardbusy_field);
+
+	priv->imisel = regmap_field_alloc(priv->regmap, bootmode_imisel_field);
 
 	priv->nrst = regmap_field_alloc(priv->regmap, rst_nrst_field);
 	priv->status = regmap_field_alloc(priv->regmap, rst_status_field);

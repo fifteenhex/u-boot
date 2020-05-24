@@ -20,7 +20,9 @@
 #define SD_STS_NORSP		(1 << 3)
 #define SD_STS_CMDRSPCRCERR	(1 << 4)
 #define SD_STS_CARDBUSY		(1 << 6)
+#define REG_DDRMOD		0x3c
 #define REG_FIFO		0x80
+#define REG_BOOT_MODE		0xdc
 #define REG_RST			0xfc
 #define RST_NRST		0
 
@@ -50,6 +52,8 @@ static struct reg_field sd_sts_cardbusy_field = REG_FIELD(REG_SD_STS, 6, 6);
 
 static struct reg_field blocksize_field = REG_FIELD(REG_BLOCK_SIZE, 0, 15);
 static struct reg_field blockcount_field = REG_FIELD(REG_BLOCK_COUNT, 0, 15);
+
+static struct reg_field bootmode_imisel_field = REG_FIELD(REG_BOOT_MODE, 2, 2);
 
 static struct reg_field rst_nrst_field = REG_FIELD(REG_RST, RST_NRST, RST_NRST);
 static struct reg_field rst_status_field = REG_FIELD(REG_RST, 1, 4);
