@@ -8,11 +8,12 @@
 #include "chenxing-v7.dtsi"
 
 / {
-        compatible = "mstar,infinity1";
+        compatible = "mstar,infinity1", "mstar,chenxing-v7";
 };
 
 &aliases {
 	eth0 = &emac;
+	mmc0 = &sdio;
 };
 
 
@@ -29,6 +30,16 @@
 		reg = <0x1f2a2000 0x4000>;
 		phy-mode = "mii";
 		clocks = <&clk_emac>;
+	};
+
+	sdio: sdio@1f282000 {
+		compatible = "mstar,msc313-sdio";
+		u-boot,dm-spl;
+		u-boot,dm-preloc;
+		reg = <0x1f282000 0x200>;
+		no-1-8-v;
+		cap-sd-highspeed;
+		bus-width = <4>;
 	};
 };
 
