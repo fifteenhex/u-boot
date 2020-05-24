@@ -112,6 +112,10 @@ void flush_dcache_all(void)
 	v7_flush_dcache_all();
 
 	v7_outer_cache_flush_all();
+
+#ifdef CONFIG_ARCH_MSTAR
+	chenxingv7_miu_flush();
+#endif
 }
 
 /*
@@ -125,6 +129,10 @@ void invalidate_dcache_range(unsigned long start, unsigned long stop)
 	v7_dcache_maint_range(start, stop, ARMV7_DCACHE_INVAL_RANGE);
 
 	v7_outer_cache_inval_range(start, stop);
+
+#ifdef CONFIG_ARCH_MSTAR
+	chenxingv7_miu_flush();
+#endif
 }
 
 /*
