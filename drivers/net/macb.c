@@ -329,7 +329,9 @@ static int _macb_send_msc313(struct macb_device *macb, const char *name, void *p
 	paddr = dma_map_single(packet, length, DMA_TO_DEVICE);
 
 	// make sure the packet is actually in DRAM
-	flush_dcache_range(paddr, paddr + ALIGN(length, ARCH_DMA_MINALIGN));
+	//flush_dcache_range(paddr, paddr + ALIGN(length, ARCH_DMA_MINALIGN));
+	barrier();
+	flush_dcache_all();
 
 	macb_writel(macb, MSC313_TAR, paddr);
 	macb_writel(macb, MSC313_TCR, length);
@@ -1213,7 +1215,7 @@ static const struct eth_ops macb_eth_ops = {
 	.send = macb_send_msc313,
 	.recv = macb_recv_msc313,
 #else
-    .send = macb_send,
+	.send = macb_send,
 	.recv = macb_recv,
 #endif
 	.stop	= macb_stop,
