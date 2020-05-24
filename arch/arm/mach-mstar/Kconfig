@@ -3,11 +3,14 @@ if ARCH_MSTAR
 config MSTAR_IPL
         bool "u-boot spl is being loaded by the vendor IPL"
 
+config MSTAR_INFINITY1
+	bool "infinity1 family"
+
 config MSC313
-	bool "msc313 family"
-	select SPL
-	select SPL_SERIAL_SUPPORT
-	select SYS_ARCH_TIMER
+	bool "infinity3 family"
+
+config MSTAR_MERCURY5
+	bool "mercury5 family"
 
 if MSC313
 

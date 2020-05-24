@@ -12,6 +12,11 @@
 #include <asm/io.h>
 #include <regmap.h>
 
+#ifdef CONFIG_HEXDUMP
+#include <hexdump.h>
+#endif
+
+
 struct reg_field {
 	unsigned offset;
 	unsigned lsb;
@@ -172,7 +177,6 @@ clk:
 	else
 		regmap_field_write(priv->clk_en, 1);
 
-out:
 	return ret;
 }
 
@@ -404,7 +408,12 @@ static int mstar_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 			// we're doing a read so setup the command
 			rspsz = mstar_mmc_setupcmd(priv, cmd);
 			regmap_field_write(priv->jobdir, 0);
-			//printk("data <- %u x %u\n", data->blocksize, data->blocks);
+
+#ifdef CONFIG_MMC_TRACE
+		dev_err("data <- %u x %u\n", data->blocksize, data->blocks);
+		dev_err(dev, "clearing destination memory\n");
+		memset(data->dest, 0xff, data->blocksize * data->blocks);
+#endif
 		}
 		else {
 			barrier();
@@ -413,7 +422,9 @@ static int mstar_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 			// trigger happening.
 			regmap_field_write(priv->errdet_en, 0);
 			regmap_field_write(priv->jobdir, 1);
-			//printk("data -> %u x %u\n", data->blocksize, data->blocks);
+#ifdef CONFIG_MMC_TRACE
+		dev_err(dev,"data -> %u x %u\n", data->blocksize, data->blocks);
+#endif
 		}
 
 		// setup for data tx/rx
@@ -423,13 +434,23 @@ static int mstar_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 		regmap_field_write(priv->blk_cnt, data->blocks);
 
 		chkcmddone = dataread;
-		dmaaddr = ((uint32_t) data->dest) - 0x20000000;
+
+		dmaaddr = ((uint32_t) data->dest);
+		printf("dmaaddr = %08x\n", dmaaddr);
+		if(data->dest >= 0xa0000000){
+			printf("using imi\n");
+			//dmaaddr -= 0xa0000000;
+			regmap_field_write(priv->imisel, 1);
+		}
+		else {
+			dmaaddr -= 0x20000000;
+			regmap_field_write(priv->imisel, 0);
+		}
+
 		dmalen = data->blocks * data->blocksize;
 		regmap_field_write(priv->dmaaddr_h, dmaaddr >> 16);
 		regmap_field_write(priv->dmaaddr_l, dmaaddr);
-		//The bootrom sets this to load into SRAM
-		//and it needs to be cleared to load to DRAM
-		regmap_field_write(priv->imisel, 0);
+
 
 		regmap_field_write(priv->dmalen_h, dmalen >> 16);
 		regmap_field_write(priv->dmalen_l, dmalen);
@@ -474,6 +495,11 @@ static int mstar_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 			regmap_field_read_poll_timeout(priv->card_busy, cardbusy,
 					!cardbusy, 0, 1000);
 		}
+
+#ifdef CONFIG_HEXDUMP
+		print_hex_dump_bytes("", DUMP_PREFIX_OFFSET, data->dest,
+						     data->blocksize * data->blocks);
+#endif
 	}
 
 	ret = 0;
@@ -500,6 +526,15 @@ static int mstar_mmc_probe(struct udevice *dev)
 	struct mmc_uclass_priv *upriv = dev_get_uclass_priv(dev);
 	struct mstar_mmc_priv *priv = dev_get_priv(dev);
 	struct mstar_mmc_platdata *plat = dev_get_platdata(dev);
+	int ret;
+
+	printf("here!\n");
+
+	ret = regmap_init_mem(dev_ofnode(dev), &priv->regmap);
+	if(ret){
+		dev_err(dev, "failed to create reg map\n");
+		goto out;
+	}
 
 	plat->mmc.priv = priv;
 	upriv->mmc = &plat->mmc;
@@ -536,7 +571,8 @@ static int mstar_mmc_probe(struct udevice *dev)
 	priv->dmalen_l = regmap_field_alloc(priv->regmap, dma_len_l_field);
 	priv->dmalen_h = regmap_field_alloc(priv->regmap, dma_len_h_field);
 
-	return 0;
+out:
+	return ret;
 }
 
 static int mstar_mmc_ofdata_to_platdata(struct udevice *dev)
@@ -547,10 +583,6 @@ static int mstar_mmc_ofdata_to_platdata(struct udevice *dev)
 	int ret;
 
 	printf("%s:%d\n", __FUNCTION__, __LINE__);
-
-	ret = regmap_init_mem(dev_ofnode(dev), &priv->regmap);
-	if(ret)
-		dev_err(dev, "failed to create reg map\n");
 
 	cfg = &plat->cfg;
 	cfg->name = "MSC";

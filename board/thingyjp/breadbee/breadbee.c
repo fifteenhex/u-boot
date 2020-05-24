@@ -86,11 +86,18 @@ void board_boot_order(u32 *spl_boot_list)
 			break;
 	}
 
-#ifdef CONFIG_MMC_MSTAR
+#ifdef CONFIG_SPL_MMC_SUPPORT
 	spl_boot_list[index++] = BOOT_DEVICE_MMC1;
 #endif
+
+#ifdef CONFIG_SPL_SPI_FLASH_SUPPORT
 	spl_boot_list[index++] = BOOT_DEVICE_SPI;
+#endif
+
+#ifdef CONFIG_SPL_YMODEM_SUPPORT
 	spl_boot_list[index++] = BOOT_DEVICE_UART;
+#endif
+
 	spl_boot_list[index++] = BOOT_DEVICE_NONE;
 }
 

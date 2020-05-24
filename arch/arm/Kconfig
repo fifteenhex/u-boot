@@ -1037,6 +1037,9 @@ config ARCH_MSTAR
 	select SPL_DM
 	select SPL_LIBCOMMON_SUPPORT
 	select SPL_LIBGENERIC_SUPPORT
+	select SPL
+	select SPL_SERIAL_SUPPORT
+	select SYS_ARCH_TIMER
 	imply SUPPORT_SPL
 
 config TEGRA
