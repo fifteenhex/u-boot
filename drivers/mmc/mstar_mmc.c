@@ -302,6 +302,12 @@ static int mstar_mmc_start_transfer_and_wait(struct mstar_mmc_priv *priv,
 		goto out;
 	}
 
+	if(data){
+		barrier();
+		// surely this should be invalidate?
+		flush_dcache_all();
+	}
+
 out:
 	regmap_field_read(priv->status, status);
 	return ret;
@@ -397,31 +403,32 @@ static int mstar_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 		ret = mstar_mmc_send_cmd_prepcmd_and_tx(priv, cmd);
 	}
 	else if(data){
+		barrier();
+		flush_dcache_all();
+
 		//printf("data flags %x\n", data->flags);
 		dataread = data->flags & MMC_DATA_READ;
 		if(dataread){
 			// we're doing a read so setup the command
 			rspsz = mstar_mmc_setupcmd(priv, cmd);
 			regmap_field_write(priv->jobdir, 0);
-
 #ifdef CONFIG_MMC_TRACE
-		dev_err("data <- %u x %u\n", data->blocksize, data->blocks);
-		/* clear the destination, so you can see if the sd controller
-		 * actually doing anything...
-		 */
-		dev_err(dev, "clearing destination memory\n");
-		memset(data->dest, 0xff, data->blocksize * data->blocks);
+			dev_err("data <- %u x %u\n", data->blocksize, data->blocks);
+			/* clear the destination, so you can see if the sd controller
+			 * actually doing anything...
+			 */
+			dev_err(dev, "clearing destination memory\n");
+			memset(data->dest, 0xff, data->blocksize * data->blocks);
 #endif
 		}
 		else {
-			barrier();
 			regmap_write(priv->regmap, REG_SD_CTL, 0);
 			// turning on errdet for a write stops the
 			// trigger happening.
 			regmap_field_write(priv->errdet_en, 0);
 			regmap_field_write(priv->jobdir, 1);
 #ifdef CONFIG_MMC_TRACE
-		dev_info(dev,"data -> %u x %u\n", data->blocksize, data->blocks);
+			dev_info(dev,"data -> %u x %u\n", data->blocksize, data->blocks);
 #endif
 		}
 
