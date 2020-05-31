@@ -739,6 +739,13 @@ static int mstar_ddr_getconfig(int chiptype, struct ddr_config *config)
 
 static void mstar_ddr_pll_setup(struct ddr_config *config)
 {
+	/* seems to be power on, i3 ipl has this after setting the registers
+	 * the i2 and m5 ipls has this before setting the registers.
+	 */
+	mstar_writew(0x0, MAYBEPLL1 + MAYBEPLL1_04);
+	// vendor code has a delay
+	mstar_delay(1000);
+
 	// this is done before setting up the ddr in the vendor code.. ddr pll?
 	if(config->pll_magic_08 > 0)
 		mstar_writew(config->pll_magic_08, MAYBEPLL1 + MAYBEPLL1_08);
@@ -746,10 +753,6 @@ static void mstar_ddr_pll_setup(struct ddr_config *config)
 		mstar_writew(config->pll_magic_0c, MAYBEPLL1 + MAYBEPLL1_0C);
 	if(config->pll_magic_10 > 0)
 		mstar_writew(config->pll_magic_10, MAYBEPLL1 + MAYBEPLL1_10);
-	// seems to be power on
-	mstar_writew(0x0, MAYBEPLL1 + MAYBEPLL1_04);
-	// vendor code has a delay
-	mstar_delay(1000);
 }
 
 void mstar_ddr_maybeanareset(struct ddr_config *config)

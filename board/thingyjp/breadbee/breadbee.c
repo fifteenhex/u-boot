@@ -148,7 +148,10 @@ void board_init_f(ulong dummy)
 	preloader_console_init();
 
 	asm volatile("mrc p15, 0, %0, c0, c0, 0" : "=r"(cpuid));
-	printf("\ncpuid: %x, mstar chipid: %x\n", (unsigned) cpuid, (unsigned)*deviceid);
+	printf("\ncpuid: %x, mstar chipid: %x\n",
+			(unsigned) cpuid,
+			(unsigned)*deviceid);
+
 
 	if(readw(PMSLEEP + PMSLEEP_LOCK) == PMSLEEP_LOCK_MAGIC){
 		printf("woken from sleep\n");
