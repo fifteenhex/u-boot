@@ -406,4 +406,7 @@ config OMAP3_SPI
 	  (McSPI). This driver be used to access SPI chips on platforms
 	  embedding this OMAP3 McSPI IP core.
 
+config MSTAR_MSC313SPINOR
+	bool "Driver for MStar SPI nor controller"
+	
 endif # menu "SPI Support"
