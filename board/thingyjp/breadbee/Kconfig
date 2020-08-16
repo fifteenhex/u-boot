@@ -1,0 +1,15 @@
+if TARGET_BREADBEE
+
+config SYS_BOARD
+	default "breadbee"
+
+config SYS_VENDOR
+	default "thingyjp"
+
+config SYS_CONFIG_NAME
+	default "breadbee"
+
+config BOARD_SPECIFIC_OPTIONS # dummy
+	def_bool y
+
+endif

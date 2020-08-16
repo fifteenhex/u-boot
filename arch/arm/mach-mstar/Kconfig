@@ -1,0 +1,65 @@
+menu "MStar options"
+	depends on ARCH_MSTAR
+
+config MSTAR_IPL
+        bool "u-boot spl is being loaded by the vendor IPL"
+
+config MSTAR_INFINITY1
+	bool "infinity1 family"
+
+config MSTAR_INFINITY3
+	bool "infinity3 family"
+
+config MSTAR_MERCURY5
+	bool "mercury5 family"
+
+config TARGET_BREADBEE
+	bool "Support breadbee boards"
+	depends on !MSTAR_MERCURY5
+	select MSTAR_INFINITY1
+	select MSTAR_INFINITY3
+	select DM_ETH
+	select MACB
+	select CMD_DHCP
+	select NET_RANDOM_ETHADDR
+	select MII
+	select REGMAP
+	select MMC
+	select DM_MMC
+	select MMC_MSTAR
+	select CMD_MMC
+	select CMD_FAT
+
+endmenu
+
+if ARCH_MSTAR
+
+config SPL_LDSCRIPT
+	default "arch/arm/mach-mstar/u-boot-spl.lds"
+
+config SPL_TEXT_BASE
+	default 0x23c00000 if MSTAR_IPL
+	default 0xa0000000
+
+config SYS_MALLOC_F_LEN
+	default 0x4000
+
+config SYS_MALLOC_LEN
+	default 0x40000
+
+config FS_FAT_MAX_CLUSTSIZE
+	default 4096
+
+config DEBUG_UART_NS16550
+	default y
+
+config DEBUG_UART_BASE
+	default 0x1f221000
+
+config DEBUG_UART_CLOCK
+	default 172000000
+
+config DEBUG_UART_SHIFT
+	default 3
+
+endif
