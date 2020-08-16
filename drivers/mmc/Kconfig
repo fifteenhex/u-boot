@@ -652,6 +652,15 @@ config MMC_MTK
 	  This is needed if support for any SD/SDIO/MMC devices is required.
 	  If unsure, say N.
 
+config MMC_MSTAR
+	bool "MStar FCIE/SDIO SD/MMC Card Interface support"
+	depends on ARCH_MSTAR
+	depends on DM_MMC
+	depends on OF_CONTROL
+	depends on REGMAP
+	help
+	  If unsure, say N.
+
 endif
 
 config TEGRA124_MMC_DISABLE_EXT_LOOPBACK

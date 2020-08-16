@@ -11,6 +11,50 @@
 	compatible = "mstar,mercury5", "mstar,chenxing-v7";
 };
 
+&riu {
+	clkgen_mux_sd: clkgen_mux@2071b8 {
+		compatible = "mstar,clkgen_mux";
+		u-boot,dm-spl;
+		u-boot,dm-preloc;
+		reg = <0x2071b8 0x4>;
+		#clock-cells = <1>;
+		clock-output-names = "sd";
+		shifts = <0>;
+		mux-shifts = <2>;
+		mux-widths = <4>;
+		mstar,deglitches = <6>;
+		clocks = <&xtal_div2>,
+			 <&xtal_div2>,
+			 <&xtal_div2>,
+			 <&xtal_div2>,
+			 <&xtal_div2>,
+			 <&xtal_div2>,
+			 <&clk_mpll_86_div2>,
+			 <&xtal_div2>,
+			 <&xtal_div2>,
+			 <&xtal_div2>,
+			 <&xtal_div2>,
+			 <&xtal_div2>,
+			 <&xtal_div2>,
+			 <&xtal_div2>,
+			 <&xtal_div2>,
+			 <&xtal_div2>,
+			 /* deglitch */
+			 <&xtal_div2>;
+	};
+
+	sd: sd@282600 {
+		compatible = "mstar,msc313-sdio";
+		u-boot,dm-spl;
+		u-boot,dm-preloc;
+		reg = <0x282600 0x200>;
+		no-1-8-v;
+		cap-sd-highspeed;
+		bus-width = <4>;
+		clocks = <&clkgen_mux_sd 0>;
+	};
+};
+
 &miu {
 	compatible = "mstar,ssc8336-miu";
 };
