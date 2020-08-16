@@ -128,6 +128,16 @@
 				clocks = <&xtal>;
 			};
 
+			cpupll: cpupll@206400 {
+				compatible = "mstar,cpupll";
+				u-boot,dm-spl;
+				u-boot,dm-preloc;
+				reg = <0x206400 0x200>;
+				#clock-cells = <0>;
+				clocks = <&mpll MSTAR_MPLL_432>;
+				mstar,l3bridge = <&l3bridge>;
+			};
+
 			pm_uart: uart@221000 {
 				compatible = "snps,dw-apb-uart";
 				u-boot,dm-spl;
