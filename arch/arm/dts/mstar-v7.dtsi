@@ -16,6 +16,7 @@
 	};
 
 	aliases: aliases {
+		spi0 = &spi_nor;
 		serial0 = &pm_uart;
 	};
 
@@ -86,6 +87,21 @@
 		#size-cells = <1>;
 		ranges;
 		u-boot,dm-pre-reloc;
+
+		spi_nor: spi_nor@1f001000 {
+			compatible = "mstar,msc313-spinor";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			u-boot,dm-spl;
+			reg-names = "reg_base", "mem_base";
+			reg = <0x1f001000 0x400>, <0x14000000 0x2000000>;
+			spi-half-duplex;
+			spi_flash@0{
+				compatible = "jedec,spi-nor";
+				u-boot,dm-spl;
+				reg = <0>;
+			};
+		};
 
 		riu: bus@1f000000 {
 			compatible = "simple-bus";
