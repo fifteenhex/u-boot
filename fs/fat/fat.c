@@ -1195,6 +1195,10 @@ out_free_itr:
 	return ret;
 }
 
+#ifdef CONFIG_SPL_BUILD
+static fat_itr static_itr;
+#endif
+
 int file_fat_read_at(const char *filename, loff_t pos, void *buffer,
 		     loff_t maxsize, loff_t *actread)
 {
@@ -1202,9 +1206,14 @@ int file_fat_read_at(const char *filename, loff_t pos, void *buffer,
 	fat_itr *itr;
 	int ret;
 
+#ifdef CONFIG_SPL_BUILD
+	itr = &static_itr;
+#else
 	itr = malloc_cache_aligned(sizeof(fat_itr));
 	if (!itr)
 		return -ENOMEM;
+#endif
+
 	ret = fat_itr_root(itr, &fsdata);
 	if (ret)
 		goto out_free_itr;
