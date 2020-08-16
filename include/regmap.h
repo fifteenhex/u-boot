@@ -347,4 +347,74 @@ void *regmap_get_range(struct regmap *map, unsigned int range_num);
  */
 int regmap_uninit(struct regmap *map);
 
+struct reg_field {
+	unsigned offset;
+	unsigned lsb;
+	unsigned msb;
+};
+
+
+#define REG_FIELD(_offset, _lsb, _msb) \
+{ \
+	.offset = _offset,\
+	.lsb = _lsb,\
+	.msb = _msb,\
+}
+
+
+struct regmap_field {
+	struct regmap	*regmap;
+	uint offset;
+	uint shift;
+	uint32_t mask;
+};
+
+static int regmap_field_write(struct regmap_field *field, uint value)
+{
+	return regmap_update_bits(field->regmap, field->offset, field->mask, value << field->shift);
+}
+
+static int regmap_field_read(struct regmap_field *field, uint* value)
+{
+	uint temp;
+	int ret;
+
+	ret = regmap_read(field->regmap, field->offset, &temp);
+	temp &= field->mask;
+	*value = temp >> field->shift;
+	return ret;
+}
+
+static struct regmap_field* regmap_field_alloc(struct regmap *regmap, struct reg_field field)
+{
+	struct regmap_field* f;
+	f = malloc(sizeof(*f));
+	f->regmap = regmap;
+	f->offset = field.offset;
+	f->shift = field.lsb;
+	f->mask = GENMASK(field.msb, field.lsb);
+	return f;
+}
+
+#define regmap_field_read_poll_timeout(field, val, cond, sleep_us, \
+				      timeout_ms) \
+({ \
+	unsigned long __start = get_timer(0); \
+	int __ret; \
+	for (;;) { \
+		__ret = regmap_field_read((field), &(val)); \
+		if (__ret) \
+			break; \
+		if (cond) \
+			break; \
+		if ((timeout_ms) && get_timer(__start) > (timeout_ms)) { \
+			__ret = regmap_field_read((field), &(val)); \
+			break; \
+		} \
+		if ((sleep_us)) \
+			udelay((sleep_us)); \
+	} \
+	__ret ?: ((cond) ? 0 : -ETIMEDOUT); \
+})
+
 #endif
