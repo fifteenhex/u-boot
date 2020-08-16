@@ -669,10 +669,32 @@
 	 | GEM_BF(name, value))
 
 /* Register access macros */
+#ifdef CONFIG_ARCH_MSTAR
+/* this is to fix up the funky memory mapping  */
+static inline u32 macb_msc313_readl(void *regs, unsigned reg){
+	u32 l = readw(regs + (reg * 2));
+	u32 h = readw(regs + ((reg * 2) + 4));
+	return l | (h << 16);
+}
+
+static inline void macb_msc313_writel(void *regs, unsigned reg, u32 value){
+	u16 l = value & 0xffff;
+	u16 h = (value >> 16) & 0xffff;
+	writew(l, regs + (reg * 2));
+	writew(h, regs + ((reg * 2) + 4));
+}
+
+#define macb_readl(port, reg)				\
+	macb_msc313_readl(port->regs, MACB_##reg)
+#define macb_writel(port, reg, value)			\
+	macb_msc313_writel(port->regs, MACB_##reg, value)
+#else
 #define macb_readl(port, reg)				\
 	readl((port)->regs + MACB_##reg)
 #define macb_writel(port, reg, value)			\
 	writel((value), (port)->regs + MACB_##reg)
+#endif
+
 #define gem_readl(port, reg)				\
 	readl((port)->regs + GEM_##reg)
 #define gem_writel(port, reg, value)			\

@@ -52,11 +52,18 @@ DECLARE_GLOBAL_DATA_PTR;
  * These buffer sizes must be power of 2 and divisible
  * by RX_BUFFER_MULTIPLE
  */
+#ifdef CONFIG_ARCH_MSTAR
+#define MACB_RX_RING_SIZE		6
+#define MACB_RX_FRAME_SIZE		0x600
+#define MACB_RX_BUFFER_SIZE		(MACB_RX_RING_SIZE * MACB_RX_FRAME_SIZE)
+#else
 #define MACB_RX_BUFFER_SIZE		128
-#define GEM_RX_BUFFER_SIZE		2048
-#define RX_BUFFER_MULTIPLE		64
-
 #define MACB_RX_RING_SIZE		32
+#endif
+
+#define RX_BUFFER_MULTIPLE		64
+#define GEM_RX_BUFFER_SIZE		2048
+
 #define MACB_TX_RING_SIZE		16
 
 #define MACB_TX_TIMEOUT		1000
@@ -307,6 +314,36 @@ static inline void macb_invalidate_rx_buffer(struct macb_device *macb)
 
 #if defined(CONFIG_CMD_NET)
 
+#ifdef CONFIG_ARCH_MSTAR
+/*
+ * The MSC313 IP doesn't seem to have tx queues, it looks like it's
+ * the same as the AT91RM9200
+ */
+static int _macb_send_msc313(struct macb_device *macb, const char *name, void *packet,
+		      int length){
+	unsigned long paddr;
+
+	/* wait for it to be safe to queue the packet, probably not actually needed...*/
+	while(!(macb_readl(macb, TSR) & MACB_BIT(RM9200_BNQ))){
+	}
+
+	paddr = dma_map_single(packet, length, DMA_TO_DEVICE);
+
+	/* make sure the packet is actually in DRAM */
+	barrier();
+	flush_dcache_all();
+
+	macb_writel(macb, TAR, paddr);
+	macb_writel(macb, TCR, length);
+
+	/* wait for the transmitter to finish */
+	while(!(macb_readl(macb, TSR) & MACB_BIT(RM9200_BNQ))){
+	}
+
+	dma_unmap_single(paddr, length, DMA_TO_DEVICE);
+	return 0;
+}
+#else
 static int _macb_send(struct macb_device *macb, const char *name, void *packet,
 		      int length)
 {
@@ -358,6 +395,7 @@ static int _macb_send(struct macb_device *macb, const char *name, void *packet,
 	/* No one cares anyway */
 	return 0;
 }
+#endif
 
 static void reclaim_rx_buffers(struct macb_device *macb,
 			       unsigned int new_tail)
@@ -384,6 +422,44 @@ static void reclaim_rx_buffers(struct macb_device *macb,
 	macb->rx_tail = new_tail;
 }
 
+#ifdef CONFIG_ARCH_MSTAR
+static int _macb_recv_msc313(struct macb_device *macb, uchar **packetp){
+	/*
+	 * The MSC313 receiver is a much simpler beast than
+	 * newer macbs. This isn't very fast because we are
+	 * constantly running out of buffers but it sort of
+	 * works
+	 */
+	int length = -EAGAIN;
+	int frame, realframe;
+	struct macb_dma_desc *desc;
+	u16 rsr = macb_readl(macb, RSR);
+	void *buffer;
+
+	//doing this actually makes things worse. :D
+	//macb_writel(macb, RSR, rsr | (BIT(2) | BIT(1) | BIT(0)));
+	//if(!(rsr & BIT(1)))
+	//	return -EAGAIN;
+
+	macb_invalidate_ring_desc(macb, RX);
+
+	for(frame = 0; frame < MACB_RX_RING_SIZE; frame++){
+		realframe = macb->rx_tail + frame;
+		desc = &macb->rx_ring[realframe % MACB_RX_RING_SIZE];
+		if(desc->addr & MACB_BIT(RX_USED)){
+			length = desc->ctrl & 0x7ff;
+			buffer = macb->rx_buffer + (realframe * MACB_RX_FRAME_SIZE);
+			memcpy((void *)net_rx_packets[0], buffer, length);
+			*packetp = (void *)net_rx_packets[0];
+			desc->addr &= ~MACB_BIT(RX_USED);
+			macb->rx_tail = realframe + 1;
+			break;
+		}
+	}
+	macb_flush_ring_desc(macb, RX);
+	return length;
+}
+#else
 static int _macb_recv(struct macb_device *macb, uchar **packetp)
 {
 	unsigned int next_rx_tail = macb->next_rx_tail;
@@ -439,6 +515,7 @@ static int _macb_recv(struct macb_device *macb, uchar **packetp)
 		barrier();
 	}
 }
+#endif
 
 static void macb_phy_reset(struct macb_device *macb, const char *name)
 {
@@ -793,6 +870,7 @@ static int _macb_init(struct macb_device *macb, const char *name)
 	macb_flush_ring_desc(macb, RX);
 	macb_flush_rx_buffer(macb);
 
+#ifndef CONFIG_ARCH_MSTAR
 	for (i = 0; i < MACB_TX_RING_SIZE; i++) {
 		macb->tx_ring[i].addr = 0;
 		if (i == (MACB_TX_RING_SIZE - 1))
@@ -802,6 +880,7 @@ static int _macb_init(struct macb_device *macb, const char *name)
 			macb->tx_ring[i].ctrl = MACB_BIT(TX_USED);
 	}
 	macb_flush_ring_desc(macb, TX);
+#endif
 
 	macb->rx_tail = 0;
 	macb->tx_head = 0;
@@ -813,7 +892,11 @@ static int _macb_init(struct macb_device *macb, const char *name)
 #endif
 
 	macb_writel(macb, RBQP, macb->rx_ring_dma);
+#ifdef CONFIG_ARCH_MSTAR
+    // MSC313 doesn't have a TX queue pointer register
+#else
 	macb_writel(macb, TBQP, macb->tx_ring_dma);
+#endif
 
 	if (macb_is_gem(macb)) {
 		/* Initialize DMA properties */
@@ -850,7 +933,7 @@ static int _macb_init(struct macb_device *macb, const char *name)
 	} else {
 	/* choose RMII or MII mode. This depends on the board */
 #ifdef CONFIG_DM_ETH
-#ifdef CONFIG_AT91FAMILY
+#if defined(CONFIG_AT91FAMILY) || defined(CONFIG_ARCH_MSTAR)
 		if (macb->phy_interface == PHY_INTERFACE_MODE_RMII) {
 			macb_writel(macb, USRIO,
 				    MACB_BIT(RMII) | MACB_BIT(CLKEN));
@@ -858,20 +941,22 @@ static int _macb_init(struct macb_device *macb, const char *name)
 			macb_writel(macb, USRIO, MACB_BIT(CLKEN));
 		}
 #else
-		if (macb->phy_interface == PHY_INTERFACE_MODE_RMII)
+		if (macb->phy_interface == PHY_INTERFACE_MODE_RMII){
 			macb_writel(macb, USRIO, 0);
-		else
+		}
+		else {
 			macb_writel(macb, USRIO, MACB_BIT(MII));
+		}
 #endif
 #else
 #ifdef CONFIG_RMII
-#ifdef CONFIG_AT91FAMILY
+#if defined(CONFIG_AT91FAMILY) || defined(CONFIG_ARCH_MSTAR)
 	macb_writel(macb, USRIO, MACB_BIT(RMII) | MACB_BIT(CLKEN));
 #else
 	macb_writel(macb, USRIO, 0);
 #endif
 #else
-#ifdef CONFIG_AT91FAMILY
+#if defined(CONFIG_AT91FAMILY) || defined(CONFIG_ARCH_MSTAR);
 	macb_writel(macb, USRIO, MACB_BIT(CLKEN));
 #else
 	macb_writel(macb, USRIO, MACB_BIT(MII));
@@ -903,10 +988,19 @@ static void _macb_halt(struct macb_device *macb)
 	ncr |= MACB_BIT(THALT);
 	macb_writel(macb, NCR, ncr);
 
+#ifdef CONFIG_ARCH_MSTAR
+	/*
+	 * TGO is called idle here and it is set when the mac isn't doing
+	 * anything.
+	 */
+	while(!(macb_readl(macb, TSR) & MACB_BIT(TGO)))
+	{
+	}
+#else
 	do {
 		tsr = macb_readl(macb, TSR);
 	} while (tsr & MACB_BIT(TGO));
-
+#endif
 	/* Disable TX and RX, and clear statistics */
 	macb_writel(macb, NCR, MACB_BIT(CLRSTAT));
 }
@@ -1010,8 +1104,10 @@ static void _macb_eth_initialize(struct macb_device *macb)
 					     &macb->rx_buffer_dma);
 	macb->rx_ring = dma_alloc_coherent(MACB_RX_DMA_DESC_SIZE,
 					   &macb->rx_ring_dma);
+#ifndef CONFIG_ARCH_MSTAR
 	macb->tx_ring = dma_alloc_coherent(MACB_TX_DMA_DESC_SIZE,
 					   &macb->tx_ring_dma);
+#endif
 	macb->dummy_desc = dma_alloc_coherent(MACB_TX_DUMMY_DMA_DESC_SIZE,
 					   &macb->dummy_desc_dma);
 
@@ -1030,6 +1126,13 @@ static void _macb_eth_initialize(struct macb_device *macb)
 }
 
 #ifndef CONFIG_DM_ETH
+static int macb_send_msc313(struct eth_device *netdev, void *packet, int length)
+{
+	struct macb_device *macb = to_macb(netdev);
+
+	return _macb_send_msc313(macb, netdev->name, packet, length);
+}
+
 static int macb_send(struct eth_device *netdev, void *packet, int length)
 {
 	struct macb_device *macb = to_macb(netdev);
@@ -1101,7 +1204,11 @@ int macb_eth_initialize(int id, void *regs, unsigned int phy_addr)
 
 	netdev->init = macb_init;
 	netdev->halt = macb_halt;
+#ifdef CONFIG_ARCH_MSTAR
+	netdev->send = macb_send_msc313;
+#else
 	netdev->send = macb_send;
+#endif
 	netdev->recv = macb_recv;
 	netdev->write_hwaddr = macb_write_hwaddr;
 
@@ -1134,13 +1241,30 @@ static int macb_start(struct udevice *dev)
 	return _macb_init(dev, dev->name);
 }
 
+#ifdef CONFIG_ARCH_MSTAR
+static int macb_send_msc313(struct udevice *dev, void *packet, int length)
+{
+	struct macb_device *macb = dev_get_priv(dev);
+
+	return _macb_send_msc313(macb, dev->name, packet, length);
+}
+#else
 static int macb_send(struct udevice *dev, void *packet, int length)
 {
 	struct macb_device *macb = dev_get_priv(dev);
 
 	return _macb_send(macb, dev->name, packet, length);
 }
+#endif
 
+#ifdef CONFIG_ARCH_MSTAR
+static int macb_recv_msc313(struct udevice *dev, int flags, uchar **packetp)
+{
+	struct macb_device *macb = dev_get_priv(dev);
+
+	return _macb_recv_msc313(macb, packetp);
+}
+#else
 static int macb_recv(struct udevice *dev, int flags, uchar **packetp)
 {
 	struct macb_device *macb = dev_get_priv(dev);
@@ -1150,6 +1274,7 @@ static int macb_recv(struct udevice *dev, int flags, uchar **packetp)
 
 	return _macb_recv(macb, packetp);
 }
+#endif
 
 static int macb_free_pkt(struct udevice *dev, uchar *packet, int length)
 {
@@ -1177,8 +1302,13 @@ static int macb_write_hwaddr(struct udevice *dev)
 
 static const struct eth_ops macb_eth_ops = {
 	.start	= macb_start,
-	.send	= macb_send,
-	.recv	= macb_recv,
+#ifdef CONFIG_ARCH_MSTAR
+	.send = macb_send_msc313,
+	.recv = macb_recv_msc313,
+#else
+	.send = macb_send,
+	.recv = macb_recv,
+#endif
 	.stop	= macb_stop,
 	.free_pkt	= macb_free_pkt,
 	.write_hwaddr	= macb_write_hwaddr,
@@ -1316,6 +1446,7 @@ static const struct macb_config sifive_config = {
 
 static const struct udevice_id macb_eth_ids[] = {
 	{ .compatible = "cdns,macb" },
+	{ .compatible = "mstar,msc313-emac" },
 	{ .compatible = "cdns,at91sam9260-macb" },
 	{ .compatible = "cdns,sam9x60-macb" },
 	{ .compatible = "atmel,sama5d2-gem" },
