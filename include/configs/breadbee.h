@@ -5,7 +5,7 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#include "../../arch/arm/mach-mstar/include/mstarv7.h"
+#include "mstarv7.h"
 
 #define CONFIG_SYS_LOAD_ADDR 0x22000000
 #define CONFIG_SYS_INIT_SP_ADDR 0xA000FFFC
