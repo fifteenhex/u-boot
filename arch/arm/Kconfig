@@ -1772,6 +1772,8 @@ source "board/woodburn/Kconfig"
 source "board/xilinx/Kconfig"
 source "board/xilinx/zynq/Kconfig"
 source "board/xilinx/zynqmp/Kconfig"
+
+source "board/mstar/mstarv7/Kconfig"
 source "board/thingyjp/breadbee/Kconfig"
 
 source "arch/arm/Kconfig.debug"

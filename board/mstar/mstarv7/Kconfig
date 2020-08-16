@@ -1,0 +1,12 @@
+if TARGET_MSTARV7
+
+config SYS_BOARD
+	default "mstarv7"
+
+config SYS_VENDOR
+	default "mstar"
+
+config SYS_CONFIG_NAME
+        default "mstarv7"
+
+endif
