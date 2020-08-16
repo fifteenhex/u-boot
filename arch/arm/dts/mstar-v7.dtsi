@@ -138,13 +138,31 @@
 				mstar,l3bridge = <&l3bridge>;
 			};
 
+			clkgen_mux_uart: clkgen_mux@2070c4 {
+				compatible = "mstar,clkgen_mux";
+				u-boot,dm-spl;
+				u-boot,dm-preloc;
+				reg = <0x2070c4 0x4>;
+				#clock-cells = <1>;
+				clock-output-names = "uart0", "uart1";
+				shifts = <0>, <8>;
+				mux-shifts = <2>, <10>;
+				mux-widths = <2>, <2>;
+				clocks = <&mpll MSTAR_MPLL_172>,
+					 <&clk_mpll_288_div2>,
+					 <&xtal_div2>;
+			};
+
 			pm_uart: uart@221000 {
 				compatible = "snps,dw-apb-uart";
 				u-boot,dm-spl;
 				u-boot,dm-preloc;
 				reg = <0x221000 0x200>;
 				reg-shift = <3>;
-				clock-frequency = <12000000>;
+				clocks = <&clkgen_mux_uart 0>;
+				assigned-clocks = <&clkgen_mux_uart 0>;
+				assigned-clock-parents = <&mpll MSTAR_MPLL_172>;
+				/*clock-frequency = <12000000>;*/
 			};
 		};
 	};
