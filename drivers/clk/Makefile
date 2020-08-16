@@ -49,3 +49,5 @@ obj-$(CONFIG_STM32H7) += clk_stm32h7.o
 obj-$(CONFIG_CLK_TI_SCI) += clk-ti-sci.o
 obj-$(CONFIG_CLK_VERSAL) += clk_versal.o
 obj-$(CONFIG_CLK_CDCE9XX) += clk-cdce9xx.o
+obj-$(CONFIG_ARCH_MSTAR) += mstar/
+
