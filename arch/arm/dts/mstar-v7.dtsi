@@ -109,6 +109,35 @@
 				reg = <0x204400 0x200>;
 			};
 
+			mpll: mpll@206000 {
+				compatible = "mstar,mpll";
+				u-boot,dm-spl;
+				u-boot,dm-preloc;
+				#clock-cells = <1>;
+				reg = <0x206000 0x200>;
+				clocks = <&xtal>;
+				mstar,pmsleep = <&pmsleep>;
+			};
+
+			miupll: miupll@206200 {
+				compatible = "mstar,miupll";
+				u-boot,dm-spl;
+				u-boot,dm-preloc;
+				reg = <0x206200 0x200>;
+				#clock-cells = <0>;
+				clocks = <&xtal>;
+			};
+
+			cpupll: cpupll@206400 {
+				compatible = "mstar,cpupll";
+				u-boot,dm-spl;
+				u-boot,dm-preloc;
+				reg = <0x206400 0x200>;
+				#clock-cells = <0>;
+				clocks = <&mpll MSTAR_MPLL_432>;
+				mstar,l3bridge = <&l3bridge>;
+			};
+
 			pm_uart: uart@221000 {
 				compatible = "snps,dw-apb-uart";
 				u-boot,dm-spl;
