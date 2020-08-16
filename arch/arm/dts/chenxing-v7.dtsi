@@ -109,6 +109,16 @@
 				reg = <0x204400 0x200>;
 			};
 
+			mpll: mpll@206000 {
+				compatible = "mstar,mpll";
+				u-boot,dm-spl;
+				u-boot,dm-preloc;
+				#clock-cells = <1>;
+				reg = <0x206000 0x200>;
+				clocks = <&xtal>;
+				mstar,pmsleep = <&pmsleep>;
+			};
+
 			pm_uart: uart@221000 {
 				compatible = "snps,dw-apb-uart";
 				u-boot,dm-spl;
