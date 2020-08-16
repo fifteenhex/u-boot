@@ -1,0 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Copyright (c) 2019 thingy.jp.
+ * Author: Daniel Palmer <daniel@0x0f.com>
+ */
+/dts-v1/;
+
+#include "chenxing-v7.dtsi"
+
+/ {
+        compatible = "mstar,chenxing-v7";
+};
