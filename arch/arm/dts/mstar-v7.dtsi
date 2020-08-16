@@ -60,6 +60,13 @@
 				reg = <0x1c00 0x100>;
 			};
 
+			l3bridge: l3bridge@204400 {
+				compatible = "mstar,l3bridge", "syscon";
+				u-boot,dm-spl;
+				u-boot,dm-preloc;
+				reg = <0x204400 0x200>;
+			};
+
 			pm_uart: uart@221000 {
 				compatible = "snps,dw-apb-uart";
 				u-boot,dm-spl;
