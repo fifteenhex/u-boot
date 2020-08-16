@@ -102,6 +102,16 @@
 				reg = <0x1c00 0x100>;
 			};
 
+			miu: miu@202200 {
+				compatible = "mstar,msc313-miu";
+				u-boot,dm-spl;
+				u-boot,dm-preloc;
+				reg = <0x202000 100>,
+				      <0x202400 100>;
+				clock-names = "miupll";
+				clocks = <&miupll>;
+			};
+
 			l3bridge: l3bridge@204400 {
 				compatible = "mstar,l3bridge", "syscon";
 				u-boot,dm-spl;
