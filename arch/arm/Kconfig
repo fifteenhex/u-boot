@@ -2037,6 +2037,8 @@ source "board/xilinx/zynqmp/Kconfig"
 source "board/xilinx/versal/Kconfig"
 source "board/phytium/durian/Kconfig"
 source "board/xen/xenguest_arm64/Kconfig"
+
+source "board/mstar/mstarv7/Kconfig"
 source "board/thingyjp/breadbee/Kconfig"
 
 source "arch/arm/Kconfig.debug"

@@ -13,6 +13,12 @@ config MSTAR_INFINITY3
 config MSTAR_MERCURY5
 	bool "mercury5 family"
 
+choice
+     prompt "Board type"
+
+config TARGET_MSTARV7
+	bool "Generic MStar/SigmaStar v7 boards"
+
 config TARGET_BREADBEE
 	bool "Support breadbee boards"
 	depends on !MSTAR_MERCURY5
@@ -29,6 +35,8 @@ config TARGET_BREADBEE
 	select MMC_MSTAR
 	select CMD_MMC
 	select CMD_FAT
+
+endchoice
 
 endmenu
 
