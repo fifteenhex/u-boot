@@ -118,6 +118,14 @@
 				reg = <0x1c00 0x100>;
 			};
 
+			timer0: timer@6040 {
+				compatible = "mstar,timer";
+				u-boot,dm-spl;
+				u-boot,dm-preloc;
+				reg = <0x6040 0x40>;
+				clocks = <&xtal_div2>;
+			};
+
 			miu: miu@202200 {
 				compatible = "mstar,msc313-miu";
 				u-boot,dm-spl;
