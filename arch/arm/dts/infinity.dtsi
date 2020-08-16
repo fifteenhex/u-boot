@@ -5,3 +5,32 @@
  */
 
 #include "chenxing-v7.dtsi"
+
+&aliases {
+	eth0 = &emac;
+};
+
+&riu {
+	clkgen_mux_emac: clkgen_mux@207108 {
+		compatible = "mstar,clkgen_mux";
+		reg = <0x207108 0x4>;
+		#clock-cells = <1>;
+		clock-output-names = "emac_ahb";
+		shifts = <0>;
+		mux-shifts = <2>;
+		mux-widths = <2>;
+		clocks = <&clk_mpll_288_div2>,
+			 <&mpll MSTAR_MPLL_GATE_MPLL_123>,
+			 <&mpll MSTAR_MPLL_GATE_MPLL_86>;
+			 /* from lan_atop ? */
+	};
+
+	emac: emac@2a2000 {
+		compatible = "mstar,msc313-emac";
+		reg = <0x2a2000 0x4000>;
+		phy-mode = "mii";
+		clocks = <&clkgen_mux_emac 0>;
+		assigned-clocks = <&clkgen_mux_emac 0>;
+		assigned-clock-parents = <&clk_mpll_288_div2>;
+	};
+};
