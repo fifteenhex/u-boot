@@ -869,6 +869,10 @@ endif
 
 ALL-$(CONFIG_ARCH_MEDIATEK) += u-boot-mtk.bin
 
+ifeq ($(CONFIG_ARCH_MSTAR)$(CONFIG_SPL),yy)
+ALL-y += ipl
+endif
+
 # Add optional build target if defined in board/cpu/soc headers
 ifneq ($(CONFIG_BUILD_TARGET),)
 ALL-y += $(CONFIG_BUILD_TARGET:"%"=%)
@@ -1448,6 +1452,14 @@ u-boot-dtb-tegra.bin: u-boot-tegra.bin FORCE
 	$(call if_changed,copy)
 endif  # binman
 endif
+
+ifneq ($(CONFIG_ARCH_MSTAR),)
+ipl: spl/u-boot-spl.bin
+	python3 board/thingyjp/breadbee/fix_ipl_hdr.py \
+		-i spl/u-boot-spl.bin \
+		-o $@
+endif
+
 
 OBJCOPYFLAGS_u-boot-app.efi := $(OBJCOPYFLAGS_EFI)
 u-boot-app.efi: u-boot FORCE
