@@ -10,3 +10,7 @@
 / {
 	compatible = "mstar,mercury5", "mstar,chenxing-v7";
 };
+
+&miu {
+	compatible = "mstar,ssc8336-miu";
+};
