@@ -990,7 +990,8 @@ dtb-$(CONFIG_TARGET_PRESIDIO_ASIC) += ca-presidio-engboard.dtb
 dtb-$(CONFIG_ARCH_MSTAR) += chenxing-v7.dtb \
 			    infinity1.dtb \
 			    infinity3.dtb \
-			    infinity6.dtb
+			    infinity6.dtb \
+			    mercury5.dtb
 
 targets += $(dtb-y)
 
