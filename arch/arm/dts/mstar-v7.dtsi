@@ -53,6 +53,13 @@
 			u-boot,dm-spl;
 			u-boot,dm-preloc;
 
+			pmsleep: syscon@1c00 {
+				compatible = "mstar,msc313-pmsleep", "syscon";
+				u-boot,dm-spl;
+				u-boot,dm-preloc;
+				reg = <0x1c00 0x100>;
+			};
+
 			pm_uart: uart@221000 {
 				compatible = "snps,dw-apb-uart";
 				u-boot,dm-spl;
