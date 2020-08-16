@@ -452,4 +452,7 @@ config MXC_SPI
 	  Enable the MXC SPI controller driver. This driver can be used
 	  on various i.MX SoCs such as i.MX31/35/51/6/7.
 
+config MSTAR_MSC313SPINOR
+	bool "Driver for MStar SPI nor controller"
+	
 endif # menu "SPI Support"
