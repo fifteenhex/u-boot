@@ -781,7 +781,10 @@ dtb-$(CONFIG_TARGET_VEXPRESS_CA5X2) += vexpress-v2p-ca5s.dtb
 dtb-$(CONFIG_TARGET_VEXPRESS_CA9X4) += vexpress-v2p-ca9.dtb
 dtb-$(CONFIG_TARGET_VEXPRESS_CA15_TC2) += vexpress-v2p-ca15_a7.dtb
 
-dtb-$(CONFIG_ARCH_MSTAR) += chenxing-v7.dtb
+dtb-$(CONFIG_ARCH_MSTAR) += chenxing-v7.dtb \
+			    infinity1.dtb \
+			    infinity3.dtb \
+			    infinity6.dtb
 
 targets += $(dtb-y)
 
