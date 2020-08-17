@@ -553,6 +553,9 @@ int phy_init(void)
 #ifdef CONFIG_PHY_MSCC
 	phy_mscc_init();
 #endif
+#ifdef CONFIG_PHY_MSTAR
+	phy_mstar_init();
+#endif
 #ifdef CONFIG_PHY_FIXED
 	phy_fixed_init();
 #endif
@@ -1050,6 +1053,11 @@ struct phy_device *phy_connect(struct mii_dev *bus, int addr,
 #ifdef CONFIG_PHY_XILINX_GMII2RGMII
 	if (!phydev)
 		phydev = phy_connect_gmii2rgmii(bus, dev, interface);
+#endif
+
+#ifdef CONFIG_PHY_MSTAR
+	if (!phydev)
+		phydev = phy_device_create(bus, 0, MSC313E_PHY_ID, false, interface);
 #endif
 
 	if (!phydev)
