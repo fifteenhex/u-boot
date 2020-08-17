@@ -23,7 +23,8 @@ struct udevice;
 
 #define PHY_FIXED_ID		0xa5a55a5a
 #define PHY_NCSI_ID            0xbeefcafe
-
+#define MSC313_PHY_ID   0xdeadbeef
+#define MSC313E_PHY_ID  0xdeadb33f
 /*
  * There is no actual id for this.
  * This is just a dummy id for gmii2rgmmi converter.
@@ -508,6 +509,7 @@ int phy_ti_init(void);
 int phy_vitesse_init(void);
 int phy_xilinx_init(void);
 int phy_mscc_init(void);
+int phy_mstar_init(void);
 int phy_fixed_init(void);
 int phy_ncsi_init(void);
 int phy_xilinx_gmii2rgmii_init(void);
