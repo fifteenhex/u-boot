@@ -1,5 +1,5 @@
 config PINCTRL_MSTAR
 	bool "MStar/SigmaStar pinctrl driver"
-	depends on ARCH_MSTAR && PINCTRL_FULL
+	depends on ARCH_MSTARV7 && PINCTRL_FULL
 	select DEVRES
 

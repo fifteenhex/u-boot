@@ -36,6 +36,8 @@ config TARGET_BREADBEE
 	select MMC_MSTAR
 	select CMD_MMC
 	select CMD_FAT
+	select PINCTRL
+	select PINCTRL_MSTAR
 
 endchoice
 
