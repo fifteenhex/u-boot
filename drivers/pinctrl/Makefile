@@ -20,6 +20,7 @@ obj-$(CONFIG_PINCTRL_EXYNOS)	+= exynos/
 obj-$(CONFIG_PINCTRL_MESON)	+= meson/
 obj-$(CONFIG_PINCTRL_MTK)	+= mediatek/
 obj-$(CONFIG_PINCTRL_MSCC)	+= mscc/
+obj-$(CONFIG_PINCTRL_MSTAR)	+= mstar/
 obj-$(CONFIG_ARCH_MVEBU)	+= mvebu/
 obj-$(CONFIG_ARCH_NEXELL)	+= nexell/
 obj-$(CONFIG_PINCTRL_SINGLE)	+= pinctrl-single.o
