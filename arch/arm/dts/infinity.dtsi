@@ -81,6 +81,8 @@
 	emac: emac@2a2000 {
 		compatible = "mstar,msc313-emac";
 		reg = <0x2a2000 0x4000>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&emac_pins>;
 		phy-mode = "mii";
 		clocks = <&clkgen_mux_emac 0>;
 		assigned-clocks = <&clkgen_mux_emac 0>;
