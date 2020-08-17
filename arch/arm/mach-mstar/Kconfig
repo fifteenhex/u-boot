@@ -29,6 +29,7 @@ config TARGET_BREADBEE
 	select CMD_DHCP
 	select NET_RANDOM_ETHADDR
 	select MII
+	select PHY_MSTAR
 	select REGMAP
 	select MMC
 	select DM_MMC
