@@ -970,6 +970,10 @@ ifeq ($(CONFIG_SPL),)
 INPUTS-$(CONFIG_ARCH_MEDIATEK) += u-boot-mtk.bin
 endif
 
+ifeq ($(CONFIG_ARCH_MSTARV7)$(CONFIG_SPL),yy)
+INPUTS-$(CONFIG_ARCH_MSTARV7) += ipl
+endif
+
 # Add optional build target if defined in board/cpu/soc headers
 ifneq ($(CONFIG_BUILD_TARGET),)
 INPUTS-y += $(CONFIG_BUILD_TARGET:"%"=%)
@@ -1641,6 +1645,13 @@ u-boot-x86-reset16.bin: u-boot FORCE
 	$(call if_changed,objcopy)
 
 endif # CONFIG_X86
+
+ifneq ($(CONFIG_ARCH_MSTARV7),)
+ipl: spl/u-boot-spl.bin
+	python3 arch/arm/mach-mstar/fix_ipl_hdr.py \
+		-i spl/u-boot-spl.bin \
+		-o $@
+endif
 
 OBJCOPYFLAGS_u-boot-app.efi := $(OBJCOPYFLAGS_EFI)
 u-boot-app.efi: u-boot FORCE
