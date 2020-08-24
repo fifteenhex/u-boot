@@ -6,6 +6,9 @@
  */
 
 #include <asm/io.h>
+#include <linux/delay.h>
+#include <linux/bitops.h>
+
 #include "mstarv7.h"
 
 #ifndef BOARD_THINGYJP_BREADBEE_CHENXINGV7_H_

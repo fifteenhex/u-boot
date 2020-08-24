@@ -7,6 +7,7 @@
 #include <asm/io.h>
 #include <linux/iopoll.h>
 #include <linux/ioport.h>
+#include <log.h>
 
 #define REG_PASSWORD				0x0
 #define VAL_PASSWORD_UNLOCK			0xAAAA

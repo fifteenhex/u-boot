@@ -4,8 +4,8 @@
 #include <dm.h>
 #include <clk.h>
 #include <clk-uclass.h>
-#include <chenxingv7.h>
 #include <regmap.h>
+#include <chenxingv7.h>
 
 #define MAYBEPLL1_04			0x4
 #define MAYBEPLL1_08			0x8

@@ -11,7 +11,7 @@
 #define CONFIG_SYS_INIT_SP_ADDR 0xA000FFFC
 #define CONFIG_SYS_UBOOT_BASE 0 // for spl_nor
 
-#define CONFIG_SYS_SPI_U_BOOT_OFFS 0x20000
+//#define CONFIG_SYS_SPI_U_BOOT_OFFS 0x20000
 
 #define CONFIG_SYS_SDRAM_BASE	0x20000000
 
@@ -29,9 +29,6 @@
 #define CONFIG_SPL_BSS_MAX_SIZE		0x4000
 
 #define CONFIG_SYS_HZ_CLOCK 6000000
-#define CONFIG_ENV_SIZE			0x2000
-#define CONFIG_ENV_OFFSET		0x2000 // 8KB into the rom partition, just in case we need to put something at the start
-#define CONFIG_ENV_SECT_SIZE	4096
 
 #define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION	1
 #define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME	"u-boot.img"

@@ -45,6 +45,18 @@ endmenu
 
 if ARCH_MSTAR
 
+config ENV_SIZE
+	default 0x2000
+
+config ENV_OFFSET
+	default 0x2000
+
+config ENV_SECT_SIZE
+	default 4096
+
+config SYS_SPI_U_BOOT_OFFS
+	default 0x20000
+
 config SPL_LDSCRIPT
 	default "arch/arm/mach-mstar/u-boot-spl.lds"
 

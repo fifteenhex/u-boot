@@ -4,9 +4,9 @@
 #include <dm.h>
 #include <clk.h>
 #include <clk-uclass.h>
-#include <chenxingv7.h>
 #include <regmap.h>
 #include <syscon.h>
+#include <chenxingv7.h>
 
 #define MAYBEPLL_04			0x04
 

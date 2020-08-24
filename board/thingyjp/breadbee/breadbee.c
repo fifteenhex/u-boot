@@ -1,18 +1,20 @@
+#include <asm/u-boot.h>
 #include <common.h>
+#include <linux/libfdt.h>
 #include <spl.h>
-#include <environment.h>
+#include <env.h>
 #include <u-boot/crc.h>
 #include <debug_uart.h>
 #include <asm/io.h>
 #include <dm.h>
 #include <clk.h>
-
+#include <init.h>
 #include <ipl.h>
-
-#include "chenxingv7.h"
+#include <image.h>
 #include "clk.h"
 #include "emac.h"
 #include "utmi.h"
+#include "chenxingv7.h"
 
 
 /* check that some required config options are selected */
@@ -329,7 +331,7 @@ int board_late_init(void){
 }
 
 #ifndef CONFIG_SPL_BUILD
-int ft_board_setup(void *blob, bd_t *bd)
+int ft_board_setup(void *blob, struct bd_info *bd)
 {
 	int i,j;
 	uint8_t* didreg = (uint8_t*) DID;
