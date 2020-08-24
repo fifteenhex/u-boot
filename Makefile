@@ -933,6 +933,10 @@ ifeq ($(CONFIG_SPL),)
 INPUTS-$(CONFIG_ARCH_MEDIATEK) += u-boot-mtk.bin
 endif
 
+ifeq ($(CONFIG_ARCH_MSTAR)$(CONFIG_SPL),yy)
+ALL-y += ipl
+endif
+
 # Add optional build target if defined in board/cpu/soc headers
 ifneq ($(CONFIG_BUILD_TARGET),)
 INPUTS-y += $(CONFIG_BUILD_TARGET:"%"=%)
@@ -1631,6 +1635,13 @@ ifeq ($(CONFIG_ARM64),y)
 u-boot-sunxi-with-spl.bin: spl/sunxi-spl.bin u-boot.itb FORCE
 	$(call if_changed,cat)
 endif
+endif
+
+ifneq ($(CONFIG_ARCH_MSTAR),)
+ipl: spl/u-boot-spl.bin
+	python3 board/thingyjp/breadbee/fix_ipl_hdr.py \
+		-i spl/u-boot-spl.bin \
+		-o $@
 endif
 
 OBJCOPYFLAGS_u-boot-app.efi := $(OBJCOPYFLAGS_EFI)
