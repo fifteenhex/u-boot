@@ -4,7 +4,7 @@
  * Author: Daniel Palmer <daniel@0x0f.com>
  */
 
-#include "chenxing-v7.dtsi"
+#include "mstar-v7.dtsi"
 
 &aliases {
 	eth0 = &emac;

@@ -11,9 +11,9 @@ CONFIG_OF_LIBFDT_OVERLAY=y
 CONFIG_OF_BOARD_SETUP=y
 
 # control dtb
-CONFIG_DEFAULT_DEVICE_TREE="chenxing-v7"
+CONFIG_DEFAULT_DEVICE_TREE="mstar-v7"
 CONFIG_MULTI_DTB_FIT=y
-CONFIG_OF_LIST="chenxing-v7 infinity1 infinity3"
+CONFIG_OF_LIST="mstar-v7 infinity1 infinity3"
 CONFIG_DTB_RESELECT=y
 
 #env

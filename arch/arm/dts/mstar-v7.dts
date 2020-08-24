@@ -5,7 +5,7 @@
  */
 /dts-v1/;
 
-#include "chenxing-v7.dtsi"
+#include "mstar-v7.dtsi"
 
 / {
         compatible = "mstar,chenxing-v7";

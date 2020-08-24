@@ -5,7 +5,7 @@ CONFIG_MSTAR_MERCURY5=y
 # control dtb
 CONFIG_DEFAULT_DEVICE_TREE="mercury5"
 CONFIG_MULTI_DTB_FIT=y
-CONFIG_OF_LIST="chenxing-v7 mercury5"
+CONFIG_OF_LIST="mstar-v7 mercury5"
 
 #env
 CONFIG_ENV_IS_IN_FAT=y
