@@ -36,6 +36,11 @@
 		bus-width = <4>;
 	};
 
+	phyana: syscon@6200 {
+		compatible = "syscon";
+		reg = <0x6200 0x600>;
+	};
+
 	emac: emac@2a2000 {
 		compatible = "mstar,msc313-emac";
 		reg = <0x2a2000 0x4000>;
@@ -43,5 +48,12 @@
 		clocks = <&clkgen_mux_emac 0>;
 		assigned-clocks = <&clkgen_mux_emac 0>;
 		assigned-clock-parents = <&clk_mpll_288_div2>;
+		phy-handle = <&phy>;
+		phy: phy@0 {
+			compatible = "ethernet-phy-idDEAD.BEEF";
+			phy-is-integrated;
+			reg = <0>;
+			mstar,phyana = <&phyana>;
+		};
 	};
 };

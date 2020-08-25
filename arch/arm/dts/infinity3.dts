@@ -11,3 +11,7 @@
 / {
         compatible = "mstar,infinity3", "mstar,chenxing-v7";
 };
+
+&phy {
+	compatible = "ethernet-phy-idDEAD.B33F";
+};
