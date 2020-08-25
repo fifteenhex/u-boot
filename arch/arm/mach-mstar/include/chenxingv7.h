@@ -108,16 +108,6 @@ static void mstar_delay(unsigned long msec)
 #define L3BRIDGE_FLUSH_TRIGGER		BIT(0)
 #define L3BRIDGE_STATUS_DONE		BIT(12)
 
-static void chenxingv7_miu_flush(void)
-{
-	/* toggle the flush miu pipe fire bit */
-	writew(0, L3BRIDGE + L3BRIDGE_14);
-	writew(L3BRIDGE_FLUSH_TRIGGER, L3BRIDGE + L3BRIDGE_14);
-	while (!(readw(L3BRIDGE + L3BRIDGE_40) & L3BRIDGE_STATUS_DONE)) {
-		/* wait for flush to complete */
-	}
-}
-
 #define CLKGEN				0x1f207000
 #define CLKGEN_MIU			0x5c
 #define CLKGEN_MIU_BOOT			0x80

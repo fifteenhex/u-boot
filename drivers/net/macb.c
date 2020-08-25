@@ -53,9 +53,8 @@ DECLARE_GLOBAL_DATA_PTR;
  * by RX_BUFFER_MULTIPLE
  */
 #ifdef CONFIG_ARCH_MSTAR
+#define MACB_RX_BUFFER_SIZE		0x600
 #define MACB_RX_RING_SIZE		6
-#define MACB_RX_FRAME_SIZE		0x600
-#define MACB_RX_BUFFER_SIZE		(MACB_RX_RING_SIZE * MACB_RX_FRAME_SIZE)
 #else
 #define MACB_RX_BUFFER_SIZE		128
 #define MACB_RX_RING_SIZE		32
@@ -430,25 +429,32 @@ static int _macb_recv_msc313(struct macb_device *macb, uchar **packetp){
 	 * constantly running out of buffers but it sort of
 	 * works
 	 */
-	int length = -EAGAIN;
-	int frame, realframe;
+	int length = -EAGAIN, frame, realframe;
 	struct macb_dma_desc *desc;
-	u16 rsr = macb_readl(macb, RSR);
 	void *buffer;
 
-	//doing this actually makes things worse. :D
-	//macb_writel(macb, RSR, rsr | (BIT(2) | BIT(1) | BIT(0)));
-	//if(!(rsr & BIT(1)))
-	//	return -EAGAIN;
+	u32 rsr = macb_readl(macb, RSR);
+
+	macb_writel(macb, RSR, rsr | (MACB_BIT(OVR) | MACB_BIT(BNA) | MACB_BIT(REC)));
+
+	if(rsr & MACB_BIT(OVR))
+		printf("overflow\n");
+
+	if(rsr & MACB_BIT(BNA))
+		printf("buffer not available\n");
+
+	if(!(rsr & MACB_BIT(REC)))
+		goto out;
 
 	macb_invalidate_ring_desc(macb, RX);
+	macb_invalidate_rx_buffer(macb);
 
 	for(frame = 0; frame < MACB_RX_RING_SIZE; frame++){
 		realframe = macb->rx_tail + frame;
 		desc = &macb->rx_ring[realframe % MACB_RX_RING_SIZE];
 		if(desc->addr & MACB_BIT(RX_USED)){
 			length = desc->ctrl & 0x7ff;
-			buffer = macb->rx_buffer + (realframe * MACB_RX_FRAME_SIZE);
+			buffer = macb->rx_buffer + (realframe * macb->rx_buffer_size);
 			memcpy((void *)net_rx_packets[0], buffer, length);
 			*packetp = (void *)net_rx_packets[0];
 			desc->addr &= ~MACB_BIT(RX_USED);
@@ -456,7 +462,10 @@ static int _macb_recv_msc313(struct macb_device *macb, uchar **packetp){
 			break;
 		}
 	}
+
 	macb_flush_ring_desc(macb, RX);
+
+out:
 	return length;
 }
 #else
