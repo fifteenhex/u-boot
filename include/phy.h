@@ -508,6 +508,7 @@ int phy_ti_init(void);
 int phy_vitesse_init(void);
 int phy_xilinx_init(void);
 int phy_mscc_init(void);
+int phy_mstar_init(void);
 int phy_fixed_init(void);
 int phy_ncsi_init(void);
 int phy_xilinx_gmii2rgmii_init(void);
