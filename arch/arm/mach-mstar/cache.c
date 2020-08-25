@@ -12,8 +12,6 @@ static void mstar_miu_flush(void)
 	}
 }
 
-
-
 void v7_outer_cache_flush_all()
 {
 	mstar_miu_flush();
@@ -23,4 +21,3 @@ void v7_outer_cache_flush_range(u32 start, u32 end)
 {
 	mstar_miu_flush();
 }
-

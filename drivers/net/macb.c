@@ -329,11 +329,12 @@ static int _macb_send_msc313(struct macb_device *macb, const char *name, void *p
 	paddr = dma_map_single(packet, length, DMA_TO_DEVICE);
 
 	/* make sure the packet is actually in DRAM */
-	barrier();
 	flush_dcache_all();
+	barrier();
 
 	macb_writel(macb, TAR, paddr);
 	macb_writel(macb, TCR, length);
+	barrier();
 
 	/* wait for the transmitter to finish */
 	while(!(macb_readl(macb, TSR) & MACB_BIT(RM9200_BNQ))){
@@ -396,6 +397,58 @@ static int _macb_send(struct macb_device *macb, const char *name, void *packet,
 }
 #endif
 
+#ifdef CONFIG_ARCH_MSTAR
+static int _macb_recv_msc313(struct macb_device *macb, uchar **packetp){
+	/*
+	 * The MSC313 receiver is a much simpler beast than
+	 * newer macbs. This isn't very fast because we are
+	 * constantly running out of buffers but it sort of
+	 * works
+	 */
+	int length = -EAGAIN, i;
+	struct macb_dma_desc *desc;
+	void *buffer;
+
+#if 0
+	u32 mask = MACB_BIT(OVR) | MACB_BIT(BNA) | MACB_BIT(REC);
+	u32 rsr = macb_readl(macb, RSR);
+
+	macb_writel(macb, RSR, rsr | mask);
+
+	if(rsr & MACB_BIT(OVR))
+		printf("overflow\n");
+
+	if(rsr & MACB_BIT(BNA))
+		printf("buffer not available\n");
+
+	if(!(rsr & mask)){
+		goto out;
+	}
+#endif
+
+	macb_invalidate_ring_desc(macb, RX);
+	macb_invalidate_rx_buffer(macb);
+	barrier();
+
+	for(i = 0; i < MACB_RX_RING_SIZE; i++, macb->rx_tail = ++macb->rx_tail % MACB_RX_RING_SIZE){
+		desc = &macb->rx_ring[macb->rx_tail];
+		if(desc->addr & MACB_BIT(RX_USED)){
+			length = desc->ctrl & 0x7ff;
+			buffer = macb->rx_buffer + (macb->rx_buffer_size * macb->rx_tail);
+			*packetp = (void *)net_rx_packets[0];
+			memcpy(*packetp, buffer, length);
+			barrier();
+			desc->addr &= ~MACB_BIT(RX_USED);
+			macb_flush_ring_desc(macb, RX);
+			barrier();
+			break;
+		}
+	}
+
+out:
+	return length;
+}
+#else
 static void reclaim_rx_buffers(struct macb_device *macb,
 			       unsigned int new_tail)
 {
@@ -421,54 +474,6 @@ static void reclaim_rx_buffers(struct macb_device *macb,
 	macb->rx_tail = new_tail;
 }
 
-#ifdef CONFIG_ARCH_MSTAR
-static int _macb_recv_msc313(struct macb_device *macb, uchar **packetp){
-	/*
-	 * The MSC313 receiver is a much simpler beast than
-	 * newer macbs. This isn't very fast because we are
-	 * constantly running out of buffers but it sort of
-	 * works
-	 */
-	int length = -EAGAIN, frame, realframe;
-	struct macb_dma_desc *desc;
-	void *buffer;
-
-	u32 rsr = macb_readl(macb, RSR);
-
-	macb_writel(macb, RSR, rsr | (MACB_BIT(OVR) | MACB_BIT(BNA) | MACB_BIT(REC)));
-
-	if(rsr & MACB_BIT(OVR))
-		printf("overflow\n");
-
-	if(rsr & MACB_BIT(BNA))
-		printf("buffer not available\n");
-
-	if(!(rsr & MACB_BIT(REC)))
-		goto out;
-
-	macb_invalidate_ring_desc(macb, RX);
-	macb_invalidate_rx_buffer(macb);
-
-	for(frame = 0; frame < MACB_RX_RING_SIZE; frame++){
-		realframe = macb->rx_tail + frame;
-		desc = &macb->rx_ring[realframe % MACB_RX_RING_SIZE];
-		if(desc->addr & MACB_BIT(RX_USED)){
-			length = desc->ctrl & 0x7ff;
-			buffer = macb->rx_buffer + (realframe * macb->rx_buffer_size);
-			memcpy((void *)net_rx_packets[0], buffer, length);
-			*packetp = (void *)net_rx_packets[0];
-			desc->addr &= ~MACB_BIT(RX_USED);
-			macb->rx_tail = realframe + 1;
-			break;
-		}
-	}
-
-	macb_flush_ring_desc(macb, RX);
-
-out:
-	return length;
-}
-#else
 static int _macb_recv(struct macb_device *macb, uchar **packetp)
 {
 	unsigned int next_rx_tail = macb->next_rx_tail;
@@ -1287,10 +1292,11 @@ static int macb_recv(struct udevice *dev, int flags, uchar **packetp)
 
 static int macb_free_pkt(struct udevice *dev, uchar *packet, int length)
 {
+#ifndef CONFIG_ARCH_MSTAR
 	struct macb_device *macb = dev_get_priv(dev);
 
 	reclaim_rx_buffers(macb, macb->next_rx_tail);
-
+#endif
 	return 0;
 }
 
