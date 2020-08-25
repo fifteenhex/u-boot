@@ -25,6 +25,7 @@ config TARGET_BREADBEE
 	select MSTAR_INFINITY1
 	select MSTAR_INFINITY3
 	select DM_ETH
+	select CMD_MII
 	select MACB
 	select CMD_DHCP
 	select NET_RANDOM_ETHADDR

@@ -24,8 +24,6 @@ int mstar_phy_probe(struct phy_device *phydev)
 	int ofnode = phydev->addr;
 	u32 val;
 
-	printf("yo!\n");
-
 	priv = malloc(sizeof(*priv));
 	if (!priv)
 		return -ENOMEM;
