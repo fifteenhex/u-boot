@@ -8,7 +8,7 @@
 #include <dm.h>
 #include <log.h>
 #include <linux/delay.h>
-
+#include <hexdump.h>
 /*
  * The u-boot networking stack is a little weird.  It seems like the
  * networking core allocates receive buffers up front without any
@@ -54,7 +54,7 @@ DECLARE_GLOBAL_DATA_PTR;
  */
 #ifdef CONFIG_ARCH_MSTAR
 #define MACB_RX_BUFFER_SIZE		0x600
-#define MACB_RX_RING_SIZE		6
+#define MACB_RX_RING_SIZE		8
 #else
 #define MACB_RX_BUFFER_SIZE		128
 #define MACB_RX_RING_SIZE		32
@@ -321,23 +321,23 @@ static inline void macb_invalidate_rx_buffer(struct macb_device *macb)
 static int _macb_send_msc313(struct macb_device *macb, const char *name, void *packet,
 		      int length){
 	unsigned long paddr;
+	u32 reg;
 
 	/* wait for it to be safe to queue the packet, probably not actually needed...*/
-	while(!(macb_readl(macb, TSR) & MACB_BIT(RM9200_BNQ))){
+	while(!((reg = macb_readl(macb, TSR)) & MACB_BIT(RM9200_BNQ))){
 	}
+	macb_writel(macb, TSR, reg |= MACB_BIT(COMP));
 
 	paddr = dma_map_single(packet, length, DMA_TO_DEVICE);
-
 	/* make sure the packet is actually in DRAM */
+	macb_writel(macb, TAR, paddr);
 	flush_dcache_all();
 	barrier();
-
-	macb_writel(macb, TAR, paddr);
 	macb_writel(macb, TCR, length);
 	barrier();
 
 	/* wait for the transmitter to finish */
-	while(!(macb_readl(macb, TSR) & MACB_BIT(RM9200_BNQ))){
+	while(!((reg = macb_readl(macb, TSR)) & MACB_BIT(COMP))){
 	}
 
 	dma_unmap_single(paddr, length, DMA_TO_DEVICE);
@@ -405,11 +405,10 @@ static int _macb_recv_msc313(struct macb_device *macb, uchar **packetp){
 	 * constantly running out of buffers but it sort of
 	 * works
 	 */
-	int length = -EAGAIN, i;
+	int length = -EAGAIN, i, frame;
 	struct macb_dma_desc *desc;
 	void *buffer;
 
-#if 0
 	u32 mask = MACB_BIT(OVR) | MACB_BIT(BNA) | MACB_BIT(REC);
 	u32 rsr = macb_readl(macb, RSR);
 
@@ -421,6 +420,7 @@ static int _macb_recv_msc313(struct macb_device *macb, uchar **packetp){
 	if(rsr & MACB_BIT(BNA))
 		printf("buffer not available\n");
 
+#if 0
 	if(!(rsr & mask)){
 		goto out;
 	}
@@ -430,18 +430,20 @@ static int _macb_recv_msc313(struct macb_device *macb, uchar **packetp){
 	macb_invalidate_rx_buffer(macb);
 	barrier();
 
-	for(i = 0; i < MACB_RX_RING_SIZE; i++, macb->rx_tail = ++macb->rx_tail % MACB_RX_RING_SIZE){
-		desc = &macb->rx_ring[macb->rx_tail];
+	for(i = 0; i < MACB_RX_RING_SIZE; i++){
+		frame = macb->rx_tail;
+		macb->rx_tail = (macb->rx_tail + 1) % MACB_RX_RING_SIZE;
+		desc = &macb->rx_ring[frame];
 		if(desc->addr & MACB_BIT(RX_USED)){
 			length = desc->ctrl & 0x7ff;
-			buffer = macb->rx_buffer + (macb->rx_buffer_size * macb->rx_tail);
+			buffer = macb->rx_buffer + (macb->rx_buffer_size * frame);
 			*packetp = (void *)net_rx_packets[0];
 			memcpy(*packetp, buffer, length);
 			barrier();
 			desc->addr &= ~MACB_BIT(RX_USED);
 			macb_flush_ring_desc(macb, RX);
 			barrier();
-			break;
+			goto out;
 		}
 	}
 

@@ -1198,6 +1198,7 @@ config ARCH_MSTAR
 	select BOARD_LATE_INIT
 	select DTB_RESELECT
 	imply SUPPORT_SPL
+	select SYS_THUMB_BUILD
 
 config ARCH_TEGRA
 	bool "NVIDIA Tegra"
