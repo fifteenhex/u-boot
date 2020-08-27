@@ -26,7 +26,7 @@ struct mstar_mmc_platdata {
 
 struct mstar_mmc_priv {
 	struct regmap	*regmap;
-	struct clk	*clk;
+	struct clk	clk;
 
 	// io control
 	struct regmap_field *clk_en;
