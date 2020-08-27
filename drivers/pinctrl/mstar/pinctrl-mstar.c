@@ -23,7 +23,7 @@ static int mstar_pinctrl_get_pin_muxing(struct udevice *dev,
 					char *buf,
 					int size)
 {
-
+	return 0;
 }
 
 int mstar_pinctrl_probe(struct udevice *dev)
