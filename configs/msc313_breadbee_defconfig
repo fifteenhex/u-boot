@@ -13,7 +13,7 @@ CONFIG_OF_BOARD_SETUP=y
 # control dtb
 CONFIG_DEFAULT_DEVICE_TREE="mstar-v7"
 CONFIG_MULTI_DTB_FIT=y
-CONFIG_OF_LIST="mstar-v7 infinity1 infinity3"
+CONFIG_OF_LIST="mstar-v7 infinity-msc313 infinity3-msc313e"
 CONFIG_DTB_RESELECT=y
 
 #env

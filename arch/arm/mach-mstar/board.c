@@ -44,3 +44,37 @@ void board_boot_order(u32 *spl_boot_list)
 	spl_boot_list[index++] = BOOT_DEVICE_NONE;
 }
 #endif
+
+int board_fit_config_name_match(const char *name)
+{
+	switch(mstar_chiptype()){
+		case CHIPTYPE_MSC313:
+			if(!strcmp(name, COMPAT_I1_MSC313))
+				return 0;
+			break;
+		case CHIPTYPE_MSC313E:
+			if(!strcmp(name, COMPAT_I3_MSC313E)){
+				return 0;
+			}
+			break;
+		case CHIPTYPE_MSC313DC:
+			if(!strcmp(name, COMPAT_I3)){
+				return 0;
+			}
+			break;
+		case CHIPTYPE_SSC325:
+			if(!strcmp(name, COMPAT_I6))
+				return 0;
+			break;
+		case CHIPTYPE_SSC8336:
+		case CHIPTYPE_SSC8336N:
+			if(!strcmp(name, COMPAT_M5))
+				return 0;
+			break;
+	}
+
+	//if(!strcmp(name, COMPAT_GENERIC))
+	//	return 0;
+
+	return -1;
+}
