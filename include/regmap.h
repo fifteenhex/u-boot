@@ -375,12 +375,12 @@ struct regmap_field {
 	uint32_t mask;
 };
 
-static int regmap_field_write(struct regmap_field *field, uint value)
+static inline int regmap_field_write(struct regmap_field *field, uint value)
 {
 	return regmap_update_bits(field->regmap, field->offset, field->mask, value << field->shift);
 }
 
-static int regmap_field_read(struct regmap_field *field, uint* value)
+static inline int regmap_field_read(struct regmap_field *field, uint* value)
 {
 	uint temp;
 	int ret;
@@ -391,7 +391,7 @@ static int regmap_field_read(struct regmap_field *field, uint* value)
 	return ret;
 }
 
-static struct regmap_field* regmap_field_alloc(struct regmap *regmap, struct reg_field field)
+static inline struct regmap_field* regmap_field_alloc(struct regmap *regmap, struct reg_field field)
 {
 	struct regmap_field* f;
 	f = malloc(sizeof(*f));
