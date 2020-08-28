@@ -11,6 +11,19 @@
 	mmc0 = &sdio;
 };
 
+&clocks {
+	clk_eth_buff: eth_buff {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <1>;
+	};
+	clk_rmii_buff: rmii_buff {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <1>;
+	};
+};
+
 &riu {
 	clkgen_mux_emac: clkgen_mux@207108 {
 		compatible = "mstar,clkgen_mux";
@@ -34,6 +47,8 @@
 		shifts = <0>, <8>;
 		mux-shifts = <2>, <10>;
 		mux-widths = <2>, <2>;
+		clocks = <&clk_eth_buff>,
+			 <&clk_rmii_buff>;
 	};
 
 	clkgen_special_emac_tx: clkgen_special@22668c {
@@ -44,6 +59,8 @@
 		shifts = <0>, <8>;
 		mux-shifts = <2>, <10>;
 		mux-widths = <2>, <2>;
+		clocks = <&clk_eth_buff>,
+			 <&clk_rmii_buff>;
 	};
 
 	sdio: sdio@282000 {
@@ -76,4 +93,8 @@
 			mstar,phyana = <&phyana>;
 		};
 	};
+};
+
+&pinctrl {
+	compatible = "mstar,msc313-pinctrl";
 };

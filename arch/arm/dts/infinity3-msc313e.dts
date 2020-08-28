@@ -6,10 +6,10 @@
 
 /dts-v1/;
 
-#include "infinity.dtsi"
+#include "infinity3.dtsi"
 
 / {
-        compatible = "mstar,infinity3", "mstar,chenxing-v7";
+        compatible = "mstar,infinity3-msc313e", "mstar,infinity3", "mstar,mstar-v7";
 };
 
 &phy {

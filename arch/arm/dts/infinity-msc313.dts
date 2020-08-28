@@ -9,5 +9,5 @@
 #include "infinity.dtsi"
 
 / {
-        compatible = "mstar,infinity1", "mstar,chenxing-v7";
+        compatible = "mstar,infinity-msc313", "mstar,infinity", "mstar,mstar-v7";
 };
