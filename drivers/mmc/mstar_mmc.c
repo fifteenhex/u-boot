@@ -12,6 +12,7 @@
 #include <asm/io.h>
 #include <regmap.h>
 #include <clk.h>
+#include <cache.h>
 
 #ifdef CONFIG_HEXDUMP
 #include <hexdump.h>
