@@ -12,7 +12,6 @@
 #include <ipl.h>
 #include <image.h>
 #include "clk.h"
-#include "emac.h"
 #include "utmi.h"
 #include "chenxingv7.h"
 
@@ -45,15 +44,6 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 #ifdef CONFIG_SPL_BUILD
-#define GETU16(b,r)		(*((u16*)(b + r)))
-#define SETU16(b, r, v)	(*((u16*)(b + r)) = v)
-
-static void emacclocks(void){
-	SETU16(CLKGEN, 0x108, 0);
-	SETU16(SCCLKGEN, 0x88, 0x04);
-	SETU16(SCCLKGEN, 0x8c, 0x04);
-}
-
 static void m5_misc(void)
 {
 	// the m5 ipl does this before DRAM setup
@@ -174,24 +164,6 @@ void board_init_f(ulong dummy)
 	mstar_utmi_setfinetuning();
 
 	mstar_clockfixup();
-
-/*
-	switch(chiptype){
-		case CHIPTYPE_MSC313:
-			emacclocks();
-			emac_patches();
-			emacphypowerup_msc313();
-			break;
-		case CHIPTYPE_MSC313E:
-		case CHIPTYPE_MSC313DC:
-			emacclocks();
-			emac_patches();
-			emacphypowerup_msc313e();
-			break;
-		default:
-			break;
-	}
-*/
 }
 
 static struct image_header hdr;
