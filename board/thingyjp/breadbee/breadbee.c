@@ -44,18 +44,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-int board_init(void)
-{
-	mstar_bump_cpufreq();
-
-	// this is needed stop FIQ interrupts bypassing the GIC
-	// mstar had this in their irqchip driver but I've moved
-	// this here to keep the mess out of view.
-	u32 *gicreg = (u32*)(0x16000000 + 0x2000);
-	*gicreg = 0x1e0;
-	return 0;
-}
-
 #ifdef CONFIG_SPL_BUILD
 #define GETU16(b,r)		(*((u16*)(b + r)))
 #define SETU16(b, r, v)	(*((u16*)(b + r)) = v)
@@ -64,10 +52,6 @@ static void emacclocks(void){
 	SETU16(CLKGEN, 0x108, 0);
 	SETU16(SCCLKGEN, 0x88, 0x04);
 	SETU16(SCCLKGEN, 0x8c, 0x04);
-}
-
-static void emacpinctrl(void){
-	SETU16(PINCTRL, 0x3c, GETU16(PINCTRL, 0x3c) | 1 << 2);
 }
 
 static void m5_misc(void)
@@ -191,16 +175,15 @@ void board_init_f(ulong dummy)
 
 	mstar_clockfixup();
 
+/*
 	switch(chiptype){
 		case CHIPTYPE_MSC313:
-			emacpinctrl();
 			emacclocks();
 			emac_patches();
 			emacphypowerup_msc313();
 			break;
 		case CHIPTYPE_MSC313E:
 		case CHIPTYPE_MSC313DC:
-			emacpinctrl();
 			emacclocks();
 			emac_patches();
 			emacphypowerup_msc313e();
@@ -208,6 +191,7 @@ void board_init_f(ulong dummy)
 		default:
 			break;
 	}
+*/
 }
 
 static struct image_header hdr;

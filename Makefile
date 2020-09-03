@@ -934,7 +934,7 @@ INPUTS-$(CONFIG_ARCH_MEDIATEK) += u-boot-mtk.bin
 endif
 
 ifeq ($(CONFIG_ARCH_MSTAR)$(CONFIG_SPL),yy)
-ALL-y += ipl
+INPUTS-$(CONFIG_ARCH_MSTAR) += ipl
 endif
 
 # Add optional build target if defined in board/cpu/soc headers

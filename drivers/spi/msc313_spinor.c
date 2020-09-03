@@ -145,6 +145,7 @@ static int msc313_spinor_probe(struct udevice *bus)
 
 	priv->regs = (u32 *) plat->reg_base;
 	priv->mem_base = (unsigned long *)plat->mem_base;
+
 	return 0;
 }
 
@@ -161,13 +162,13 @@ static const struct udevice_id msc313_spinor_ids[] = {
 	{ }
 };
 
-U_BOOT_DRIVER(mtk_qspi) = {
-	.name     = "msc313_spinor",
-	.id       = UCLASS_SPI,
-	.of_match = msc313_spinor_ids,
-	.ops      = &msc313_spinor_ops,
-	.ofdata_to_platdata       = msc313_spinor_ofdata_to_platdata,
+U_BOOT_DRIVER(msc313_spinor) = {
+	.name			  = "msc313_spinor",
+	.id			  = UCLASS_SPI,
+	.of_match		  = msc313_spinor_ids,
+	.ops			  = &msc313_spinor_ops,
+	.ofdata_to_platdata	  = msc313_spinor_ofdata_to_platdata,
 	.platdata_auto_alloc_size = sizeof(struct msc313_spinor_platdata),
-	.priv_auto_alloc_size     = sizeof(struct msc313_spinor_priv),
-	.probe    = msc313_spinor_probe,
+	.priv_auto_alloc_size	  = sizeof(struct msc313_spinor_priv),
+	.probe			  = msc313_spinor_probe,
 };

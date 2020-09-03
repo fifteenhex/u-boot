@@ -93,12 +93,15 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			u-boot,dm-spl;
+			u-boot,dm-preloc;
 			reg-names = "reg_base", "mem_base";
-			reg = <0x1f001000 0x400>, <0x14000000 0x2000000>;
+			reg = <0x1f001000 0x400>,
+			      <0x14000000 0x2000000>;
 			spi-half-duplex;
 			spi_flash@0{
 				compatible = "jedec,spi-nor";
 				u-boot,dm-spl;
+				u-boot,dm-preloc;
 				reg = <0>;
 			};
 		};

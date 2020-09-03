@@ -78,3 +78,15 @@ int board_fit_config_name_match(const char *name)
 
 	return -1;
 }
+
+int board_init(void)
+{
+	mstar_bump_cpufreq();
+
+	// this is needed stop FIQ interrupts bypassing the GIC
+	// mstar had this in their irqchip driver but I've moved
+	// this here to keep the mess out of view.
+	u32 *gicreg = (u32*)(0x16000000 + 0x2000);
+	*gicreg = 0x1e0;
+	return 0;
+}
