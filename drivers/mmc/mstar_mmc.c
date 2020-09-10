@@ -13,6 +13,7 @@
 #include <regmap.h>
 #include <clk.h>
 #include <cache.h>
+#include <cpu_func.h>
 
 #ifdef CONFIG_HEXDUMP
 #include <hexdump.h>

@@ -71,6 +71,27 @@ static ulong mstar_mpll_get_rate(struct clk *clk)
 
 static int mstar_mpll_enable(struct clk *clk)
 {
+	struct mstar_mpll_priv *priv = dev_get_priv(clk->dev);
+	uint power;
+
+	regmap_read(priv->regmap, REG_POWER, &power);
+/*	if(power == 0){
+		printf("mpll is already running\n");
+		goto out;
+	}
+*/
+
+	// this might be power control for the pll?
+	regmap_write(priv->pmsleep, PMSLEEP_F4, 0);
+	// vendor code has a delay here
+	mdelay(10);
+
+	// this seems to turn the pll that supplies mpll clocks
+	regmap_write(priv->regmap, REG_POWER, 0);
+	// vendor code has a delay
+	mdelay(10);
+
+out:
 	return 0;
 }
 
@@ -108,16 +129,6 @@ static int mstar_mpll_probe(struct udevice *dev)
 	priv->output_div = regmap_field_alloc(priv->regmap, config2_output_div_first);
 	priv->loop_div_first = regmap_field_alloc(priv->regmap, config1_loop_div_first);
 	priv->loop_div_second = regmap_field_alloc(priv->regmap, config2_loop_div_second);
-
-	// this might be power control for the pll?
-	regmap_write(priv->pmsleep, PMSLEEP_F4, 0);
-	// vendor code has a delay here
-	mdelay(10);
-
-	// this seems to turn the pll that supplies mpll clocks
-	regmap_write(priv->regmap, REG_POWER, 0);
-	// vendor code has a delay
-	mdelay(10);
 
 	// this too
 	uint16_t tmp;

@@ -128,9 +128,6 @@ void board_init_f(ulong dummy)
 {
 	uint32_t cpuid;
 	int chiptype = mstar_chiptype();
-
-
-
 	void* reg;
 
 #ifdef CONFIG_DEBUG_UART

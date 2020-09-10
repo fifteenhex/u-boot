@@ -158,4 +158,7 @@ static inline int mstar_chiptype(void){
 	}
 }
 
+void mstar_bump_cpufreq(void);
+void mstar_clockfixup(void);
+
 #endif /* BOARD_THINGYJP_BREADBEE_CHENXINGV7_H_ */

@@ -3,14 +3,18 @@
  */
 
 #include <common.h>
+#include <asm/u-boot.h>
 #include <spl.h>
-#include <environment.h>
+#include <env.h>
 #include <u-boot/crc.h>
 #include <debug_uart.h>
 #include <asm/io.h>
 #include <dm.h>
 #include <clk.h>
 #include <ipl.h>
+#include <init.h>
+#include <image.h>
+
 #include "chenxingv7.h"
 
 
@@ -41,46 +45,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-int board_init(void)
-{
-	mstar_bump_cpufreq();
-
-	// this is needed stop FIQ interrupts bypassing the GIC
-	// mstar had this in their irqchip driver but I've moved
-	// this here to keep the mess out of view.
-	u32 *gicreg = (u32*)(0x16000000 + 0x2000);
-	*gicreg = 0x1e0;
-	return 0;
-}
-
 #ifdef CONFIG_SPL_BUILD
-void board_boot_order(u32 *spl_boot_list)
-{
-	int index = 0;
-
-	uint16_t bootsource = readw(DID + DID_BOOTSOURCE);
-	switch(mstar_chiptype()){
-		case CHIPTYPE_SSC8336:
-		case CHIPTYPE_SSC8336N:
-			if(bootsource & DID_BOOTSOURCE_M5_SD)
-				printk("will try sd first\n");
-			break;
-	}
-
-#ifdef CONFIG_SPL_MMC_SUPPORT
-	spl_boot_list[index++] = BOOT_DEVICE_MMC1;
-#endif
-
-#ifdef CONFIG_SPL_SPI_FLASH_SUPPORT
-	spl_boot_list[index++] = BOOT_DEVICE_SPI;
-#endif
-
-#ifdef CONFIG_SPL_YMODEM_SUPPORT
-	spl_boot_list[index++] = BOOT_DEVICE_UART;
-#endif
-
-	spl_boot_list[index++] = BOOT_DEVICE_NONE;
-}
 
 static void m5_misc(void)
 {
@@ -166,11 +131,6 @@ void board_init_f(ulong dummy)
 {
 	uint32_t cpuid;
 	int chiptype = mstar_chiptype();
-
-
-
-	void* reg;
-
 #ifdef CONFIG_DEBUG_UART
 	debug_uart_init();
 #endif
@@ -196,6 +156,11 @@ void board_init_f(ulong dummy)
 	miu_init();
 	cpupll_init();
 #endif
+
+	mstar_bump_cpufreq();
+
+	//mstar_utmi_setfinetuning();
+	//mstar_clockfixup();
 }
 
 static struct image_header hdr;
@@ -205,37 +170,6 @@ struct image_header *spl_get_load_buffer(ssize_t offset, size_t size)
 }
 
 #endif // spl
-
-int board_fit_config_name_match(const char *name)
-{
-	switch(mstar_chiptype()){
-		case CHIPTYPE_MSC313:
-			if(!strcmp(name, COMPAT_I1))
-				return 0;
-			break;
-		case CHIPTYPE_MSC313E:
-		case CHIPTYPE_MSC313DC:
-			if(!strcmp(name, COMPAT_I3)){
-				return 0;
-			}
-			break;
-		case CHIPTYPE_SSC325:
-			if(!strcmp(name, COMPAT_I6))
-				return 0;
-			break;
-		case CHIPTYPE_SSC8336:
-		case CHIPTYPE_SSC8336N:
-			if(!strcmp(name, COMPAT_M5))
-				return 0;
-			break;
-	}
-
-	//if(!strcmp(name, COMPAT_GENERIC))
-	//	return 0;
-
-	return -1;
-}
-
 
 int embedded_dtb_select(void)
 {
@@ -249,7 +183,7 @@ int board_late_init(void){
 }
 
 #ifndef CONFIG_SPL_BUILD
-int ft_board_setup(void *blob, bd_t *bd)
+int ft_board_setup(void *blob, struct bd_info *bd)
 {
 	int i,j;
 	uint8_t* didreg = (uint8_t*) DID;

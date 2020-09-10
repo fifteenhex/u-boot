@@ -47,6 +47,7 @@ static int mstar_clkgen_set_parent(struct clk *clk, struct clk *parent)
 	return -EINVAL;
 
 setparent:
+	clk_enable(&priv->parents.clks[clkidx]);
 	priv->parent[clk->id] = &priv->parents.clks[clkidx];
 	regmap_update_bits(priv->regmap, 0, mask, clkidx << muxshift);
 
