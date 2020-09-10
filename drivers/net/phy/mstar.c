@@ -25,11 +25,13 @@ struct mstar_phy_priv {
 #define GETU16(b,r)		(*((u16*)(b + r)))
 #define SETU16(b, r, v)	(*((u16*)(b + r)) = v)
 
+/*
 static void emacclocks(void){
 	SETU16(CLKGEN, 0x108, 0);
 	SETU16(SCCLKGEN, 0x88, 0x04);
 	SETU16(SCCLKGEN, 0x8c, 0x04);
 }
+*/
 
 int mstar_phy_probe(struct phy_device *phydev)
 {
@@ -44,13 +46,13 @@ int mstar_phy_probe(struct phy_device *phydev)
 
 	switch(mstar_chiptype()){
 		case CHIPTYPE_MSC313:
-			emacclocks();
+			//emacclocks();
 			emac_patches();
 			emacphypowerup_msc313();
 			break;
 		case CHIPTYPE_MSC313E:
 		case CHIPTYPE_MSC313DC:
-			emacclocks();
+			//emacclocks();
 			emac_patches();
 			emacphypowerup_msc313e();
 			break;

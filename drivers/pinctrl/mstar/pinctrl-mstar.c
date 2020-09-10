@@ -43,7 +43,7 @@ static const struct mstar_pinctrl_selector selectors_eth[] = {
 static const struct mstar_pinctrl_function msc313_functions[] = {
 	{
 		.name = FUNCTIONNAME_ETH,
-		.reg = REG_JTAG,
+		.reg = REG_ETH,
 		.mask = MASK_ETH,
 		.selectors = selectors_eth,
 		.numselectors = ARRAY_SIZE(selectors_eth),
