@@ -4,6 +4,15 @@ menu "MStar/SigmaStar v7 options"
 config MSTAR_IPL
         bool "u-boot spl is being loaded by the vendor IPL"
 
+config MSTAR_INFINITY1
+	bool "infinity1 family"
+
+config MSTAR_INFINITY3
+	bool "infinity3 family"
+
+config MSTAR_MERCURY5
+	bool "mercury5 family"
+
 endmenu
 
 if ARCH_MSTARV7
