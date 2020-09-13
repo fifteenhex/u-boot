@@ -15,3 +15,7 @@
 &phy {
 	compatible = "ethernet-phy-idDEAD.B33F";
 };
+
+&pinctrl {
+	compatible = "mstar,msc313e-pinctrl";
+};
