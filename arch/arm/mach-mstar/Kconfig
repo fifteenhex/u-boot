@@ -22,6 +22,7 @@ config TARGET_MSTARV7
 config TARGET_BREADBEE
 	bool "Support breadbee boards"
 	depends on !MSTAR_MERCURY5
+	select SPL_DM_SPI
 	select MSTAR_INFINITY1
 	select MSTAR_INFINITY3
 	select DM_ETH

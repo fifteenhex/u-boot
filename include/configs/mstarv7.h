@@ -21,8 +21,8 @@
 #define MSTAR_SRAM_SZ			0x20000 // i3+ seem to have 128KB
 #endif
 
+#define CONFIG_SPL_MAX_SIZE		CONFIG_SPL_SIZE_LIMIT
 
-#define CONFIG_SPL_MAX_SIZE		0xc000	// 48KB seems to be the biggest we can load
 #define CONFIG_SPL_STACK		(MSTAR_SRAM + MSTAR_SRAM_SZ)
 
 #define CONFIG_SPL_BSS_START_ADDR	MSTAR_SRAM + CONFIG_SPL_MAX_SIZE

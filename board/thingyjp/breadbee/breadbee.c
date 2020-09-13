@@ -177,6 +177,49 @@ int embedded_dtb_select(void)
 	return 0;
 }
 
+#ifndef CONFIG_SPL_BUILD
+int eth_setup(void)
+{
+	int i,j;
+	uint8_t* didreg = (uint8_t*) DID;
+	uint8_t mac_addr[6];
+	uint8_t did[6];
+	uint32_t didcrc32;
+	char ethaddr[16];
+
+	for(i = 0; i < 3; i++){
+		for(j = 0; j < 2; j++){
+			did[(i * 2) + j] = *(didreg + ((i * 4) + j));
+		}
+	}
+
+	didcrc32 = crc32(0, did, sizeof(did));
+
+	// stolen from sunxi
+	for (i = 0; i < 4; i++) {
+//		sprintf(ethaddr, "ethernet%d", i);
+//		if (!fdt_get_alias(blob, ethaddr))
+//			continue;
+
+		if (i == 0)
+			strcpy(ethaddr, "ethaddr");
+		else
+			sprintf(ethaddr, "eth%daddr", i);
+
+		if (env_get(ethaddr))
+			continue;
+		mac_addr[0] = 0xbe;
+		mac_addr[1] = 0xe0 | ((didcrc32 >> 28) & 0xf);
+		mac_addr[2] = ((didcrc32 >> 20) & 0xff);
+		mac_addr[3] = ((didcrc32 >> 12) & 0xff);
+		mac_addr[4] = ((didcrc32 >> 4) & 0xff);
+		mac_addr[5] = ((didcrc32 << 4) & 0xf0) | i;
+
+		eth_env_set_enetaddr(ethaddr, mac_addr);
+	}
+	return 0;
+}
+#endif
 
 int board_late_init(void){
 #ifndef CONFIG_SPL_BUILD
@@ -218,50 +261,15 @@ int board_late_init(void){
 			env_set("bb_boardtype", "unknown");
 			break;
 	}
+
+	eth_setup();
+
 #endif
 	return 0;
 }
 
-#ifndef CONFIG_SPL_BUILD
 int ft_board_setup(void *blob, struct bd_info *bd)
 {
-	int i,j;
-	uint8_t* didreg = (uint8_t*) DID;
-	uint8_t mac_addr[6];
-	uint8_t did[6];
-	uint32_t didcrc32;
-	char ethaddr[16];
-
-	for(i = 0; i < 3; i++){
-		for(j = 0; j < 2; j++){
-			did[(i * 2) + j] = *(didreg + ((i * 4) + j));
-		}
-	}
-
-	didcrc32 = crc32(0, did, sizeof(did));
-
-	// stolen from sunxi
-	for (i = 0; i < 4; i++) {
-		sprintf(ethaddr, "ethernet%d", i);
-		if (!fdt_get_alias(blob, ethaddr))
-			continue;
-
-		if (i == 0)
-			strcpy(ethaddr, "ethaddr");
-		else
-			sprintf(ethaddr, "eth%daddr", i);
-
-		if (env_get(ethaddr))
-			continue;
-		mac_addr[0] = 0xbe;
-		mac_addr[1] = 0xe0 | ((didcrc32 >> 28) & 0xf);
-		mac_addr[2] = ((didcrc32 >> 20) & 0xff);
-		mac_addr[3] = ((didcrc32 >> 12) & 0xff);
-		mac_addr[4] = ((didcrc32 >> 4) & 0xff);
-		mac_addr[5] = ((didcrc32 << 4) & 0xf0) | i;
-
-		eth_env_set_enetaddr(ethaddr, mac_addr);
-	}
 	return 0;
 }
-#endif
+
