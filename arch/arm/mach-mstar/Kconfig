@@ -19,6 +19,23 @@ choice
 config TARGET_MSTARV7
 	bool "Generic MStar/SigmaStar v7 boards"
 
+config TARGET_BREADBEE
+	bool "Support breadbee boards"
+	depends on !MSTAR_MERCURY5
+	select MSTAR_INFINITY1
+	select MSTAR_INFINITY3
+	select DM_ETH
+	select MACB
+	select CMD_DHCP
+	select NET_RANDOM_ETHADDR
+	select MII
+	select REGMAP
+	select MMC
+	select DM_MMC
+	select MMC_MSTAR
+	select CMD_MMC
+	select CMD_FAT
+
 endchoice
 
 endmenu
