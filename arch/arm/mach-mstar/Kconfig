@@ -1,0 +1,39 @@
+menu "MStar/SigmaStar v7 options"
+	depends on ARCH_MSTARV7
+
+endmenu
+
+if ARCH_MSTARV7
+
+config NR_DRAM_BANKS
+	default 1
+
+# Set the text base to the bottom of DRAM + 1K before
+# for any headers that might be attached to start of
+# the u-boot image
+config SYS_TEXT_BASE
+	default 0x20001000
+
+# For ubi we need a fair bit of heap
+config SYS_MALLOC_LEN
+	default 0x1000000
+
+config SYS_MALLOC_F_LEN
+	default 0x2000
+
+config DEBUG_UART_BASE
+	default 0x1f221000
+
+config DEBUG_UART_CLOCK
+	default 172000000
+
+config DEBUG_UART_SHIFT
+	default 3
+
+config SPL_SIZE_LIMIT
+	default 0xc000
+
+config SYS_LOAD_ADDR
+	default 0x24000000
+
+endif

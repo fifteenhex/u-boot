@@ -356,6 +356,11 @@ F:	drivers/timer/atmel_tcb_timer.c
 F:	include/dt-bindings/mfd/atmel-flexcom.h
 F:	drivers/timer/mchp-pit64b-timer.c
 
+ARM MSTAR/SIGMASTAR V7
+M:	Daniel Palmer <daniel@thingy.jp>
+S:	Maintained
+F:	arch/arm/mach-mstar/
+
 ARM NEXELL S5P4418
 M:	Stefan Bosch <stefan_b@posteo.net>
 S:	Maintained
