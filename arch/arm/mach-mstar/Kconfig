@@ -8,6 +8,9 @@ if ARCH_MSTARV7
 config NR_DRAM_BANKS
 	default 1
 
+config SPL_LDSCRIPT
+	default "arch/arm/mach-mstar/u-boot-spl.lds"
+
 # Set the text base to the bottom of DRAM + 1K before
 # for any headers that might be attached to start of
 # the u-boot image
