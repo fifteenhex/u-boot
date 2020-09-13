@@ -5,6 +5,9 @@ endmenu
 
 if ARCH_MSTARV7
 
+config SPL_LDSCRIPT
+	default "arch/arm/mach-mstar/u-boot-spl.lds"
+
 config DEBUG_UART_NS16550
 	default y
 
