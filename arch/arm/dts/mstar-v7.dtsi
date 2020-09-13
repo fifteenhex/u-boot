@@ -3,6 +3,8 @@
  * Copyright (c) 2020 thingy.jp.
  * Author: Daniel Palmer <daniel@thingy.jp>
  */
+ 
+#include <dt-bindings/clock/mstar.h>
 
 / {
 	#address-cells = <1>;
@@ -49,13 +51,15 @@
 			#size-cells = <1>;
 			ranges = <0x0 0x1f000000 0x00400000>;
 			u-boot,dm-spl;
+			u-boot,dm-preloc;
 
 			pm_uart: uart@221000 {
 				compatible = "snps,dw-apb-uart";
 				u-boot,dm-spl;
+				u-boot,dm-preloc;
 				reg = <0x221000 0x200>;
 				reg-shift = <3>;
-				clock-frequency = <172000000>;
+				clock-frequency = <12000000>;
 			};
 		};
 	};
