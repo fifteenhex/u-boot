@@ -101,6 +101,18 @@ config SPL_TEXT_BASE
 config SYS_TEXT_BASE
 	default 0x20001000
 
+config ENV_SIZE
+	default 0x2000
+
+config ENV_OFFSET
+	default 0x2000
+
+config ENV_SECT_SIZE
+	default 4096
+
+config SYS_SPI_U_BOOT_OFFS
+	default 0x20000
+
 # For ubi we need a fair bit of heap
 config SYS_MALLOC_LEN
 	default 0x1000000
