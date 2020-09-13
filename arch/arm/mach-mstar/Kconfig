@@ -27,6 +27,9 @@ config DEBUG_UART_CLOCK
 config DEBUG_UART_SHIFT
 	default 3
 
+config SPL_SIZE_LIMIT
+	default 0xc000
+
 config SYS_SOC
         default "mstarv7"
 
