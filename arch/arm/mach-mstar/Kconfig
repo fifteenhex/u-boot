@@ -51,6 +51,16 @@ config MSTAR_MERCURY5
 config MSTAR_PIONEER3
 	bool "pioneer3 family"
 
+choice
+     prompt "Board type"
+
+config TARGET_MSTARV7
+	bool "Generic MStar/SigmaStar v7 boards"
+	select MULTI_DTB_FIT
+	select SPL_SPI
+
+endchoice
+
 endmenu
 
 if ARCH_MSTARV7
