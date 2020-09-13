@@ -8,6 +8,7 @@
 
 &aliases {
 	eth0 = &emac;
+	mmc0 = &sdio;
 };
 
 &riu {
@@ -23,6 +24,16 @@
 			 <&mpll MSTAR_MPLL_GATE_MPLL_123>,
 			 <&mpll MSTAR_MPLL_GATE_MPLL_86>;
 			 /* from lan_atop ? */
+	};
+
+	sdio: sdio@282000 {
+		compatible = "mstar,msc313-sdio";
+		u-boot,dm-spl;
+		u-boot,dm-preloc;
+		reg = <0x282000 0x200>;
+		no-1-8-v;
+		cap-sd-highspeed;
+		bus-width = <4>;
 	};
 
 	emac: emac@2a2000 {
