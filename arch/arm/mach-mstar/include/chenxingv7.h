@@ -8,6 +8,7 @@
 #include <asm/io.h>
 #include <linux/delay.h>
 #include <linux/bitops.h>
+#include <log.h>
 
 #include "mstarv7.h"
 
@@ -15,13 +16,15 @@
 #define BOARD_THINGYJP_BREADBEE_CHENXINGV7_H_
 
 #define ENV_VAR_MSTAR_FAMILY	"mstar_family"
-#define COMPAT_I1		"infinity1"
+#define COMPAT_I1		"infinity"
+#define COMPAT_I1_MSC313	"infinity-msc313"
 #define COMPAT_I3		"infinity3"
+#define COMPAT_I3_MSC313E	"infinity3-msc313e"
 #define COMPAT_I6		"infinity6"
 #define COMPAT_M5		"mercury5"
-#define COMPAT_GENERIC		"chenxing-v7"
+#define COMPAT_GENERIC		"mstar-v7"
 
-static uint16_t mstar_writew(uint16_t value, uint32_t addr)
+static inline uint16_t mstar_writew(uint16_t value, uint32_t addr)
 {
 	uint16_t pre = readw(addr);
 	uint16_t post;
@@ -31,7 +34,7 @@ static uint16_t mstar_writew(uint16_t value, uint32_t addr)
 	return post;
 }
 
-static uint32_t mstar_writereadback_l(uint32_t value, uint32_t addr)
+static inline uint32_t mstar_writereadback_l(uint32_t value, uint32_t addr)
 {
 	uint32_t pre = readw(addr);
 	uint32_t post;
@@ -41,7 +44,7 @@ static uint32_t mstar_writereadback_l(uint32_t value, uint32_t addr)
 	return post;
 }
 
-static void mstar_dump_reg_block(const char* what, uint32_t start){
+static inline void mstar_dump_reg_block(const char* what, uint32_t start){
 	uint32_t val;
 	void* reg;
 	int i, j;
@@ -59,7 +62,7 @@ static void mstar_dump_reg_block(const char* what, uint32_t start){
 	}
 }
 
-static void mstar_delay(unsigned long msec)
+static inline void mstar_delay(unsigned long msec)
 {
 	printf("delaying for %lu\n", msec);
 	mdelay(msec);
@@ -136,7 +139,7 @@ static void mstar_delay(unsigned long msec)
 static const uint8_t* deviceid = (uint8_t*) CHIPID;
 static const void* efuse = (void*) EFUSE;
 
-static int mstar_chiptype(void){
+static inline int mstar_chiptype(void){
 	debug("deviceid is %02x\n", (unsigned) *deviceid);
 	switch(*deviceid){
 		case CHIPID_MSC313:

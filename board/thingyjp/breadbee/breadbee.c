@@ -171,39 +171,6 @@ struct image_header *spl_get_load_buffer(ssize_t offset, size_t size)
 
 #endif // spl
 
-
-
-int board_fit_config_name_match(const char *name)
-{
-	switch(mstar_chiptype()){
-		case CHIPTYPE_MSC313:
-			if(!strcmp(name, COMPAT_I1))
-				return 0;
-			break;
-		case CHIPTYPE_MSC313E:
-		case CHIPTYPE_MSC313DC:
-			if(!strcmp(name, COMPAT_I3)){
-				return 0;
-			}
-			break;
-		case CHIPTYPE_SSC325:
-			if(!strcmp(name, COMPAT_I6))
-				return 0;
-			break;
-		case CHIPTYPE_SSC8336:
-		case CHIPTYPE_SSC8336N:
-			if(!strcmp(name, COMPAT_M5))
-				return 0;
-			break;
-	}
-
-	//if(!strcmp(name, COMPAT_GENERIC))
-	//	return 0;
-
-	return -1;
-}
-
-
 int embedded_dtb_select(void)
 {
 	fdtdec_setup();
