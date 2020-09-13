@@ -1166,6 +1166,30 @@ config ARCH_ZYNQMP
 	imply MP
 	imply DM_USB_GADGET
 
+config ARCH_MSTARV7
+	bool "MStar/SigmaStar ARM v7 SoCs"
+	select CPU_V7A
+	select SYS_NS16550
+	select DM
+	select DM_SERIAL
+	select SPL
+	select SPL_SEPARATE_BSS
+	select SPL_OF_CONTROL
+	select SPL_DM
+	select SPL_LIBCOMMON_SUPPORT
+	select SPL_LIBGENERIC_SUPPORT
+	select SPL_SERIAL_SUPPORT
+	select SYS_ARCH_TIMER
+	select FIT
+	select OF_LIBFDT
+	select OF_CONTROL
+	select OF_LIBFDT_OVERLAY
+	select OF_BOARD_SETUP
+	select ENABLE_ARM_SOC_BOOT0_HOOK
+	select BOARD_LATE_INIT
+	select DTB_RESELECT
+	imply SUPPORT_SPL
+
 config ARCH_TEGRA
 	bool "NVIDIA Tegra"
 	imply DISTRO_DEFAULTS
@@ -1926,6 +1950,8 @@ source "arch/arm/mach-zynqmp/Kconfig"
 source "arch/arm/mach-versal/Kconfig"
 
 source "arch/arm/mach-zynqmp-r5/Kconfig"
+
+source "arch/arm/mach-mstar/Kconfig"
 
 source "arch/arm/cpu/armv7/Kconfig"
 

@@ -1,0 +1,20 @@
+menu "MStar/SigmaStar v7 options"
+	depends on ARCH_MSTARV7
+
+endmenu
+
+if ARCH_MSTARV7
+
+config DEBUG_UART_NS16550
+	default y
+
+config DEBUG_UART_BASE
+	default 0x1f221000
+
+config DEBUG_UART_CLOCK
+	default 172000000
+
+config DEBUG_UART_SHIFT
+	default 3
+
+endif
