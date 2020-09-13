@@ -33,6 +33,24 @@ config MSTAR_MSTAR_BREAK_BOOT0
 	  you to setup your JTAG probe just after JTAG was enabled
 	  but before a lot of code has executed.
 
+config MSTAR_INFINITY1
+	bool "infinity1 family"
+
+config MSTAR_INFINITY2M
+	bool "infinity2m family"
+
+config MSTAR_INFINITY3
+	bool "infinity3 family"
+
+config MSTAR_INFINITY6
+	bool "infinity6 family"
+
+config MSTAR_MERCURY5
+	bool "mercury5 family"
+
+config MSTAR_PIONEER3
+	bool "pioneer3 family"
+
 endmenu
 
 if ARCH_MSTARV7
