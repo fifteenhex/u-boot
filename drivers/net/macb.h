@@ -669,6 +669,19 @@
 	 | GEM_BF(name, value))
 
 /* Register access macros */
+#ifdef CONFIG_ARCH_MSTAR
+
+#include <riu.h>
+
+#define macb_readl(port, reg)				\
+	riu_readl(port->regs, MACB_##reg)
+#define macb_writel(port, reg, value)			\
+	riu_writel(port->regs, MACB_##reg, value)
+#define gem_readl(port, reg)				\
+	riu_readl(port->regs, GEM_##reg)
+#define gem_writel(port, reg, value)			\
+	riu_writel(port->regs, GEM_##reg, value)
+#else
 #define macb_readl(port, reg)				\
 	readl((port)->regs + MACB_##reg)
 #define macb_writel(port, reg, value)			\
@@ -677,6 +690,7 @@
 	readl((port)->regs + GEM_##reg)
 #define gem_writel(port, reg, value)			\
 	writel((value), (port)->regs + GEM_##reg)
+#endif
 
 /* DMA descriptor bitfields */
 #define MACB_RX_USED_OFFSET			0
