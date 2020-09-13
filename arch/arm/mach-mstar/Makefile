@@ -2,4 +2,5 @@
 #
 
 obj-y	+= init.o \
+	   cache.o \
 	   cpu.o
