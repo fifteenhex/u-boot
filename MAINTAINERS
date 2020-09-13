@@ -360,6 +360,7 @@ ARM MSTAR/SIGMASTAR V7
 M:	Daniel Palmer <daniel@thingy.jp>
 S:	Maintained
 F:	arch/arm/mach-mstar/
+F:	arch/arm/include/asm/arch-mstarv7/
 
 ARM NEXELL S5P4418
 M:	Stefan Bosch <stefan_b@posteo.net>

@@ -1294,6 +1294,7 @@ config ARCH_MSTARV7
 	select DM_SERIAL
 	select DTB_RESELECT
 	select DYNAMIC_CRC_TABLE
+	select ENABLE_ARM_SOC_BOOT0_HOOK
 	select FIT
 	select LTO
 	select OF_BOARD_SETUP
@@ -1319,10 +1320,10 @@ config ARCH_MSTARV7
 	select SPL_SYS_THUMB_BUILD
 	select SPL_TINY_MEMSET
 	select SYS_ARCH_TIMER
+	select SYS_ARCH_TIMER
 	select SYSCON
 	select SYS_NS16550
 	select SYS_THUMB_BUILD
-
 
 config ARCH_TEGRA
 	bool "NVIDIA Tegra"
