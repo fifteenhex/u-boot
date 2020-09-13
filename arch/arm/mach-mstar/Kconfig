@@ -88,6 +88,9 @@ config SYS_MALLOC_LEN
 config SYS_MALLOC_F_LEN
 	default 0x2000
 
+config FS_FAT_MAX_CLUSTSIZE
+	default 4096
+
 config DEBUG_UART_BASE
 	default 0x1f221000
 
