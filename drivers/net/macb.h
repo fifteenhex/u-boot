@@ -669,14 +669,14 @@
 	 | GEM_BF(name, value))
 
 /* Register access macros */
-#define macb_readl(port, reg)				\
-	readl((port)->regs + MACB_##reg)
-#define macb_writel(port, reg, value)			\
-	writel((value), (port)->regs + MACB_##reg)
-#define gem_readl(port, reg)				\
-	readl((port)->regs + GEM_##reg)
-#define gem_writel(port, reg, value)			\
-	writel((value), (port)->regs + GEM_##reg)
+#define macb_readl(port, reg)						\
+	port->config->reg_read((port)->regs, MACB_##reg)
+#define macb_writel(port, reg, value)					\
+	port->config->reg_write((port->regs), MACB_##reg, (value))
+#define gem_readl(port, reg)						\
+	port->config->reg_read((port)->regs, GEM_##reg)
+#define gem_writel(port, reg, value)					\
+	port->config->reg_write((port)->regs, GEM_##reg, (value))
 
 /* DMA descriptor bitfields */
 #define MACB_RX_USED_OFFSET			0
