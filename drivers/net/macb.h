@@ -669,7 +669,7 @@
 	 | GEM_BF(name, value))
 
 /* Register access macros */
-#ifdef CONFIG_ARCH_MSTAR
+#ifdef CONFIG_ARCH_MSTARV7
 
 #include <riu.h>
 
