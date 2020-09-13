@@ -1,6 +1,14 @@
 menu "MStar/SigmaStar v7 options"
 	depends on ARCH_MSTARV7
 
+config MSTAR_IPL
+	bool "u-boot is being loaded by the vendor IPL"
+	help
+	  Say y here if you are loading u-boot via the vendor
+	  IPL. Note that the image can only be 48KB or less
+	  for the IPL to load it so this only really applies
+	  to a SPL/TPL.
+
 endmenu
 
 if ARCH_MSTARV7
@@ -10,6 +18,10 @@ config NR_DRAM_BANKS
 
 config SPL_LDSCRIPT
 	default "arch/arm/mach-mstar/u-boot-spl.lds"
+
+config SPL_TEXT_BASE
+	default 0x23c00000 if MSTAR_IPL
+	default 0xa0000000
 
 # Set the text base to the bottom of DRAM + 1K before
 # for any headers that might be attached to start of
