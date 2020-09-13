@@ -24,6 +24,15 @@ config SPL_TEXT_BASE
 	default 0x23c00000 if MSTAR_IPL
 	default 0xa0000000
 
+config SYS_MALLOC_F_LEN
+	default 0x4000
+
+config SYS_MALLOC_LEN
+	default 0x40000
+
+config FS_FAT_MAX_CLUSTSIZE
+	default 4096
+
 config DEBUG_UART_NS16550
 	default y
 
