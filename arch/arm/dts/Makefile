@@ -987,7 +987,11 @@ dtb-$(CONFIG_TARGET_DURIAN) += phytium-durian.dtb
 
 dtb-$(CONFIG_TARGET_PRESIDIO_ASIC) += ca-presidio-engboard.dtb
 
-dtb-$(CONFIG_ARCH_MSTARV7) += mstar-v7.dtb
+dtb-$(CONFIG_ARCH_MSTARV7) += mstar-v7.dtb \
+			    infinity-msc313.dtb \
+			    infinity3-msc313e.dtb \
+			    infinity6.dtb \
+			    mercury5.dtb
 
 targets += $(dtb-y)
 
