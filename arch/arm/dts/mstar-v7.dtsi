@@ -136,6 +136,14 @@
 				clocks = <&miupll>;
 			};
 
+			pinctrl: pinctrl@203c00 {
+				reg = <0x203c00 0x200>;
+				emac_pins: eth {
+					function = "eth";
+					groups = "eth";
+				};
+			};
+
 			l3bridge: l3bridge@204400 {
 				compatible = "mstar,l3bridge", "syscon";
 				u-boot,dm-spl;
