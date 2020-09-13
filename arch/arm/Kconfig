@@ -1172,9 +1172,17 @@ config ARCH_MSTARV7
 	select SYS_NS16550
 	select DM
 	select DM_SERIAL
+	select CLK
+	select RAM
+	select REGMAP
+	select SYSCON
 	select SPL
 	select SPL_SEPARATE_BSS
 	select SPL_OF_CONTROL
+	select SPL_RAM
+	select SPL_CLK
+	select SPL_REGMAP
+	select SPL_SYSCON
 	select SPL_DM
 	select SPL_LIBCOMMON_SUPPORT
 	select SPL_LIBGENERIC_SUPPORT
