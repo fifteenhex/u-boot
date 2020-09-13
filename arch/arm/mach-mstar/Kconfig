@@ -59,6 +59,25 @@ config TARGET_MSTARV7
 	select MULTI_DTB_FIT
 	select SPL_SPI
 
+config TARGET_BREADBEE
+	bool "Support breadbee boards"
+	depends on !MSTAR_MERCURY5
+	depends on !MSTAR_INFINITY2M
+	select SPL_DM_SPI
+	select MSTAR_INFINITY1
+	select MSTAR_INFINITY3
+	select DM_ETH
+	select MACB
+	select CMD_DHCP
+	select NET_RANDOM_ETHADDR
+	select MII
+	select REGMAP
+	select MMC
+	select DM_MMC
+	select MMC_MSTAR
+	select CMD_MMC
+	select CMD_FAT
+
 endchoice
 
 endmenu
