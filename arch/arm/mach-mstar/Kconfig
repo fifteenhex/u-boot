@@ -13,6 +13,14 @@ config MSTAR_INFINITY3
 config MSTAR_MERCURY5
 	bool "mercury5 family"
 
+choice
+     prompt "Board type"
+
+config TARGET_MSTARV7
+	bool "Generic MStar/SigmaStar v7 boards"
+
+endchoice
+
 endmenu
 
 if ARCH_MSTARV7
