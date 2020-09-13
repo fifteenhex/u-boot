@@ -1222,7 +1222,11 @@ dtb-$(CONFIG_TARGET_EA_LPC3250DEVKITV2) += lpc3250-ea3250.dtb
 
 dtb-$(CONFIG_ARCH_QEMU) += qemu-arm.dtb qemu-arm64.dtb
 
-dtb-$(CONFIG_ARCH_MSTARV7) += mstar-v7.dtb
+dtb-$(CONFIG_ARCH_MSTARV7) += mstar-v7.dtb \
+			      mstar-infinity-msc313.dtb \
+			      mstar-infinity3-msc313e.dtb \
+			      mstar-infinity6.dtb \
+			      mercury5.dtb
 
 include $(srctree)/scripts/Makefile.dts
 
