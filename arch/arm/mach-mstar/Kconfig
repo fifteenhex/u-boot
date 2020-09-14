@@ -9,6 +9,30 @@ config MSTAR_IPL
 	  for the IPL to load it so this only really applies
 	  to a SPL/TPL.
 
+config MSTAR_BANG_BOOT0
+	bool "Output a bang in boot0"
+	help
+	  Say y here if you are want to output a bang from
+	  boot0 on pm_uart. This makes it easier to see if
+	  the boot rom or IPL jumped to our code correctly
+	  or not.
+
+config MSTAR_ENABLE_JTAG_BOOT0
+	bool "Enable JTAG in boot0 for debugging very early"
+	help
+	  Say y here if you are want to debug via JTAG very
+	  early in the boot process, right after the boot rom
+	  or IPL have passed control the the u-boot SPL.
+
+config MSTAR_MSTAR_BREAK_BOOT0
+	bool "break early in boot0"
+	depends on MSTAR_ENABLE_JTAG_BOOT0
+	help
+	  Say y here if you are want a breakpoint added before
+	  boot0 starts the normal u-boot startup code. This allows
+	  you to setup your JTAG probe just after JTAG was enabled
+	  but before a lot of code has executed.
+
 endmenu
 
 if ARCH_MSTARV7
