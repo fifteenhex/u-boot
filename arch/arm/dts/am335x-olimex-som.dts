@@ -1,0 +1,15 @@
+/*
+ * Copyright (C) 2012 Texas Instruments Incorporated - http://www.ti.com/
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+/dts-v1/;
+
+#include "am335x-olimex.dtsi"
+
+/ {
+	model = "OLIMEX AM335x-SOM";
+	compatible = "olimex,am335x_som", "ti,am33xx";
+};

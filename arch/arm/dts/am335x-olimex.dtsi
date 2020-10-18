@@ -1,0 +1,94 @@
+/*
+ * Copyright (C) 2012 Texas Instruments Incorporated - http://www.ti.com/
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+#include "am33xx.dtsi"
+
+/ {
+	chosen {
+		stdout-path = &uart0;
+		tick-timer = &timer2;
+	};
+
+	leds {
+		pinctrl-names = "default";
+		pinctrl-0 = <&usr_led_pins_default>;
+
+		compatible = "gpio-leds";
+
+		led@0 {
+			label = "olimex-som:green:led1";
+			gpios = <&gpio3 18 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+			default-state = "off";
+		};
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0x80000000 0x20000000>; /* 512 MB */
+	};
+
+	dummy_reg: regulator@0 {
+		compatible = "regulator-fixed";
+		regulator-name = "dummy_regulator";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+	};
+};
+
+&aes {
+	status = "okay";
+};
+
+&am33xx_pinmux {
+
+	mmc1_pins_default: mmc1_pins_default {
+		pinctrl-single,pins = <
+			0x100 ( PIN_INPUT | MUX_MODE0 ) /* (G17) mmc0_clk.mmc0_clk */
+			0x104 ( PIN_INPUT | MUX_MODE0 ) /* (G18) mmc0_cmd.mmc0_cmd */
+			0xfc ( PIN_INPUT | MUX_MODE0 ) /* (G16) mmc0_dat0.mmc0_dat0 */
+			0xf8 ( PIN_INPUT | MUX_MODE0 ) /* (G15) mmc0_dat1.mmc0_dat1 */
+			0xf4 ( PIN_INPUT | MUX_MODE0 ) /* (F18) mmc0_dat2.mmc0_dat2 */
+			0xf0 ( PIN_INPUT_PULLUP | MUX_MODE0 ) /* (F17) mmc0_dat3.mmc0_dat3 */
+			0x160 ( PIN_INPUT | MUX_MODE7 ) /* (C15) spi0_cs1.mmc0_sdcd */
+		>;
+	};
+
+	uart0_pins_default: uart0_pins_default {
+		pinctrl-single,pins = <
+			0x170 ( PIN_INPUT | MUX_MODE0 ) /* (E15) uart0_rxd.uart0_rxd */
+			0x174 ( PIN_OUTPUT | MUX_MODE0 ) /* (E16) uart0_txd.uart0_txd */
+		>;
+	};
+
+	usr_led_pins_default: usr_led_pins_default {
+		pinctrl-single,pins = <
+			0x1a0 ( PIN_OUTPUT | MUX_MODE7 ) /* (B12) mcasp0_aclkr.gpio3[18] */
+		>;
+	};
+};
+
+&mmc1 {
+	status = "okay";
+	bus-width = <0x4>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&mmc1_pins_default>;
+	cd-gpios = <&gpio0 6 GPIO_ACTIVE_HIGH>;
+	cd-inverted;
+	vmmc-supply = <&dummy_reg>;
+};
+
+&sham {
+	status = "okay";
+};
+
+&uart0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart0_pins_default>;
+	status = "okay";
+};

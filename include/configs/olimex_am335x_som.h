@@ -163,4 +163,9 @@
 #endif
 #endif
 
+#ifdef CONFIG_SPL_BUILD
+#undef CONFIG_DM_MMC
+#undef CONFIG_TIMER
+#endif
+
 #endif	/* ! __CONFIG_OLIMEX_AM335x_SOM_H */

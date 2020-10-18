@@ -9,6 +9,7 @@
  */
 
 #include <common.h>
+#include <dm.h>
 #include <errno.h>
 //#include <libfdt.h>
 #include <spl.h>
@@ -27,6 +28,24 @@
 #include <asm/gpio.h>
 #include <env.h>
 #include <watchdog.h>
+#include <linux/delay.h>
+#include <serial.h>
+#include <asm/arch/cpu.h>
+#include <asm/arch/hardware.h>
+#include <asm/arch/omap.h>
+#include <asm/arch/ddr_defs.h>
+#include <asm/arch/clock.h>
+#include <asm/arch/clk_synthesizer.h>
+#include <asm/arch/gpio.h>
+#include <asm/arch/mmc_host_def.h>
+#include <asm/arch/sys_proto.h>
+#include <asm/arch/mem.h>
+#include <asm/io.h>
+#include <asm/gpio.h>
+#include <asm/omap_common.h>
+#include <asm/omap_sec_common.h>
+#include <asm/omap_mmc.h>
+
 #include "board.h"
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -131,13 +150,6 @@ int board_init(void)
 	return 0;
 }
 
-#if defined(CONFIG_GENERIC_MMC) && !defined(CONFIG_SPL_BUILD)
-int board_mmc_init(bd_t *bis)
-{
-	return omap_mmc_init(0, 0, 0, -1, -1);
-}
-#endif
-
 #ifdef CONFIG_BOARD_LATE_INIT
 int board_late_init(void)
 {
@@ -152,5 +164,39 @@ int ft_board_setup(void *fdt, struct bd_info *bd)
 
 int board_fit_config_name_match(const char *name)
 {
-    return 0;
+	printf("here!\n");
+	if (!strcmp(name, "olimex,am335x_som"))
+		return 0;
+
+	return -1;
 }
+
+#if !CONFIG_IS_ENABLED(OF_CONTROL)
+static const struct omap_hsmmc_plat am335x_mmc0_platdata = {
+	.base_addr = (struct hsmmc *)OMAP_HSMMC1_BASE,
+	.cfg.host_caps = MMC_MODE_HS_52MHz | MMC_MODE_HS | MMC_MODE_4BIT,
+	.cfg.f_min = 400000,
+	.cfg.f_max = 52000000,
+	.cfg.voltages = MMC_VDD_32_33 | MMC_VDD_33_34 | MMC_VDD_165_195,
+	.cfg.b_max = CONFIG_SYS_MMC_MAX_BLK_COUNT,
+};
+
+U_BOOT_DEVICE(am335x_mmc0) = {
+	.name = "omap_hsmmc",
+	.platdata = &am335x_mmc0_platdata,
+};
+
+static const struct omap_hsmmc_plat am335x_mmc1_platdata = {
+	.base_addr = (struct hsmmc *)OMAP_HSMMC2_BASE,
+	.cfg.host_caps = MMC_MODE_HS_52MHz | MMC_MODE_HS | MMC_MODE_8BIT,
+	.cfg.f_min = 400000,
+	.cfg.f_max = 52000000,
+	.cfg.voltages = MMC_VDD_32_33 | MMC_VDD_33_34 | MMC_VDD_165_195,
+	.cfg.b_max = CONFIG_SYS_MMC_MAX_BLK_COUNT,
+};
+
+U_BOOT_DEVICE(am335x_mmc1) = {
+	.name = "omap_hsmmc",
+	.platdata = &am335x_mmc1_platdata,
+};
+#endif
