@@ -46,16 +46,9 @@
 };
 
 &am33xx_pinmux {
-
-	mmc1_pins_default: mmc1_pins_default {
+	mmc1_pins: pinmux_mmc1_pins {
 		pinctrl-single,pins = <
-			0x100 ( PIN_INPUT | MUX_MODE0 ) /* (G17) mmc0_clk.mmc0_clk */
-			0x104 ( PIN_INPUT | MUX_MODE0 ) /* (G18) mmc0_cmd.mmc0_cmd */
-			0xfc ( PIN_INPUT | MUX_MODE0 ) /* (G16) mmc0_dat0.mmc0_dat0 */
-			0xf8 ( PIN_INPUT | MUX_MODE0 ) /* (G15) mmc0_dat1.mmc0_dat1 */
-			0xf4 ( PIN_INPUT | MUX_MODE0 ) /* (F18) mmc0_dat2.mmc0_dat2 */
-			0xf0 ( PIN_INPUT_PULLUP | MUX_MODE0 ) /* (F17) mmc0_dat3.mmc0_dat3 */
-			0x160 ( PIN_INPUT | MUX_MODE7 ) /* (C15) spi0_cs1.mmc0_sdcd */
+			0x160 (PIN_INPUT | MUX_MODE7) /* spi0_cs1.gpio0_6 */
 		>;
 	};
 
@@ -77,7 +70,7 @@
 	status = "okay";
 	bus-width = <0x4>;
 	pinctrl-names = "default";
-	pinctrl-0 = <&mmc1_pins_default>;
+	pinctrl-0 = <&mmc1_pins>;
 	cd-gpios = <&gpio0 6 GPIO_ACTIVE_HIGH>;
 	cd-inverted;
 	vmmc-supply = <&dummy_reg>;

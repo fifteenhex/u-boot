@@ -164,7 +164,6 @@ int ft_board_setup(void *fdt, struct bd_info *bd)
 
 int board_fit_config_name_match(const char *name)
 {
-	printf("here!\n");
 	if (!strcmp(name, "olimex,am335x_som"))
 		return 0;
 

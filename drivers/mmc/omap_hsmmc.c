@@ -1459,9 +1459,13 @@ static int omap_hsmmc_getcd(struct udevice *dev)
 	struct omap_hsmmc_data *priv = dev_get_priv(dev);
 	value = dm_gpio_get_value(&priv->cd_gpio);
 #endif
+
 	/* if no CD return as 1 */
 	if (value < 0)
 		return 1;
+
+	//dgp hack
+	value = 1;
 
 	return value;
 }
