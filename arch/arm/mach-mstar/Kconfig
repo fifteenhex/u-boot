@@ -19,6 +19,12 @@ config MSTAR_IPL
 	imply MTD_SPI_NAND
 	imply SPL_MTD_SUPPORT
 	imply SPL_YMODEM_SUPPORT
+	imply DM_ETH
+	imply MACB
+	imply NET_RANDOM_ETHADDR
+	imply MII
+	imply PHY_MSTAR
+	imply CMD_DHCP
 	help
 	  Say y here if you are loading u-boot via the vendor
 	  IPL. Note that the image can only be 48KB or less
