@@ -25,6 +25,7 @@ config MSTAR_IPL
 	imply MII
 	imply PHY_MSTAR
 	imply CMD_DHCP
+	select SPL_STACK_R
 	help
 	  Say y here if you are loading u-boot via the vendor
 	  IPL. Note that the image can only be 48KB or less
@@ -122,6 +123,14 @@ config SPL_TEXT_BASE
 # the u-boot image
 config SYS_TEXT_BASE
 	default 0x20001000
+
+# Because the SRAM is pretty small we need to start using
+# the DRAM for stack and heap as soon as possible.
+# There is always at least 64MB of DRAM so put our new
+# stack there.
+config SPL_STACK_R_ADDR
+	default 0x24000000
+#
 
 config ENV_SIZE
 	default 0x2000
