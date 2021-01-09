@@ -207,10 +207,15 @@ static int spinand_init_quad_enable(struct spinand_device *spinand)
 	if (!(spinand->flags & SPINAND_HAS_QE_BIT))
 		return 0;
 
+#ifdef CONFIG_SPL_BUILD
+	if (spinand->op_templates.read_cache->data.buswidth == 4)
+		enable = true;
+#else
 	if (spinand->op_templates.read_cache->data.buswidth == 4 ||
 	    spinand->op_templates.write_cache->data.buswidth == 4 ||
 	    spinand->op_templates.update_cache->data.buswidth == 4)
 		enable = true;
+#endif
 
 	return spinand_upd_cfg(spinand, CFG_QUAD_ENABLE,
 			       enable ? CFG_QUAD_ENABLE : 0);
@@ -223,12 +228,14 @@ static int spinand_ecc_enable(struct spinand_device *spinand,
 			       enable ? CFG_ECC_ENABLE : 0);
 }
 
+#ifndef CONFIG_SPL_BUILD
 static int spinand_write_enable_op(struct spinand_device *spinand)
 {
 	struct spi_mem_op op = SPINAND_WR_EN_DIS_OP(true);
 
 	return spi_mem_exec_op(spinand->slave, &op);
 }
+#endif
 
 static int spinand_load_page_op(struct spinand_device *spinand,
 				const struct nand_page_io_req *req)
@@ -313,6 +320,7 @@ static int spinand_read_from_cache_op(struct spinand_device *spinand,
 	return 0;
 }
 
+#ifndef CONFIG_SPL_BUILD
 static int spinand_write_to_cache_op(struct spinand_device *spinand,
 				     const struct nand_page_io_req *req)
 {
@@ -398,7 +406,9 @@ static int spinand_write_to_cache_op(struct spinand_device *spinand,
 
 	return 0;
 }
+#endif
 
+#ifndef CONFIG_SPL_BUILD
 static int spinand_program_op(struct spinand_device *spinand,
 			      const struct nand_page_io_req *req)
 {
@@ -408,7 +418,9 @@ static int spinand_program_op(struct spinand_device *spinand,
 
 	return spi_mem_exec_op(spinand->slave, &op);
 }
+#endif
 
+#ifndef CONFIG_SPL_BUILD
 static int spinand_erase_op(struct spinand_device *spinand,
 			    const struct nand_pos *pos)
 {
@@ -418,6 +430,7 @@ static int spinand_erase_op(struct spinand_device *spinand,
 
 	return spi_mem_exec_op(spinand->slave, &op);
 }
+#endif
 
 static int spinand_wait(struct spinand_device *spinand, u8 *s)
 {
@@ -434,6 +447,7 @@ static int spinand_wait(struct spinand_device *spinand, u8 *s)
 
 		if (!(status & STATUS_BUSY))
 			goto out;
+
 	} while (get_timer(start) < stop);
 
 	/*
@@ -535,6 +549,7 @@ static int spinand_read_page(struct spinand_device *spinand,
 	return spinand_check_ecc_status(spinand, status);
 }
 
+#ifndef CONFIG_SPL_BUILD
 static int spinand_write_page(struct spinand_device *spinand,
 			      const struct nand_page_io_req *req)
 {
@@ -559,6 +574,7 @@ static int spinand_write_page(struct spinand_device *spinand,
 
 	return ret;
 }
+#endif
 
 static int spinand_mtd_read(struct mtd_info *mtd, loff_t from,
 			    struct mtd_oob_ops *ops)
@@ -614,6 +630,7 @@ static int spinand_mtd_read(struct mtd_info *mtd, loff_t from,
 	return ret ? ret : max_bitflips;
 }
 
+#ifndef CONFIG_SPL_BUILD
 static int spinand_mtd_write(struct mtd_info *mtd, loff_t to,
 			     struct mtd_oob_ops *ops)
 {
@@ -654,7 +671,9 @@ static int spinand_mtd_write(struct mtd_info *mtd, loff_t to,
 
 	return ret;
 }
+#endif
 
+#ifndef CONFIG_SPL_BUILD
 static bool spinand_isbad(struct nand_device *nand, const struct nand_pos *pos)
 {
 	struct spinand_device *spinand = nand_to_spinand(nand);
@@ -681,7 +700,9 @@ static bool spinand_isbad(struct nand_device *nand, const struct nand_pos *pos)
 
 	return false;
 }
+#endif
 
+#ifndef CONFIG_SPL_BUILD
 static int spinand_mtd_block_isbad(struct mtd_info *mtd, loff_t offs)
 {
 	struct nand_device *nand = mtd_to_nanddev(mtd);
@@ -701,7 +722,9 @@ static int spinand_mtd_block_isbad(struct mtd_info *mtd, loff_t offs)
 #endif
 	return ret;
 }
+#endif
 
+#ifndef CONFIG_SPL_BUILD
 static int spinand_markbad(struct nand_device *nand, const struct nand_pos *pos)
 {
 	struct spinand_device *spinand = nand_to_spinand(nand);
@@ -721,7 +744,9 @@ static int spinand_markbad(struct nand_device *nand, const struct nand_pos *pos)
 
 	return spinand_write_page(spinand, &req);
 }
+#endif
 
+#ifndef CONFIG_SPL_BUILD
 static int spinand_mtd_block_markbad(struct mtd_info *mtd, loff_t offs)
 {
 	struct nand_device *nand = mtd_to_nanddev(mtd);
@@ -741,7 +766,9 @@ static int spinand_mtd_block_markbad(struct mtd_info *mtd, loff_t offs)
 #endif
 	return ret;
 }
+#endif
 
+#ifndef CONFIG_SPL_BUILD
 static int spinand_erase(struct nand_device *nand, const struct nand_pos *pos)
 {
 	struct spinand_device *spinand = nand_to_spinand(nand);
@@ -766,7 +793,9 @@ static int spinand_erase(struct nand_device *nand, const struct nand_pos *pos)
 
 	return ret;
 }
+#endif
 
+#ifndef CONFIG_SPL_BUILD
 static int spinand_mtd_erase(struct mtd_info *mtd,
 			     struct erase_info *einfo)
 {
@@ -785,7 +814,9 @@ static int spinand_mtd_erase(struct mtd_info *mtd,
 
 	return ret;
 }
+#endif
 
+#ifndef CONFIG_SPL_BUILD
 static int spinand_mtd_block_isreserved(struct mtd_info *mtd, loff_t offs)
 {
 #ifndef __UBOOT__
@@ -806,6 +837,7 @@ static int spinand_mtd_block_isreserved(struct mtd_info *mtd, loff_t offs)
 
 	return ret;
 }
+#endif
 
 const struct spi_mem_op *
 spinand_find_supported_op(struct spinand_device *spinand,
@@ -823,9 +855,11 @@ spinand_find_supported_op(struct spinand_device *spinand,
 }
 
 static const struct nand_ops spinand_ops = {
+#ifndef CONFIG_SPL_BUILD
 	.erase = spinand_erase,
 	.markbad = spinand_markbad,
 	.isbad = spinand_isbad,
+#endif
 };
 
 static const struct spinand_manufacturer *spinand_manufacturers[] = {
@@ -945,6 +979,7 @@ int spinand_match_and_init(struct spinand_device *spinand,
 
 		spinand->op_templates.read_cache = op;
 
+#ifndef CONFIG_SPL_BUILD
 		op = spinand_select_op_variant(spinand,
 					       info->op_variants.write_cache);
 		if (!op)
@@ -955,7 +990,7 @@ int spinand_match_and_init(struct spinand_device *spinand,
 		op = spinand_select_op_variant(spinand,
 					       info->op_variants.update_cache);
 		spinand->op_templates.update_cache = op;
-
+#endif
 		return 0;
 	}
 
@@ -1041,7 +1076,6 @@ static int spinand_init(struct spinand_device *spinand)
 	ret = spinand_detect(spinand);
 	if (ret)
 		goto err_free_bufs;
-
 	/*
 	 * Use kzalloc() instead of devm_kzalloc() here, because some drivers
 	 * may use this buffer for DMA access.
@@ -1056,7 +1090,6 @@ static int spinand_init(struct spinand_device *spinand)
 	}
 
 	spinand->oobbuf = spinand->databuf + nanddev_page_size(nand);
-
 	ret = spinand_init_cfg_cache(spinand);
 	if (ret)
 		goto err_free_bufs;
@@ -1097,11 +1130,13 @@ static int spinand_init(struct spinand_device *spinand)
 	 * area is available for user.
 	 */
 	mtd->_read_oob = spinand_mtd_read;
+#ifndef CONFIG_SPL_BUILD
 	mtd->_write_oob = spinand_mtd_write;
 	mtd->_block_isbad = spinand_mtd_block_isbad;
 	mtd->_block_markbad = spinand_mtd_block_markbad;
 	mtd->_block_isreserved = spinand_mtd_block_isreserved;
 	mtd->_erase = spinand_mtd_erase;
+#endif
 
 	if (spinand->eccinfo.ooblayout)
 		mtd_set_ooblayout(mtd, spinand->eccinfo.ooblayout);
@@ -1170,11 +1205,9 @@ static int spinand_probe(struct udevice *dev)
 	spinand->slave = slave;
 	spinand_set_ofnode(spinand, dev_ofnode(dev));
 #endif
-
 	ret = spinand_init(spinand);
 	if (ret)
 		return ret;
-
 #ifndef __UBOOT__
 	ret = mtd_device_register(mtd, NULL, 0);
 #else

@@ -275,19 +275,28 @@ struct spinand_info {
 	struct spinand_ecc_info eccinfo;
 	struct {
 		const struct spinand_op_variants *read_cache;
+#ifndef CONFIG_SPL_BUILD
 		const struct spinand_op_variants *write_cache;
 		const struct spinand_op_variants *update_cache;
+#endif
 	} op_variants;
 	int (*select_target)(struct spinand_device *spinand,
 			     unsigned int target);
 };
 
+#ifdef CONFIG_SPL_BUILD
+#define SPINAND_INFO_OP_VARIANTS(__read, __write, __update)		\
+	{								\
+		.read_cache = __read,					\
+	}
+#else
 #define SPINAND_INFO_OP_VARIANTS(__read, __write, __update)		\
 	{								\
 		.read_cache = __read,					\
 		.write_cache = __write,					\
 		.update_cache = __update,				\
 	}
+#endif
 
 #define SPINAND_ECCINFO(__ooblayout, __get_status)			\
 	.eccinfo = {							\
@@ -349,8 +358,10 @@ struct spinand_device {
 
 	struct {
 		const struct spi_mem_op *read_cache;
+#ifndef CONFIG_SPL_BUILD
 		const struct spi_mem_op *write_cache;
 		const struct spi_mem_op *update_cache;
+#endif
 	} op_templates;
 
 	int (*select_target)(struct spinand_device *spinand,
@@ -446,5 +457,9 @@ int spinand_match_and_init(struct spinand_device *dev,
 
 int spinand_upd_cfg(struct spinand_device *spinand, u8 mask, u8 val);
 int spinand_select_target(struct spinand_device *spinand, unsigned int target);
+
+int spl_spinand_init(void);
+int spl_spinand_peb_size(void);
+int spl_spinand_read_block(int block, int offset, int len, void *dst);
 
 #endif /* __LINUX_MTD_SPINAND_H */
