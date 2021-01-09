@@ -706,8 +706,12 @@ config SPL_MUSB_NEW
 	  the drivers in drivers/usb/musb-new as part of an SPL build. The
 	  old drivers are in drivers/usb/musb.
 
+config SPL_BUILD_NAND
+	bool
+
 config SPL_NAND_SUPPORT
 	bool "Support NAND flash"
+	select SPL_BUILD_NAND
 	help
 	  Enable support for NAND (Negative AND) flash in SPL. NAND flash
 	  can be used to allow SPL to load U-Boot from supported devices.
@@ -739,6 +743,12 @@ config SPL_NAND_IDENT
 	bool "Use chip ID to identify NAND flash"
 	help
 	  SPL uses the chip ID list to identify the NAND flash.
+
+config SPL_SPI_NAND_SUPPORT
+	bool "Support SPI-NAND flash"
+	select SPL_BUILD_NAND
+	help
+	  xx
 
 config SPL_UBI
 	bool "Support UBI"

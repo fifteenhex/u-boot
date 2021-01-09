@@ -11,6 +11,7 @@
 #include <onenand_uboot.h>
 #include <ubispl.h>
 #include <spl.h>
+#include <linux/mtd/spinand.h>
 
 int spl_ubi_load_image(struct spl_image_info *spl_image,
 		       struct spl_boot_device *bootdev)
@@ -32,6 +33,15 @@ int spl_ubi_load_image(struct spl_image_info *spl_image,
 	case BOOT_DEVICE_ONENAND:
 		info.read = onenand_spl_read_block;
 		info.peb_size = CONFIG_SYS_ONENAND_BLOCK_SIZE;
+		break;
+#endif
+#ifdef CONFIG_SPL_SPI_NAND_SUPPORT
+	case BOOT_DEVICE_SPINAND:
+		ret = spl_spinand_init();
+		if(ret)
+			return ret;
+		info.read = spl_spinand_read_block;
+		info.peb_size =	spl_spinand_peb_size();
 		break;
 #endif
 	default:
@@ -86,3 +96,4 @@ out:
 /* Use priorty 0 so that Ubi will override NAND and ONENAND methods */
 SPL_LOAD_IMAGE_METHOD("NAND", 0, BOOT_DEVICE_NAND, spl_ubi_load_image);
 SPL_LOAD_IMAGE_METHOD("OneNAND", 0, BOOT_DEVICE_ONENAND, spl_ubi_load_image);
+SPL_LOAD_IMAGE_METHOD("SPI NAND(UBI)", 0, BOOT_DEVICE_SPINAND, spl_ubi_load_image);
