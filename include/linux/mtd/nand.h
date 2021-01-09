@@ -149,9 +149,11 @@ struct nand_device;
  * NAND layers (SPI NAND, raw NAND, ...).
  */
 struct nand_ops {
+#ifndef CONFIG_SPL_BUILD
 	int (*erase)(struct nand_device *nand, const struct nand_pos *pos);
 	int (*markbad)(struct nand_device *nand, const struct nand_pos *pos);
 	bool (*isbad)(struct nand_device *nand, const struct nand_pos *pos);
+#endif
 };
 
 /**
