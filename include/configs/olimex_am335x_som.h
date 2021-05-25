@@ -114,7 +114,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"loadaddr=0x82000000\0" \
 	"fdtaddr=0x88000000\0" \
-	"bootargs=console=ttyO0,115200n8 rootwait root=/dev/mmcblk0p1\0" \
+	"bootargs=console=ttyO0,115200n8 rootwait root=/dev/mmcblk0p1 ro rootflags=data=journal\0" \
 	"bootcmd=ext4load mmc 0:1 $loadaddr /boot/zImage; ext4load mmc 0:1 $fdtaddr /boot/am335x-olimex-som.dtb; bootz $loadaddr - $fdtaddr\0"
 #endif
 #endif
