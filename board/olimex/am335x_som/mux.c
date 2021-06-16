@@ -59,6 +59,11 @@ static struct module_pin_mux nand_pin_mux[] = {
 };
 #endif
 
+static struct module_pin_mux gpio0_29_pin_mux[] = {
+	{OFFSET(rmii1_refclk), (MODE(7) |  PULLUP_EN | PULLUDEN)},      /* GPIO0_29 */
+	{-1},
+};
+
 void enable_uart0_pin_mux(void)
 {
 	configure_module_pin_mux(uart0_pin_mux);
@@ -70,4 +75,5 @@ void enable_board_pin_mux()
 #if defined(CONFIG_NAND)
 	configure_module_pin_mux(nand_pin_mux);
 #endif
+	configure_module_pin_mux(gpio0_29_pin_mux);
 }

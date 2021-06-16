@@ -151,8 +151,23 @@ int board_init(void)
 }
 
 #ifdef CONFIG_BOARD_LATE_INIT
+
+#define GPIO_PHY_RST	29
+
+static void board_phy_init(void)
+{
+	puts("phy reset\n");
+	gpio_request(GPIO_PHY_RST, "phy_rst");
+	gpio_direction_output(GPIO_PHY_RST, 0);
+	mdelay(2);
+	gpio_set_value(GPIO_PHY_RST, 1);
+	mdelay(2);
+}
+
 int board_late_init(void)
 {
+	board_phy_init();
+
 	return 0;
 }
 #endif
