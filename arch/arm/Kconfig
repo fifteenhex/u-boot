@@ -2352,6 +2352,7 @@ source "board/xen/xenguest_arm64/Kconfig"
 source "board/mstar/mstarv7/Kconfig"
 source "board/thingyjp/breadbee/Kconfig"
 source "board/100ask/dongshanpione/Kconfig"
+source "board/wirelesstag/som2d01/Kconfig"
 
 source "arch/arm/Kconfig.debug"
 

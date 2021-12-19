@@ -1,6 +1,7 @@
 CONFIG_ARM=y
 CONFIG_ARCH_MSTARV7=y
 CONFIG_MSTAR_IPL=y
+CONFIG_TARGET_SOM2D01=y
 CONFIG_DEFAULT_DEVICE_TREE="mstar-infinity2m-ssd201"
 CONFIG_OF_LIST="mstar-infinity2m-ssd201 mstar-infinity2m-ssd202d"
 
