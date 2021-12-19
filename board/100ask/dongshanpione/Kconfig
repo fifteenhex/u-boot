@@ -1,0 +1,12 @@
+if TARGET_DONGSHANPIONE
+
+config SYS_BOARD
+	default "dongshanpione"
+
+config SYS_VENDOR
+	default "100ask"
+
+config SYS_CONFIG_NAME
+        default "dongshanpione"
+
+endif
