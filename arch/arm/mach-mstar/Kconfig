@@ -3,6 +3,20 @@ menu "MStar/SigmaStar v7 options"
 
 config MSTAR_IPL
 	bool "u-boot is being loaded by the vendor IPL"
+	imply SPI
+	imply DM_SPI
+	imply DM_SPI_FLASH
+	imply MSTAR_MSC313SPINOR
+	imply SPL_SPI_SUPPORT
+	imply SPL_SPI_FLASH_SUPPORT
+	imply SPL_DM_SPI
+	imply SPL_DM_SPI_FLASH
+	imply SPI_FLASH_WINBOND
+	imply MTD
+	imply DM_MTD
+	imply MTD_SPI_NAND
+	imply SPL_MTD_SUPPORT
+	imply SPL_YMODEM_SUPPORT
 	help
 	  Say y here if you are loading u-boot via the vendor
 	  IPL. Note that the image can only be 48KB or less
