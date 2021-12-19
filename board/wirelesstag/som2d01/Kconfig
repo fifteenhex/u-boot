@@ -1,0 +1,12 @@
+if TARGET_SOM2D01
+
+config SYS_BOARD
+	default "som2d01"
+
+config SYS_VENDOR
+	default "wirelesstag"
+
+config SYS_CONFIG_NAME
+        default "som2d01"
+
+endif
