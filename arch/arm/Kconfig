@@ -1232,6 +1232,8 @@ config ARCH_MSTARV7
 	select OF_CONTROL
 	select OF_LIBFDT
 	select OF_LIBFDT_OVERLAY
+	select PINCTRL
+	select PINCTRL_MSTAR
 	select RAM
 	select REGMAP
 	select SPL
@@ -1250,7 +1252,6 @@ config ARCH_MSTARV7
 	select SPL_SYS_MALLOC_SIMPLE
 	select SPL_SYS_THUMB_BUILD
 	select SPL_TINY_MEMSET
-	select SYS_ARCH_TIMER
 	select SYS_ARCH_TIMER
 	select SYSCON
 	select SYS_NS16550
