@@ -460,14 +460,23 @@ static int _macb_recv_msc313(struct macb_device *macb, uchar **packetp){
 
 	u32 mask = MACB_BIT(OVR) | MACB_BIT(BNA) | MACB_BIT(REC);
 	u32 rsr = macb_readl(macb, RSR);
+	u32 ctrl;
+	u32 rbqp = macb_readl(macb, RBQP);
 
 	macb_writel(macb, RSR, rsr | mask);
 
 	if(rsr & MACB_BIT(OVR))
 		printf("overflow\n");
 
-	if(rsr & MACB_BIT(BNA))
-		printf("buffer not available\n");
+	if(rsr & MACB_BIT(BNA)){
+		printf("buffer not available 0x%08x\n", rbqp);
+		for(i = 0; i < macb->config->macb_rx_ring_sz; i++){
+			desc = &macb->rx_ring[i];
+			printf("desc %d(%p) addr: %08x; ctrl %08x\n", i, desc, desc->addr, desc->ctrl);
+		}
+		 macb_writel(macb, RBQP, macb->rx_ring_dma);
+		//macb_writel(macb, NCR, MACB_BIT(TE) | MACB_BIT(RE));
+	}
 
 #if 0
 	if(!(rsr & mask)){
@@ -476,7 +485,6 @@ static int _macb_recv_msc313(struct macb_device *macb, uchar **packetp){
 #endif
 
 	macb_invalidate_ring_desc(macb, RX);
-	macb_invalidate_rx_buffer(macb);
 	barrier();
 
 	for(i = 0; i < macb->config->macb_rx_ring_sz; i++){
@@ -484,14 +492,16 @@ static int _macb_recv_msc313(struct macb_device *macb, uchar **packetp){
 		macb->rx_tail = (macb->rx_tail + 1) % macb->config->macb_rx_ring_sz;
 		desc = &macb->rx_ring[frame];
 		if(desc->addr & MACB_BIT(RX_USED)){
+			//printf("rx desc %d\n", frame);
 			length = desc->ctrl & 0x7ff;
+			macb_invalidate_rx_buffer(macb);
 			buffer = macb->rx_buffer + (macb->rx_buffer_size * frame);
 			*packetp = (void *)net_rx_packets[0];
 			memcpy(*packetp, buffer, length);
 			barrier();
 			desc->addr &= ~MACB_BIT(RX_USED);
-			macb_flush_ring_desc(macb, RX);
 			barrier();
+			macb_flush_ring_desc(macb, RX);
 			goto out;
 		}
 	}
@@ -1252,6 +1262,7 @@ static void _macb_eth_initialize(struct macb_device *macb)
 					     &macb->rx_buffer_dma);
 	macb->rx_ring = dma_alloc_coherent(MACB_RX_DMA_DESC_SIZE,
 					   &macb->rx_ring_dma);
+	printf("rx ring %p\n", macb->rx_ring_dma);
 #ifndef CONFIG_ARCH_MSTARV7
 	macb->tx_ring = dma_alloc_coherent(MACB_TX_DMA_DESC_SIZE,
 					   &macb->tx_ring_dma);
@@ -1664,7 +1675,7 @@ static const struct macb_config sama7g5_emac_config = {
 #ifdef CONFIG_ARCH_MSTARV7
 static const struct macb_config msc313_config = {
 	.macb_rx_buffer_sz = 0x600,
-	.macb_rx_ring_sz = 8,
+	.macb_rx_ring_sz = 96,
 	.reg_read = riu_readl,
 	.reg_write = riu_writel,
 	.usrio = &macb_default_usrio,
@@ -1672,7 +1683,7 @@ static const struct macb_config msc313_config = {
 
 static const struct macb_config msc313e_config = {
 	.macb_rx_buffer_sz = 0x600,
-	.macb_rx_ring_sz = 8,
+	.macb_rx_ring_sz = 96,
 	.reg_index = 1,
 	.reg_read = xiu_readl,
 	.reg_write = xiu_writel,
