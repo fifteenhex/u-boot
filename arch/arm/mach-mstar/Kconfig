@@ -104,6 +104,17 @@ config TARGET_BREADBEE
 	select CMD_MMC
 	select CMD_FAT
 
+if MSTAR_INFINITY2M
+config TARGET_DONGSHANPIONE
+	bool "Support DongShanPiOne"
+	select MULTI_DTB_FIT
+	select PINCTRL
+	select PINCTRL_MSTAR
+	select MMC_MSTAR
+	select SPL_UBI
+	select MTD_UBI_FASTMAP
+	select ENV_IS_IN_UBI
+endif
 endchoice
 
 endmenu
