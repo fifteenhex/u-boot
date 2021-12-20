@@ -11,7 +11,7 @@
 };
 
 &pinctrl {
-	compatible = "mstar,msc313e-pinctrl";
+	compatible = "sstar,ssd20xd-pinctrl";
 };
 
 &emac {
