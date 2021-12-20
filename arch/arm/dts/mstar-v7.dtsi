@@ -199,7 +199,7 @@
 			compatible = "mstar,msc313-spinor";
 			#address-cells = <1>;
 			#size-cells = <0>;
-#ifdef CONFIG_SPL_DM_SPI_FLASH
+#if defined(CONFIG_SPL_DM_SPI_FLASH) || defined(CONFIG_SPL_SPI_NAND_SUPPORT)
 			u-boot,dm-spl;
 			u-boot,dm-preloc;
 #endif
@@ -209,7 +209,7 @@
 			spi-half-duplex;
 			spi_flash: spi_flash@0{
 				compatible = "jedec,spi-nor";
-#ifdef CONFIG_SPL_DM_SPI_FLASH
+#if defined(CONFIG_SPL_DM_SPI_FLASH) || defined(CONFIG_SPL_SPI_NAND_SUPPORT)
 				u-boot,dm-spl;
 				u-boot,dm-preloc;
 #endif
