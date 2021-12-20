@@ -1633,6 +1633,14 @@ static int macb_eth_of_to_plat(struct udevice *dev)
 	return macb_late_eth_of_to_plat(dev);
 }
 
+static const struct macb_config sifive_config = {
+	.dma_burst_length = 16,
+	.hw_dma_cap = HW_DMA_CAP_32B,
+	.clk_init = macb_sifive_clk_init,
+	.usrio = &macb_default_usrio,
+};
+
+#ifdef CONFIG_ARCH_AT91
 static const struct macb_usrio_cfg sama7g5_usrio = {
 	.mii = 0,
 	.rmii = 1,
@@ -1647,13 +1655,6 @@ static const struct macb_config sama5d4_config = {
 	.usrio = &macb_default_usrio,
 	.macb_rx_buffer_sz = MACB_DEFAULT_RX_BUFFER_SIZE,
 	.macb_rx_ring_sz = MACB_DEFAULT_RX_RING_SIZE,
-};
-
-static const struct macb_config sifive_config = {
-	.dma_burst_length = 16,
-	.hw_dma_cap = HW_DMA_CAP_32B,
-	.clk_init = macb_sifive_clk_init,
-	.usrio = &macb_default_usrio,
 };
 
 static const struct macb_config sama7g5_gmac_config = {
@@ -1671,6 +1672,7 @@ static const struct macb_config sama7g5_emac_config = {
 	.macb_rx_buffer_sz = MACB_DEFAULT_RX_BUFFER_SIZE,
 	.macb_rx_ring_sz = MACB_DEFAULT_RX_RING_SIZE,
 };
+#endif
 
 #ifdef CONFIG_ARCH_MSTARV7
 static const struct macb_config msc313_config = {
@@ -1697,6 +1699,7 @@ static const struct udevice_id macb_eth_ids[] = {
 	{ .compatible = "mstar,msc313-emac", .data = (ulong)&msc313_config },
 	{ .compatible = "mstar,msc313e-emac", .data = (ulong)&msc313e_config },
 #endif
+#ifdef CONFIG_ARCH_AT91
 	{ .compatible = "cdns,at91sam9260-macb" },
 	{ .compatible = "cdns,sam9x60-macb" },
 	{ .compatible = "cdns,sama7g5-gem",
@@ -1706,9 +1709,14 @@ static const struct udevice_id macb_eth_ids[] = {
 	{ .compatible = "atmel,sama5d2-gem" },
 	{ .compatible = "atmel,sama5d3-gem" },
 	{ .compatible = "atmel,sama5d4-gem", .data = (ulong)&sama5d4_config },
+#endif
+#if defined(CONFIG_ARCH_ZYNQ) || defined(CONFIG_ARCH_ZYNQMP)
 	{ .compatible = "cdns,zynq-gem" },
+#endif
+#if defined(TARGET_SIFIVE_UNLEASHED)
 	{ .compatible = "sifive,fu540-c000-gem",
 	  .data = (ulong)&sifive_config },
+#endif
 	{ }
 };
 
