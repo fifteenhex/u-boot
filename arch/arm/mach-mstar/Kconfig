@@ -114,6 +114,7 @@ config TARGET_DONGSHANPIONE
 	select SPL_UBI
 	select MTD_UBI_FASTMAP
 	select ENV_IS_IN_UBI
+	select CMD_MMC
 
 config TARGET_SOM2D01
 	bool "Support SOM2D01"
