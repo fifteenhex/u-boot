@@ -1,0 +1,12 @@
+if TARGET_UNITV2
+
+config SYS_BOARD
+	default "unitv2"
+
+config SYS_VENDOR
+	default "m5stack"
+
+config SYS_CONFIG_NAME
+        default "unitv2"
+
+endif
