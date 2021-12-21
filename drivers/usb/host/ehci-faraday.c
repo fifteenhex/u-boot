@@ -10,11 +10,16 @@
 #include <log.h>
 #include <asm/io.h>
 #include <usb.h>
-#include <linux/delay.h>
 #include <usb/fusbh200.h>
 #include <usb/fotg210.h>
+#include <dm.h>
+#include <linux/delay.h>
+#include <linux/usb/otg.h>
+#include <linux/usb/phy.h>
 
 #include "ehci.h"
+
+#define CONFIG_USB_EHCI_BASE 0
 
 #ifndef CONFIG_USB_EHCI_BASE_LIST
 #define CONFIG_USB_EHCI_BASE_LIST	{ CONFIG_USB_EHCI_BASE }
@@ -142,3 +147,43 @@ int ehci_hcd_stop(int index)
 {
 	return 0;
 }
+
+static const struct udevice_id faraday_usb_ids[] = {
+	{ .compatible = "mstar,msc313-usb" },
+	{ }
+};
+
+static int ehci_usb_of_to_plat(struct udevice *dev)
+{
+	struct usb_plat *plat = dev_get_plat(dev);
+
+	return 0;
+}
+
+static int ehci_usb_probe(struct udevice *dev)
+{
+	struct usb_plat *plat = dev_get_plat(dev);
+	struct usb_ehci *ehci = dev_read_addr_ptr(dev);
+
+	return 0;
+}
+
+static int ehci_usb_remove(struct udevice *dev)
+{
+	ehci_deregister(dev);
+
+	return 0;
+}
+
+U_BOOT_DRIVER(usb_faraday) = {
+	.name	= "ehci_faraday",
+	.id	= UCLASS_USB,
+	.of_match = faraday_usb_ids,
+	.of_to_plat = ehci_usb_of_to_plat,
+	.probe	= ehci_usb_probe,
+	.remove = ehci_usb_remove,
+	.ops	= &faraday_ehci_ops,
+	.plat_auto	= sizeof(struct usb_plat),
+	//.priv_auto	= sizeof(struct ehci_mx6_priv_data),
+	.flags	= DM_FLAG_ALLOC_PRIV_DMA,
+};
