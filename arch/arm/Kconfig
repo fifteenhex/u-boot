@@ -1222,12 +1222,14 @@ config ARCH_MSTARV7
 	select CLK
 	select CPU_V7A
 	select DM
+	select DM_GPIO
 	select DM_SERIAL
 	select DTB_RESELECT
 	select DYNAMIC_CRC_TABLE
 	select ENABLE_ARM_SOC_BOOT0_HOOK
 	select FIT
 	select LTO
+	select MSC313_GPIO
 	select OF_BOARD_SETUP
 	select OF_CONTROL
 	select OF_LIBFDT
