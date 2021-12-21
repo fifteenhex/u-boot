@@ -5,3 +5,8 @@
  */
 
 #include "mstar-infinity2m.dtsi"
+
+&gpio {
+	compatible = "sstar,ssd20xd-gpio";
+	status = "okay";
+};
