@@ -115,6 +115,7 @@ config TARGET_DONGSHANPIONE
 	select MTD_UBI_FASTMAP
 	select ENV_IS_IN_UBI
 	select CMD_MMC
+	select CMD_GPIO
 	select USB
 	select USB_EHCI_HCD
 	select USB_EHCI_FARADAY
