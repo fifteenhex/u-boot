@@ -523,4 +523,11 @@ config NOMADIK_GPIO
 	  into a number of banks each with 32 GPIOs. The GPIOs for a device are
 	  defined in the device tree with one node for each bank.
 
+config MSC313_GPIO
+	bool "MStar MSC313 GPIO"
+	depends on DM_GPIO
+	help
+	  Select this to enable GPIO for MStar MSC313 and later MStar/SigmaStar
+	  SoCs.
+
 endif
