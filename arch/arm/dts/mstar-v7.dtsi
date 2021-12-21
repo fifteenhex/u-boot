@@ -344,6 +344,12 @@
 					 <&xtal_div2>;
 			};
 
+			gpio: gpio@207800 {
+				#gpio-cells = <2>;
+				reg = <0x207800 0x200>;
+				gpio-controller;
+			};
+
 			pm_uart: uart@221000 {
 				compatible = "snps,dw-apb-uart";
 				u-boot,dm-spl;
