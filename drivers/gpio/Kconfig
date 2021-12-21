@@ -570,4 +570,11 @@ config SLG7XL45106_I2C_GPO
 	   8-bit gpo expander, all gpo lines are controlled by writing
 	   value into data register.
 
+config MSC313_GPIO
+	bool "MStar MSC313 GPIO"
+	depends on DM_GPIO
+	help
+	  Select this to enable GPIO for MStar MSC313 and later MStar/SigmaStar
+	  SoCs.
+
 endif
