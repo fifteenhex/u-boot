@@ -132,6 +132,9 @@ config SYS_TEXT_BASE
 # stack there.
 config SPL_STACK_R_ADDR
 	default 0x24000000
+# 8MiB below that put the UBI info
+config SPL_UBI_INFO_ADDR
+	default 0x23800000
 #
 
 config ENV_SIZE
