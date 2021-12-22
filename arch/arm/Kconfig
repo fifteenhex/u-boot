@@ -2251,6 +2251,7 @@ source "board/thingyjp/breadbee/Kconfig"
 source "board/100ask/dongshanpione/Kconfig"
 source "board/wirelesstag/som2d01/Kconfig"
 source "board/m5stack/unitv2/Kconfig"
+source "board/miyoo/miyoomini/Kconfig"
 
 source "arch/arm/Kconfig.debug"
 
