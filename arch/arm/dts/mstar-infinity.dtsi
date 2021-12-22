@@ -88,6 +88,7 @@
 		assigned-clocks = <&clkgen_mux_emac 0>;
 		assigned-clock-parents = <&clk_mpll_288_div2>;
 		phy-handle = <&phy>;
+		mstar,phyana = <&phyana>;
 		phy: phy@0 {
 			compatible = "ethernet-phy-idDEAD.BEEF";
 			phy-is-integrated;
