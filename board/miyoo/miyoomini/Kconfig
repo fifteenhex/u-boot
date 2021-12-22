@@ -1,0 +1,12 @@
+if TARGET_MIYOOMINI
+
+config SYS_BOARD
+	default "miyoomini"
+
+config SYS_VENDOR
+	default "miyoo"
+
+config SYS_CONFIG_NAME
+        default "miyoomini"
+
+endif
