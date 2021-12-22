@@ -1532,6 +1532,30 @@ static struct macb_config default_gem_config = {
 	.macb_rx_ring_sz = MACB_DEFAULT_RX_RING_SIZE,
 };
 
+void emac_patches(void){
+	printf("emac patches\n");
+
+	// this is "switch rx descriptor format to mode 1"
+	*(int8_t *)0x1f2a2274 = 0x0;
+	*(int8_t *)0x1f2a2275 = 0x1;
+
+	// RX shift patch
+	*(int8_t *)0x1f2a2200 = *(int8_t *)0x1f2a2200 | 0x10;
+
+	// TX underrun patch
+	*(int8_t *)0x1f2a2271 = *(int8_t *)0x1f2a2271 | 0x1;
+
+	// clkgen setup
+	*(int8_t *)0x1f207108 = 0x0;
+	*(int8_t *)0x1f226688 = 0x0; // rx
+	*(int8_t *)0x1f22668c = 0x0; // tx
+
+	*(u16*)(0x1f2a2000 + 0x200) = 0xF051; // mstar call this julian100, magic number, seems to be related to the phy
+	*(u16*)(0x1f2a2000 + 0x204) = 0x0000;
+	*(u16*)(0x1f2a2000 + 0x208) = 0x0001; // mstar call this julian104, this enables software descriptors apparently
+	*(u16*)(0x1f2a2000 + 0x20c) = 0x0000;
+}
+
 static int macb_eth_probe(struct udevice *dev)
 {
 	struct eth_pdata *pdata = dev_get_plat(dev);
@@ -1567,6 +1591,8 @@ static int macb_eth_probe(struct udevice *dev)
 		}
 		macb->config = &default_gem_config;
 	}
+
+	emac_patches();
 
 #ifdef CONFIG_CLK
 	ret = macb_enable_clk(dev);
