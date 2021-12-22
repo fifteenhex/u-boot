@@ -61,7 +61,6 @@ CONFIG_SPI_FLASH_GIGADEVICE=y
 #this is needed because the env is only 8K
 #and sf won't do a sector erase instead
 #of a block erase
-CONFIG_SPI_FLASH_USE_4K_SECTORS=y
 
 #debugging/bring up
 #CONFIG_OF_EMBED=y
