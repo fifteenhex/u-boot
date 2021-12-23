@@ -6,9 +6,9 @@
 #include <timer.h>
 #include <regmap.h>
 
-#define TIMER_CTRL			0x0
-#define TIMER_CTRL_EN			BIT(0)
-#define TIMER_CTRL_CLR			BIT(3)
+#define TIMER_CTRL		0x0
+#define TIMER_CTRL_EN		BIT(0)
+#define TIMER_CTRL_CLR		BIT(3)
 #define TIMER_COUNTER_L		0x10
 #define TIMER_COUNTER_H		0x14
 
@@ -71,4 +71,3 @@ U_BOOT_DRIVER(mstar_timer) = {
 	.probe = mstar_timer_probe,
 	.ops = &mstar_timer_ops,
 };
-
