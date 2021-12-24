@@ -7,5 +7,6 @@ void mstar_poweron_reason(void);
 int mstar_cpupll_init(void);
 int mstar_miu_init(void);
 int mstar_board_late_init(void);
+void mstar_board_init_f(ulong dummy);
 
 #endif
