@@ -7,6 +7,7 @@
 #include <asm/io.h>
 #include <linux/iopoll.h>
 #include <linux/ioport.h>
+#include <linux/clk-provider.h>
 #include <log.h>
 
 #define REG_PASSWORD			0x0
@@ -112,6 +113,9 @@ static int msc313_spinor_xfer(struct udevice *dev, unsigned int bitlen,
 static int msc313_spinor_set_speed(struct udevice *bus, uint speed)
 {
 	/* nothing to do */
+
+	printf("set speed: %u\n", speed);
+
 	return 0;
 }
 
@@ -145,6 +149,17 @@ static int msc313_spinor_ofdata_to_platdata(struct udevice *bus)
 	return 0;
 }
 
+static const struct clk_div_table div_table[] = {
+	{0x1, 2},
+	{0x4, 4},
+	{0x40, 8},
+	{0x80, 16},
+	{0x100, 32},
+	{0x200, 64},
+	{0x400, 128},
+	{ 0 },
+};
+
 static int msc313_spinor_probe(struct udevice *bus)
 {
 	struct msc313_spinor_platdata *plat = dev_get_plat(bus);
@@ -153,7 +168,7 @@ static int msc313_spinor_probe(struct udevice *bus)
 	priv->regs = (u32 *) plat->reg_base;
 	priv->mem_base = (unsigned long *)plat->mem_base;
 
-	/* initially force the clock down to the lowest known rate */
+	/* initially force the clock down to 54MHz */
 	writew(0x40, priv->regs + REG_SPI_CLKDIV);
 
 	return 0;
