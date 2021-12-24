@@ -131,7 +131,8 @@ int eth_setup(void)
 }
 #endif
 
-int board_late_init(void){
+int board_late_init(void)
+{
 #ifndef CONFIG_SPL_BUILD
 	const char* family = CHIPTYPE_UNKNOWN;
 	int chiptype = mstar_chiptype();
