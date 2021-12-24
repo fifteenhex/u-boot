@@ -270,3 +270,87 @@ __weak int ft_board_setup(void *blob, struct bd_info *bd)
 {
 	return 0;
 }
+
+u32 mpllregs[5];
+uint mplldbg;
+
+#ifdef CONFIG_SPL_BUILD
+static void m5_misc(void)
+{
+	// the m5 ipl does this before DRAM setup
+	// zero'ing these registers while running
+	// doesn't seem to break anything though.
+
+	mstar_writew(0x2201, 0x1f206700);
+	mstar_writew(0x0420, 0x1f206704);
+	mstar_writew(0x0041, 0x1f206708);
+	mstar_writew(0x0000, 0x1f20670c);
+	mstar_writew(0xdd2f, 0x1f206720);
+	mstar_writew(0x0024, 0x1f206724);
+	mstar_writew(0x0000, 0x1f20672c);
+	mstar_writew(0x0001, 0x1f206728);
+}
+
+#ifndef CONFIG_MSTAR_IPL
+static int miu_init(void)
+{
+	struct udevice *dev;
+	int rv;
+
+	rv = uclass_get_device(UCLASS_RAM, 0, &dev);
+	if (rv)
+		debug("DRAM init failed: %d\n", rv);
+
+	return rv;
+}
+#endif
+
+void mstar_board_init_f(ulong dummy)
+{
+	uint32_t cpuid;
+	int chiptype = mstar_chiptype();
+	void* reg;
+
+#ifdef CONFIG_DEBUG_UART
+	debug_uart_init();
+#endif
+
+	spl_early_init();
+	preloader_console_init();
+
+	asm volatile("mrc p15, 0, %0, c0, c0, 0" : "=r"(cpuid));
+	printf("\ncpuid: %x, mstar chipid: %x\n",
+			(unsigned) cpuid,
+			(unsigned)*deviceid);
+
+	mstar_check_ipl();
+	mstar_poweron_reason();
+
+	switch(chiptype){
+		case CHIPTYPE_SSC8336:
+			m5_misc();
+			break;
+	}
+
+#ifndef CONFIG_MSTAR_IPL
+	miu_init();
+	mstar_cpupll_init();
+#endif
+
+	mstar_bump_cpufreq();
+
+	printf("mplldbg %x\n", mplldbg);
+	for(int i = 0; i < 5; i++){
+		printf("mpll: %x - %x\n", i * 4, mpllregs[i]);
+	}
+
+	//mstar_utmi_setfinetuning();
+	//mstar_clockfixup();
+}
+
+__weak void board_init_f(ulong dummy)
+{
+	mstar_board_init_f(dummy);
+}
+
+#endif // spl
