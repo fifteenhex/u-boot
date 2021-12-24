@@ -146,8 +146,6 @@ int mstar_fill_macaddress(void)
 	uint32_t didcrc32;
 	char ethaddr[16];
 
-	printf("yo yo!\n");
-
 	for(i = 0; i < 3; i++){
 		for(j = 0; j < 2; j++){
 			did[(i * 2) + j] = *(didreg + ((i * 4) + j));
