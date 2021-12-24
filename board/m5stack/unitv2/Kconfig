@@ -9,4 +9,7 @@ config SYS_VENDOR
 config SYS_CONFIG_NAME
         default "unitv2"
 
+config MTDPARTS_DEFAULT
+	default "spi-nand0:509184K@15104K(UBI)"
+
 endif
