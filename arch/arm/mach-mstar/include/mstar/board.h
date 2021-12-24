@@ -6,5 +6,6 @@ void mstar_check_ipl(void);
 void mstar_poweron_reason(void);
 int mstar_cpupll_init(void);
 int mstar_miu_init(void);
+int mstar_board_late_init(void);
 
 #endif

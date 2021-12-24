@@ -247,3 +247,28 @@ struct image_header *spl_get_load_buffer(ssize_t offset, size_t size)
 {
 	return CONFIG_SYS_TEXT_BASE + offset;
 }
+
+int mstar_board_late_init(void)
+{
+#ifndef CONFIG_SPL_BUILD
+	return mstar_fill_macaddress();
+#else
+	return 0;
+#endif
+}
+
+__weak int board_late_init(void)
+{
+	return mstar_board_late_init();
+}
+
+__weak int embedded_dtb_select(void)
+{
+	fdtdec_setup();
+	return 0;
+}
+
+__weak int ft_board_setup(void *blob, struct bd_info *bd)
+{
+	return 0;
+}
