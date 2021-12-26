@@ -288,6 +288,14 @@ config PHY_XILINX_ZYNQMP
 	  Enable this to support ZynqMP High Speed Gigabit Transceiver
 	  that is part of ZynqMP SoC.
 
+config PHY_MSC313_USB
+	bool "Mstar MSC313 USB PHY Driver"
+	depends on PHY
+	depends on ARCH_MSTARV7
+	help
+	  Support the USB phy on MStar/SigmaStar SoCs
+	  from the MSC313 onwards.
+
 source "drivers/phy/rockchip/Kconfig"
 source "drivers/phy/cadence/Kconfig"
 source "drivers/phy/ti/Kconfig"
