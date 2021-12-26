@@ -361,6 +361,65 @@
 				assigned-clock-parents = <&mpll MSTAR_MPLL_172>;
 				/*clock-frequency = <12000000>;*/
 			};
+
+			utmi0: utmi@284200 {
+				compatible = "syscon";
+				reg = <0x284200 0x80>;
+			};
+
+			usbc0: usbc@284600 {
+				compatible = "syscon";
+				reg = <0x284600 0x20>;
+			};
+
+			usbphy0: usbphy@0 {
+				#phy-cells = <1>;
+				compatible = "mstar,msc313-usb-phy";
+				clocks = <&xtal_div2>;
+				mstar,utmi = <&utmi0>;
+				mstar,usbc = <&usbc0>;
+				/*pinctrl-names = "default";
+				//pinctrl-0 = <&usb_pins>;*/
+				//status = "disabled";
+			};
+
+			uhc0: uhc@284800 {
+				compatible = "mstar,msc313-ehci";
+				reg = <0x284800 0x200>;
+				phys = <&usbphy0 0>;
+				phy-names = "usb";
+				mstar,usbc = <&usbc0>;
+				//status = "disabled";
+			};
+
+			utmi1: utmi@285200 {
+				compatible = "syscon";
+				reg = <0x285200 0x80>;
+			};
+
+			usbc1: usbc@286200 {
+				compatible = "syscon";
+				reg = <0x286200 0x20>;
+			};
+
+			usbphy1: usbphy@1 {
+				#phy-cells = <1>;
+				compatible = "mstar,msc313-usb-phy";
+				clocks = <&xtal_div2>;
+				mstar,utmi = <&utmi1>;
+				mstar,usbc = <&usbc1>;
+				//status = "disabled";
+			};
+
+			uhc1: uhc@286400 {
+				compatible = "mstar,msc313-ehci";
+				reg = <0x286400 0x200>;
+				phys = <&usbphy1 0>;
+				phy-names = "usb";
+				mstar,usbc = <&usbc1>;
+				//status = "disabled";
+			};
+
 		};
 	};
 };
