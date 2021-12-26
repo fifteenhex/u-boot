@@ -120,6 +120,10 @@ config TARGET_DONGSHANPIONE
 	select USB
 	select USB_EHCI_HCD
 	select USB_EHCI_FARADAY
+	select PHY
+	select PHY_MSC313_USB
+	select CMD_USB
+	select CMD_DM
 
 config TARGET_SOM2D01
 	bool "Support SOM2D01"
