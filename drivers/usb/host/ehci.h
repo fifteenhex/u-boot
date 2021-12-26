@@ -108,8 +108,14 @@ struct usb_linux_config_descriptor {
 #define ehci_readl(x)		be32_to_cpu(__raw_readl(x))
 #define ehci_writel(a, b)	__raw_writel(cpu_to_be32(b), a)
 #else
+#ifdef CONFIG_ARCH_MSTARV7
+#include <riu.h>
+#define ehci_readl(x)		riu_readl(riu_bank(x), riu_reg(x))
+#define ehci_writel(a, b)	riu_writel(riu_bank(a), riu_reg(a), b)
+#else
 #define ehci_readl(x)		readl(x)
 #define ehci_writel(a, b)	writel(b, a)
+#endif
 #endif
 
 #if defined CONFIG_EHCI_MMIO_BIG_ENDIAN

@@ -10,6 +10,7 @@
 #include <log.h>
 #include <asm/io.h>
 #include <usb.h>
+#include <usb/ehci-ci.h>
 #include <usb/fusbh200.h>
 #include <usb/fotg210.h>
 #include <dm.h>
@@ -30,14 +31,27 @@ union ehci_faraday_regs {
 	struct fotg210_regs  otg;
 };
 
+struct ehci_faraday_priv {
+	struct ehci_ctrl ctrl;
+	struct clk *clocks;
+	struct reset_ctl *resets;
+	struct phy phy;
+#ifdef CONFIG_DM_REGULATOR
+	struct udevice *vbus_supply;
+#endif
+	int clock_count;
+	int reset_count;
+};
+
 static inline int ehci_is_fotg2xx(union ehci_faraday_regs *regs)
 {
-	return !readl(&regs->usb.easstr);
+	return !ehci_readl(&regs->usb.easstr);
 }
 
 void faraday_ehci_set_usbmode(struct ehci_ctrl *ctrl)
 {
 	/* nothing needs to be done */
+	printf("%s:%d\n", __func__, __LINE__);
 }
 
 int faraday_ehci_get_port_speed(struct ehci_ctrl *ctrl, uint32_t reg)
@@ -45,11 +59,13 @@ int faraday_ehci_get_port_speed(struct ehci_ctrl *ctrl, uint32_t reg)
 	int spd, ret = PORTSC_PSPD_HS;
 	union ehci_faraday_regs *regs;
 
+	printf("%s:%d\n", __func__, __LINE__);
+
 	ret = (void __iomem *)((ulong)ctrl->hcor - 0x10);
 	if (ehci_is_fotg2xx(regs))
-		spd = OTGCSR_SPD(readl(&regs->otg.otgcsr));
+		spd = OTGCSR_SPD(ehci_readl(&regs->otg.otgcsr));
 	else
-		spd = BMCSR_SPD(readl(&regs->usb.bmcsr));
+		spd = BMCSR_SPD(ehci_readl(&regs->usb.bmcsr));
 
 	switch (spd) {
 	case 0:    /* full speed */
@@ -71,6 +87,8 @@ int faraday_ehci_get_port_speed(struct ehci_ctrl *ctrl, uint32_t reg)
 
 uint32_t *faraday_ehci_get_portsc_register(struct ehci_ctrl *ctrl, int port)
 {
+	//printf("%s:%d\n", __func__, __LINE__);
+
 	/* Faraday EHCI has one and only one portsc register */
 	if (port) {
 		/* Printing the message would cause a scan failure! */
@@ -88,6 +106,7 @@ static const struct ehci_ops faraday_ehci_ops = {
 	.get_portsc_register	= faraday_ehci_get_portsc_register,
 };
 
+#if !CONFIG_IS_ENABLED(DM_USB)
 /*
  * Create the appropriate control structures to manage
  * a new EHCI host controller.
@@ -99,6 +118,8 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 	struct ehci_hcor *hcor;
 	union ehci_faraday_regs *regs;
 	uint32_t base_list[] = CONFIG_USB_EHCI_BASE_LIST;
+
+	printf("%s:%d\n", __func__, __LINE__);
 
 	if (index < 0 || index >= ARRAY_SIZE(base_list))
 		return -1;
@@ -120,18 +141,20 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 		setbits_le32(&regs->otg.otgcsr, OTGCSR_A_BUSREQ);
 		mdelay(1);
 		/* Disable OTG & DEV interrupts, triggered at level-high */
-		writel(IMR_IRQLH | IMR_OTG | IMR_DEV, &regs->otg.imr);
+		ehci_writel(&regs->otg.imr, IMR_IRQLH | IMR_OTG | IMR_DEV);
 		/* Clear all interrupt status */
-		writel(ISR_HOST | ISR_OTG | ISR_DEV, &regs->otg.isr);
+		ehci_writel(&regs->otg.isr, ISR_HOST | ISR_OTG | ISR_DEV);
 	} else {
 		/* Interrupt=level-high */
 		setbits_le32(&regs->usb.bmcsr, BMCSR_IRQLH);
 		/* VBUS on */
 		clrbits_le32(&regs->usb.bmcsr, BMCSR_VBUS_OFF);
 		/* Disable all interrupts */
-		writel(0x00, &regs->usb.bmier);
-		writel(0x1f, &regs->usb.bmisr);
+		ehci_writel(&regs->usb.bmier, 0x00);
+		ehci_writel(&regs->usb.bmisr, 0x1f);
 	}
+
+	printf("%s:%d\n", __func__, __LINE__);
 
 	*ret_hccr = hccr;
 	*ret_hcor = hcor;
@@ -147,9 +170,10 @@ int ehci_hcd_stop(int index)
 {
 	return 0;
 }
+#endif
 
 static const struct udevice_id faraday_usb_ids[] = {
-	{ .compatible = "mstar,msc313-usb" },
+	{ .compatible = "mstar,msc313-ehci" },
 	{ }
 };
 
@@ -162,8 +186,33 @@ static int ehci_usb_of_to_plat(struct udevice *dev)
 
 static int ehci_usb_probe(struct udevice *dev)
 {
-	struct usb_plat *plat = dev_get_plat(dev);
+	struct ehci_faraday_priv *priv = dev_get_priv(dev);
 	struct usb_ehci *ehci = dev_read_addr_ptr(dev);
+	union ehci_faraday_regs *regs = ehci;
+	struct usb_plat *plat = dev_get_plat(dev);
+	struct ehci_hccr *hccr;
+	struct ehci_hcor *hcor;
+	int ret;
+
+	ret = ehci_setup_phy(dev, &priv->phy, 0);
+	if (ret)
+		return ret;
+
+	hccr = (struct ehci_hccr *) ehci;
+	hcor = (struct ehci_hcor *)
+		((void *)hccr + HC_LENGTH(ehci_readl(&hccr->cr_capbase)));
+
+	/* Interrupt=level-high */
+	setbits_le32(&regs->usb.bmcsr, BMCSR_IRQLH);
+	/* VBUS on */
+	clrbits_le32(&regs->usb.bmcsr, BMCSR_VBUS_OFF);
+	/* Disable all interrupts */
+	ehci_writel(&regs->usb.bmier, 0x00);
+	ehci_writel(&regs->usb.bmisr, 0x1f);
+
+	ret = ehci_register(dev, hccr, hcor, &faraday_ehci_ops, 0, USB_INIT_HOST);
+	if(ret)
+		return ret;
 
 	return 0;
 }
@@ -176,14 +225,14 @@ static int ehci_usb_remove(struct udevice *dev)
 }
 
 U_BOOT_DRIVER(usb_faraday) = {
-	.name	= "ehci_faraday",
-	.id	= UCLASS_USB,
-	.of_match = faraday_usb_ids,
-	.of_to_plat = ehci_usb_of_to_plat,
-	.probe	= ehci_usb_probe,
-	.remove = ehci_usb_remove,
-	.ops	= &faraday_ehci_ops,
+	.name		= "ehci_faraday",
+	.id		= UCLASS_USB,
+	.of_match	= faraday_usb_ids,
+	.of_to_plat	= ehci_usb_of_to_plat,
+	.probe		= ehci_usb_probe,
+	.remove		= ehci_usb_remove,
+	.ops		= &ehci_usb_ops,
 	.plat_auto	= sizeof(struct usb_plat),
-	//.priv_auto	= sizeof(struct ehci_mx6_priv_data),
-	.flags	= DM_FLAG_ALLOC_PRIV_DMA,
+	.priv_auto	= sizeof(struct ehci_faraday_priv),
+	.flags		= DM_FLAG_ALLOC_PRIV_DMA,
 };
