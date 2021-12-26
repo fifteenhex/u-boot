@@ -17,4 +17,14 @@ static inline void riu_writel(void *regs, unsigned reg, u32 value){
         writew(h, regs + ((reg * 2) + 4));
 }
 
+static inline void* riu_bank(void *regs)
+{
+	return (void*)(((unsigned) regs) & ~0x1ff);
+}
+
+static inline unsigned riu_reg(void *regs)
+{
+	return ((unsigned) regs) & 0x1ff;
+}
+
 #endif
