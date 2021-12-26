@@ -37,7 +37,6 @@ static const struct phy_ops msc313_usb_phy_ops = {
 
 static void msc313_usb_phy_switch_port(struct udevice *dev, struct msc313_usb_phy *phy)
 {
-	printk("yo yo yo!\n");
 	dev_info(dev, "Switching to UHC port\n");
 	regmap_update_bits(phy->usbc, MSTAR_USBC_REG_PRTCTRL,
 				MSTAR_PRTCTRL_OTG | MSTAR_PRTCTRL_UHC, 0);
