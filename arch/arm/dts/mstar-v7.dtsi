@@ -267,6 +267,11 @@
 					 <&xtal_div2>;
 			};
 
+			watchdog@6000 {
+				compatible = "mstar,msc313e-wdt";
+				reg = <0x6000 0x1f>;
+			};
+
 			timer0: timer@6040 {
 				compatible = "mstar,timer";
 				u-boot,dm-spl;
