@@ -124,6 +124,12 @@ config TARGET_DONGSHANPIONE
 	select PHY_MSC313_USB
 	select CMD_USB
 	select CMD_DM
+	select USB_HOST_ETHER
+	select USB_ETHER_RTL8152
+	select CMD_EXT4
+	select CMD_FAT
+	select WATCHDOG
+	select WDT
 
 config TARGET_SOM2D01
 	bool "Support SOM2D01"
