@@ -6,6 +6,36 @@
 
 #include "mstar-infinity.dtsi"
 
+&riu {
+#if 0
+	utmi2: utmi@284a00 {
+		compatible = "syscon";
+		reg = <0x284a00 0x80>;
+	};
+
+	usbc2: usbc@284e00 {
+		compatible = "syscon";
+		reg = <0x284e00 0x20>;
+	};
+
+	usbphy2: usbphy@2 {
+		#phy-cells = <1>;
+		compatible = "mstar,msc313-usb-phy";
+		clocks = <&xtal_div2>;
+		mstar,utmi = <&utmi2>;
+		mstar,usbc = <&usbc2>;
+	};
+
+	uhc2: uhc@285000 {
+		compatible = "mstar,msc313-ehci";
+		reg = <0x285000 0x200>;
+		phys = <&usbphy2 0>;
+		phy-names = "usb";
+		mstar,usbc = <&usbc2>;
+	};
+#endif
+};
+
 &phy {
 	compatible = "ethernet-phy-idDEAD.B33F";
 };

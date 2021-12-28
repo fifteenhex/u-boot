@@ -25,6 +25,8 @@
 
 #include "ehci.h"
 
+#define DEBUG 1
+
 #ifndef CONFIG_USB_MAX_CONTROLLER_COUNT
 #define CONFIG_USB_MAX_CONTROLLER_COUNT 1
 #endif
@@ -737,9 +739,11 @@ static int ehci_submit_root(struct usb_device *dev, unsigned long pipe,
 	int port = le16_to_cpu(req->index) & 0xff;
 	struct ehci_ctrl *ctrl = ehci_get_ctrl(dev);
 
+	printf("%s:%d\n", __func__, __LINE__);
+
 	srclen = 0;
 
-	debug("req=%u (%#x), type=%u (%#x), value=%u, index=%u\n",
+	printf("req=%u (%#x), type=%u (%#x), value=%u, index=%u\n",
 	      req->request, req->request,
 	      req->requesttype, req->requesttype,
 	      le16_to_cpu(req->value), le16_to_cpu(req->index));
@@ -1638,7 +1642,7 @@ static int ehci_submit_control_msg(struct udevice *dev, struct usb_device *udev,
 				   unsigned long pipe, void *buffer, int length,
 				   struct devrequest *setup)
 {
-	debug("%s: dev='%s', udev=%p, udev->dev='%s', portnr=%d\n", __func__,
+	printf("%s: dev='%s', udev=%p, udev->dev='%s', portnr=%d\n", __func__,
 	      dev->name, udev, udev->dev->name, udev->portnr);
 
 	return _ehci_submit_control_msg(udev, pipe, buffer, length, setup);

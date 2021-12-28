@@ -256,7 +256,9 @@ int usb_control_msg(struct usb_device *dev, unsigned int pipe,
 	 * interrupt handler may set the status when the USB operation has
 	 * been completed.
 	 */
+	printf("%s:%d\n", __func__, __LINE__);
 	while (timeout--) {
+		printf("%s:%d\n", __func__, __LINE__);
 		if (!((volatile unsigned long)dev->status & USB_ST_NOT_PROC))
 			break;
 		mdelay(1);

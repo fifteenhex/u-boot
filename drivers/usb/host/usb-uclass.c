@@ -261,9 +261,13 @@ int usb_init(void)
 
 	asynch_allowed = 1;
 
+	printf("%s:%d\n", __func__, __LINE__);
+
 	ret = uclass_get(UCLASS_USB, &uc);
 	if (ret)
 		return ret;
+
+	printf("%s:%d\n", __func__, __LINE__);
 
 	uc_priv = uclass_get_priv(uc);
 
@@ -292,6 +296,8 @@ int usb_init(void)
 			continue;
 		}
 
+		printf("%s:%d\n", __func__, __LINE__);
+
 		if (ret) {		/* Other error. */
 			printf("probe failed, error %d\n", ret);
 			continue;
@@ -299,6 +305,8 @@ int usb_init(void)
 		controllers_initialized++;
 		usb_started = true;
 	}
+
+	printf("%s:%d\n", __func__, __LINE__);
 
 	/*
 	 * lowlevel init done, now scan the bus for devices i.e. search HUBs
@@ -312,6 +320,8 @@ int usb_init(void)
 		if (!priv->companion)
 			usb_scan_bus(bus, true);
 	}
+
+	printf("%s:%d\n", __func__, __LINE__);
 
 	/*
 	 * Now that the primary controllers have been scanned and have handed
@@ -329,6 +339,8 @@ int usb_init(void)
 		}
 	}
 
+	printf("%s:%d\n", __func__, __LINE__);
+
 	debug("scan end\n");
 
 	/* Remove any devices that were not found on this scan */
@@ -342,6 +354,8 @@ int usb_init(void)
 	/* if we were not able to find at least one working bus, bail out */
 	if (controllers_initialized == 0)
 		printf("No working controllers found\n");
+
+	printf("%s:%d\n", __func__, __LINE__);
 
 	return usb_started ? 0 : -1;
 }
@@ -689,6 +703,9 @@ int usb_scan_device(struct udevice *parent, int port,
 	udev->speed = speed;
 	udev->devnum = priv->next_addr + 1;
 	udev->portnr = port;
+
+	printf("%s:%d\n", __func__, __LINE__);
+
 	debug("Calling usb_setup_device(), portnr=%d\n", udev->portnr);
 	parent_udev = device_get_uclass_id(parent) == UCLASS_USB_HUB ?
 		dev_get_parent_priv(parent) : NULL;
@@ -709,12 +726,15 @@ int usb_scan_device(struct udevice *parent, int port,
 			return ret;
 		created = true;
 	}
+	printf("%s:%d\n", __func__, __LINE__);
+
 	plat = dev_get_parent_plat(dev);
 	debug("%s: Probing '%s', plat=%p\n", __func__, dev->name, plat);
 	plat->devnum = udev->devnum;
 	plat->udev = udev;
 	priv->next_addr++;
 	ret = device_probe(dev);
+	printf("%s:%d\n", __func__, __LINE__);
 	if (ret) {
 		debug("%s: Device '%s' probe failed\n", __func__, dev->name);
 		priv->next_addr--;
@@ -722,6 +742,7 @@ int usb_scan_device(struct udevice *parent, int port,
 			device_unbind(dev);
 		return ret;
 	}
+	printf("%s:%d\n", __func__, __LINE__);
 	*devp = dev;
 
 	return 0;

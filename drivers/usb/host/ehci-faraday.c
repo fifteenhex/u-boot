@@ -85,7 +85,7 @@ int faraday_ehci_get_port_speed(struct ehci_ctrl *ctrl, uint32_t reg)
 	return ret;
 }
 
-uint32_t *faraday_ehci_get_portsc_register(struct ehci_ctrl *ctrl, int port)
+static uint32_t *faraday_ehci_get_portsc_register(struct ehci_ctrl *ctrl, int port)
 {
 	//printf("%s:%d\n", __func__, __LINE__);
 
@@ -97,13 +97,33 @@ uint32_t *faraday_ehci_get_portsc_register(struct ehci_ctrl *ctrl, int port)
 	}
 
 	/* Faraday EHCI PORTSC register offset is 0x20 from hcor */
-	return (uint32_t *)((uint8_t *)ctrl->hcor + 0x20);
+	return (uint32_t *)((void*)ctrl->hcor + 0x20);
+}
+
+static int faraday_init_after_reset(struct ehci_ctrl *ctrl)
+{
+	union ehci_faraday_regs *regs = ctrl->hccr;
+	printf("%s:%d\n", __func__, __LINE__);
+
+	/* Interrupt=level-high */
+	setbits_le32(&regs->usb.bmcsr, BMCSR_IRQLH);
+	/* VBUS on */
+	//clrbits_le32(&regs->usb.bmcsr, BMCSR_VBUS_OFF);
+
+	setbits_le32(&regs->usb.bmcsr, BMCSR_VBUS_OFF);
+
+	/* Disable all interrupts */
+	ehci_writel(&regs->usb.bmier, 0x00);
+	ehci_writel(&regs->usb.bmisr, 0x1f);
+
+	return 0;
 }
 
 static const struct ehci_ops faraday_ehci_ops = {
 	.set_usb_mode		= faraday_ehci_set_usbmode,
 	.get_port_speed		= faraday_ehci_get_port_speed,
 	.get_portsc_register	= faraday_ehci_get_portsc_register,
+	.init_after_reset	= faraday_init_after_reset,
 };
 
 #if !CONFIG_IS_ENABLED(DM_USB)
@@ -202,15 +222,7 @@ static int ehci_usb_probe(struct udevice *dev)
 	hcor = (struct ehci_hcor *)
 		((void *)hccr + HC_LENGTH(ehci_readl(&hccr->cr_capbase)));
 
-	/* Interrupt=level-high */
-	setbits_le32(&regs->usb.bmcsr, BMCSR_IRQLH);
-	/* VBUS on */
-	clrbits_le32(&regs->usb.bmcsr, BMCSR_VBUS_OFF);
-	/* Disable all interrupts */
-	ehci_writel(&regs->usb.bmier, 0x00);
-	ehci_writel(&regs->usb.bmisr, 0x1f);
-
-	ret = ehci_register(dev, hccr, hcor, &faraday_ehci_ops, 0, USB_INIT_HOST);
+	ret = ehci_register(dev, hccr, hcor, &faraday_ehci_ops, EHCI_TWEAK_NO_INIT_CF, USB_INIT_HOST);
 	if(ret)
 		return ret;
 

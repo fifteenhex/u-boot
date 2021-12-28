@@ -396,7 +396,7 @@
 				mstar,usbc = <&usbc0>;
 				//status = "disabled";
 			};
-
+#if 0
 			utmi1: utmi@285200 {
 				compatible = "syscon";
 				reg = <0x285200 0x80>;
@@ -424,7 +424,7 @@
 				mstar,usbc = <&usbc1>;
 				//status = "disabled";
 			};
-
+#endif
 		};
 	};
 };

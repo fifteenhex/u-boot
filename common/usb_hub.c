@@ -116,6 +116,9 @@ static int usb_set_port_feature(struct usb_device *dev, int port, int feature)
 
 static int usb_get_hub_status(struct usb_device *dev, void *data)
 {
+	printf("%s:%d\n", __func__, __LINE__);
+
+
 	return usb_control_msg(dev, usb_rcvctrlpipe(dev, 0),
 			USB_REQ_GET_STATUS, USB_DIR_IN | USB_RT_HUB, 0, 0,
 			data, sizeof(struct usb_hub_status), USB_CNTL_TIMEOUT);
@@ -124,6 +127,8 @@ static int usb_get_hub_status(struct usb_device *dev, void *data)
 int usb_get_port_status(struct usb_device *dev, int port, void *data)
 {
 	int ret;
+
+	printf("%s:%d\n", __func__, __LINE__);
 
 	ret = usb_control_msg(dev, usb_rcvctrlpipe(dev, 0),
 			USB_REQ_GET_STATUS, USB_DIR_IN | USB_RT_PORT, 0, port,
@@ -270,6 +275,8 @@ static int usb_hub_port_reset(struct usb_device *dev, int port,
 	unsigned short portstatus, portchange;
 	int delay = HUB_SHORT_RESET_TIME; /* start with short reset delay */
 
+	printf("%s:%d\n", __func__, __LINE__);
+
 #if CONFIG_IS_ENABLED(DM_USB)
 	debug("%s: resetting '%s' port %d...\n", __func__, dev->dev->name,
 	      port + 1);
@@ -342,6 +349,7 @@ int usb_hub_port_connect_change(struct usb_device *dev, int port)
 	unsigned short portstatus;
 	int ret, speed;
 
+	printf("%s:%d\n", __func__, __LINE__);
 	/* Check status */
 	ret = usb_get_port_status(dev, port + 1, portsts);
 	if (ret < 0) {
@@ -445,6 +453,7 @@ static int usb_scan_port(struct usb_device_scan *usb_scan)
 	if (get_timer(0) < hub->query_delay)
 		return 0;
 
+	printf("%s:%d\n", __func__, __LINE__);
 	ret = usb_get_port_status(dev, i + 1, portsts);
 	if (ret < 0) {
 		debug("get_port_status failed\n");
@@ -458,7 +467,7 @@ static int usb_scan_port(struct usb_device_scan *usb_scan)
 		}
 		return 0;
 	}
-
+	printf("%s:%d\n", __func__, __LINE__);
 	portstatus = le16_to_cpu(portsts->wPortStatus);
 	portchange = le16_to_cpu(portsts->wPortChange);
 	debug("Port %d Status %X Change %X\n", i + 1, portstatus, portchange);
@@ -470,6 +479,7 @@ static int usb_scan_port(struct usb_device_scan *usb_scan)
 	 * device is connected to the port (eg: CCS bit is set but CSC is not
 	 * in the PORTSC register of a root hub), ignore such case.
 	 */
+	printf("%s:%d\n", __func__, __LINE__);
 	if (!(portchange & USB_PORT_STAT_C_CONNECTION) &&
 	    !(portstatus & USB_PORT_STAT_CONNECTION)) {
 		if (get_timer(0) >= hub->connect_timeout) {
@@ -482,23 +492,23 @@ static int usb_scan_port(struct usb_device_scan *usb_scan)
 		}
 		return 0;
 	}
-
+	printf("%s:%d\n", __func__, __LINE__);
 	if (portchange & USB_PORT_STAT_C_RESET) {
 		debug("port %d reset change\n", i + 1);
 		usb_clear_port_feature(dev, i + 1, USB_PORT_FEAT_C_RESET);
 	}
-
+	printf("%s:%d\n", __func__, __LINE__);
 	if ((portchange & USB_SS_PORT_STAT_C_BH_RESET) &&
 	    usb_hub_is_superspeed(dev)) {
 		debug("port %d BH reset change\n", i + 1);
 		usb_clear_port_feature(dev, i + 1, USB_SS_PORT_FEAT_C_BH_RESET);
 	}
-
+	printf("%s:%d\n", __func__, __LINE__);
 	/* A new USB device is ready at this point */
 	debug("devnum=%d port=%d: USB dev found\n", dev->devnum, i + 1);
-
+	printf("%s:%d\n", __func__, __LINE__);
 	usb_hub_port_connect_change(dev, i);
-
+	printf("%s:%d\n", __func__, __LINE__);
 	if (portchange & USB_PORT_STAT_C_ENABLE) {
 		debug("port %d enable change, status %x\n", i + 1, portstatus);
 		usb_clear_port_feature(dev, i + 1, USB_PORT_FEAT_C_ENABLE);
@@ -521,12 +531,12 @@ static int usb_scan_port(struct usb_device_scan *usb_scan)
 		}
 #endif
 	}
-
+	printf("%s:%d\n", __func__, __LINE__);
 	if (portstatus & USB_PORT_STAT_SUSPEND) {
 		debug("port %d suspend change\n", i + 1);
 		usb_clear_port_feature(dev, i + 1, USB_PORT_FEAT_SUSPEND);
 	}
-
+	printf("%s:%d\n", __func__, __LINE__);
 	if (portchange & USB_PORT_STAT_C_OVERCURRENT) {
 		debug("port %d over-current change\n", i + 1);
 		usb_clear_port_feature(dev, i + 1,
