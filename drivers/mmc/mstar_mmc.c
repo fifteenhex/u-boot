@@ -194,9 +194,14 @@ out:
 }
 
 static int mstar_mmc_start_transfer_and_wait(struct mstar_mmc_priv *priv,
-		bool cmd, bool data, bool busy, unsigned int* status)
+		bool cmd, size_t datasz, bool busy, unsigned int* status)
 {
 	unsigned int intflags, poll_timeout;
+	bool data = datasz ? true : false;
+	/*
+	 * If the controller just locks up we'll get stuck here so
+	 * we need to set a time limit for the transfer to happen.
+	 */
 	unsigned timeout = 100;
 	unsigned tmp;
 	int ret = 0;
@@ -204,8 +209,13 @@ static int mstar_mmc_start_transfer_and_wait(struct mstar_mmc_priv *priv,
 	regmap_read(priv->regmap, REG_SD_CTL, &tmp);
 	//printf("sdctl %04x\n", tmp);
 
-	if(data)
-		timeout += 1000;
+	/*
+	 * If there is data the amount of time the transfer will take
+	 * will increase with the transfer size.
+	 * Lets add 100ms to start with and add 1ms per 1K of data.
+	 */
+	if(datasz)
+		timeout += (100 + (datasz >> 10));
 
 	priv->cmd_done = false;
 	priv->data_done = false;
@@ -317,7 +327,7 @@ static int mstar_mmc_capturecmdresult(struct mstar_mmc_priv *priv,
 static int mstar_mmc_send_cmd_prepcmd_and_tx(struct mstar_mmc_priv *priv, struct mmc_cmd *cmd){
 	int rspsz = mstar_mmc_setupcmd(priv, cmd);
 	unsigned int status;
-	if(mstar_mmc_start_transfer_and_wait(priv, true, false, cmd->cmdarg & MMC_RSP_BUSY, &status)){
+	if(mstar_mmc_start_transfer_and_wait(priv, true, 0, cmd->cmdarg & MMC_RSP_BUSY, &status)){
 		//cmd->error = ETIMEDOUT;
 	}
 
@@ -351,12 +361,12 @@ static int mstar_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 			rspsz = mstar_mmc_setupcmd(priv, cmd);
 			regmap_field_write(priv->jobdir, 0);
 #ifdef CONFIG_MMC_TRACE
-			dev_err("data <- %u x %u\n", data->blocksize, data->blocks);
+			dev_err(dev, "data <- %u x %u\n", data->blocksize, data->blocks);
 			/* clear the destination, so you can see if the sd controller
 			 * actually doing anything...
 			 */
 			dev_err(dev, "clearing destination memory\n");
-			memset(data->dest, 0xff, data->blocksize * data->blocks);
+//			memset(data->dest, 0xff, data->blocksize * data->blocks);
 #endif
 		}
 		else {
@@ -402,7 +412,8 @@ static int mstar_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 		regmap_field_write(priv->dmalen_h, dmalen >> 16);
 		regmap_field_write(priv->dmalen_l, dmalen);
 
-		if(mstar_mmc_start_transfer_and_wait(priv, chkcmddone, true, false, &status)){
+		if(mstar_mmc_start_transfer_and_wait(priv, chkcmddone,
+				data->blocksize * data->blocks, false, &status)){
 			//mrq->data->error = ETIMEDOUT;
 			ret = 1;
 			goto tfr_err;
@@ -443,10 +454,11 @@ static int mstar_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 					!cardbusy, 0, 1000);
 		}
 
+		flush_dcache_all();
 #ifdef CONFIG_MMC_TRACE
 #ifdef CONFIG_HEXDUMP
 		print_hex_dump_bytes("", DUMP_PREFIX_OFFSET, data->dest,
-						     data->blocksize * data->blocks);
+				min((uint)1024, (uint)(data->blocksize * data->blocks)));
 #endif
 #endif
 	}
