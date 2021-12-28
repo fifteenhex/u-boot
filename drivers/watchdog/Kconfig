@@ -327,5 +327,14 @@ config SPL_WDT
 	help
 	  Enable driver model for watchdog timer in SPL.
 	  This is similar to CONFIG_WDT in U-Boot.
+	  
+config WDT_MSC313E
+	tristate "MStar MSC313e watchdog"
+	depends on WDT && ARCH_MSTARV7
+	default ARCH_MSTARV7
+	help
+	  Say Y here to include support for the Watchdog timer embedded
+	  into MStar MSC313e chips. This will reboot your system when the
+	  timeout is reached.
 
 endmenu
