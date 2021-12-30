@@ -50,9 +50,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-u32 mpllregs[5];
-uint mplldbg;
-
 #ifdef CONFIG_SPL_BUILD
 
 static void m5_misc(void)
@@ -134,58 +131,4 @@ static void poweron_reason(void)
 		printf("normal power on\n");
 	}
 }
-
-void board_init_f(ulong dummy)
-{
-	uint32_t cpuid;
-	int chiptype = mstar_chiptype();
-	void* reg;
-
-#ifdef CONFIG_DEBUG_UART
-	debug_uart_init();
-#endif
-
-	spl_early_init();
-	preloader_console_init();
-
-	asm volatile("mrc p15, 0, %0, c0, c0, 0" : "=r"(cpuid));
-	printf("\ncpuid: %x, mstar chipid: %x\n",
-			(unsigned) cpuid,
-			(unsigned)*deviceid);
-
-	check_ipl();
-	poweron_reason();
-
-	switch(chiptype){
-		case CHIPTYPE_SSC8336:
-			m5_misc();
-			break;
-	}
-
-#ifndef CONFIG_MSTAR_IPL
-	miu_init();
-	cpupll_init();
-#endif
-
-	mstar_bump_cpufreq();
-
-	printf("mplldbg %x\n", mplldbg);
-	for(int i = 0; i < 5; i++){
-		printf("mpll: %x - %x\n", i * 4, mpllregs[i]);
-	}
-
-	//mstar_utmi_setfinetuning();
-	//mstar_clockfixup();
-}
 #endif // spl
-
-int embedded_dtb_select(void)
-{
-	fdtdec_setup();
-	return 0;
-}
-
-
-int board_late_init(void){
-	return 0;
-}
