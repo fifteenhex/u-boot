@@ -7,22 +7,18 @@
 /dts-v1/;
 
 #include "mstar-infinity2m-ssd20xd.dtsi"
+#include "mstar-infinity2m-ssd202d.dtsi"
 
 / {
         compatible = "mstar,infinity2m-ssd202d", "mstar,infinity2m-ssd20xd",
 		     "mstar,infinity2m", "mstar,mstar-v7";
-
-	memory@20000000 {
-		device_type = "memory";
-		reg = <0x20000000 0x8000000>;
-	};
 };
 
 &phy {
 	compatible = "ethernet-phy-idDEAD.B33F";
 };
 
-&spi_flash {
+&isp {
 	#address-cells = <1>;
 	#size-cells = <1>;
 	compatible = "spi-nand";

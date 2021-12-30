@@ -16,7 +16,7 @@
 	};
 
 	aliases: aliases {
-		spi0 = &spi_nor;
+		spi0 = &isp;
 		serial0 = &pm_uart;
 	};
 
@@ -195,7 +195,7 @@
 		ranges;
 		u-boot,dm-pre-reloc;
 
-		spi_nor: spi_nor@1f001000 {
+		isp: isp@1f001000 {
 			compatible = "mstar,msc313-spinor";
 			#address-cells = <1>;
 			#size-cells = <0>;
