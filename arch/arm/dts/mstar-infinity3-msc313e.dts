@@ -10,6 +10,11 @@
 
 / {
         compatible = "mstar,infinity3-msc313e", "mstar,infinity3", "mstar,mstar-v7";
+
+	memory@20000000 {
+		device_type = "memory";
+		reg = <0x20000000 0x4000000>;
+	};
 };
 
 &phy {

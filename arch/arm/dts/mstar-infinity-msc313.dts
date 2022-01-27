@@ -9,5 +9,10 @@
 #include "mstar-infinity.dtsi"
 
 / {
-        compatible = "mstar,infinity-msc313", "mstar,infinity", "mstar,mstar-v7";
+	compatible = "mstar,infinity-msc313", "mstar,infinity", "mstar,mstar-v7";
+
+        memory@20000000 {
+		device_type = "memory";
+		reg = <0x20000000 0x4000000>;
+	};
 };
