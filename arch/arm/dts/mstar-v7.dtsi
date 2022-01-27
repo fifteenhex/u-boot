@@ -10,11 +10,6 @@
 	#address-cells = <1>;
 	#size-cells = <1>;
 
-	memory@20000000 {
-		device_type = "memory";
-		reg = <0x20000000 0x4000000>;
-	};
-
 	aliases: aliases {
 		spi0 = &isp;
 		serial0 = &pm_uart;
