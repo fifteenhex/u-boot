@@ -7,6 +7,15 @@ config SYS_VENDOR
 	default "100ask"
 
 config SYS_CONFIG_NAME
-        default "dongshanpione"
+	default "dongshanpione"
+
+config OF_LIST
+	default "mstar-infinity2m-ssd202d-100ask-dongshanpione"
+
+config DEFAULT_DEVICE_TREE
+	default "mstar-infinity2m-ssd202d-100ask-dongshanpione"
+
+config MTDPARTS_DEFAULT
+	default "spi-nand0:128256K@2816K(UBI)"
 
 endif
