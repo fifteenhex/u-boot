@@ -9,7 +9,11 @@
 
 / {
 	model = "SOM2D01 (SSD202D)";
-	compatible = "ido,som2d01", "mstar,infinity2m";
+	compatible = "ido,som2d01",
+		     "mstar,infinity2m-ssd201",
+		     "mstar,infinity2m-ssd20xd",
+		     "mstar,infinity2m",
+		     "mstar,mstar-v7";
 
 	aliases {
 		serial0 = &pm_uart;

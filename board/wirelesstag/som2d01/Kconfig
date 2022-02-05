@@ -9,14 +9,16 @@ config SYS_VENDOR
 config SYS_CONFIG_NAME
         default "som2d01"
 
+#mstar-infinity2m-ssd201-wirelesstag-ido-som2d01 
+
 config OF_LIST
-	default "mstar-infinity2m-ssd201-wirelesstag-ido-som2d01 mstar-infinity2m-ssd202d-wirelesstag-ido-som2d01 mstar-infinity2m-ssd202d-wirelesstag-ido-sbc2d06-v1b-22w"
+	default "mstar-infinity2m-ssd202d-wirelesstag-ido-som2d01 mstar-infinity2m-ssd202d-wirelesstag-ido-sbc2d06-v1b-22w"
 
 config DEFAULT_DEVICE_TREE
-	default "mstar-infinity2m-ssd201-wirelesstag-ido-som2d01"
+	default "mstar-infinity2m-ssd202d-wirelesstag-ido-som2d01"
 
 config MTDPARTS_DEFAULT
-	default "spi-nand0:128256K@2816K(UBI)"
+	default "spi-nand0:-@2816K(UBI)"
 
 config SPL_UBI
 	default y
@@ -24,8 +26,10 @@ config SPL_UBI_MAX_VOL_LEBS
 	default 256
 config SPL_UBI_MAX_PEB_SIZE
 	default 131072
+
+# Enough for 512MB
 config SPL_UBI_MAX_PEBS
-	default 1024
+	default 4096
 config SPL_UBI_VOL_IDS
 	default 8
 config SPL_UBI_PEB_OFFSET
