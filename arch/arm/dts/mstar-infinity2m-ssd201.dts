@@ -17,19 +17,7 @@
 	compatible = "ethernet-phy-idDEAD.B33F";
 };
 
-&isp {
-	#address-cells = <1>;
-	#size-cells = <1>;
+&spi_flash {
 	compatible = "spi-nand";
-	reg = <0>;
-	spi-max-frequency = <50000000>;
-	partitions {
-		compatible = "fixed-partitions";
-		#address-cells = <1>;
-		#size-cells = <1>;
-		root@f20000-0x000008000000 {
-			label = "ubi";
-			reg = <0xf20000 0x70e0000>;
-		};
-	};
+	status = "okay";
 };

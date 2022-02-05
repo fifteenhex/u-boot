@@ -20,4 +20,5 @@
 
 &spi_flash {
 	compatible = "spi-nand";
+	status = "okay";
 };

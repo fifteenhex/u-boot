@@ -10,10 +10,10 @@ config SYS_CONFIG_NAME
         default "som2d01"
 
 config OF_LIST
-	default "mstar-infinity2m-ssd201 mstar-infinity2m-ssd202d mstar-infinity2m-ssd201-wirelesstag-ido-som2d01 mstar-infinity2m-ssd202d-wirelesstag-ido-som2d01 mstar-infinity2m-ssd202d-wirelesstag-ido-sbc2d06-v1b-22w"
+	default "mstar-infinity2m-ssd201-wirelesstag-ido-som2d01 mstar-infinity2m-ssd202d-wirelesstag-ido-som2d01 mstar-infinity2m-ssd202d-wirelesstag-ido-sbc2d06-v1b-22w"
 
 config DEFAULT_DEVICE_TREE
-	default "mstar-infinity2m-ssd201"
+	default "mstar-infinity2m-ssd201-wirelesstag-ido-som2d01"
 
 config MTDPARTS_DEFAULT
 	default "spi-nand0:128256K@2816K(UBI)"
