@@ -8,6 +8,7 @@
 #include <linux/iopoll.h>
 #include <linux/ioport.h>
 #include <linux/clk-provider.h>
+#include <dm/device_compat.h>
 #include <log.h>
 
 #define REG_PASSWORD			0x0
@@ -122,6 +123,18 @@ static int msc313_spinor_set_speed(struct udevice *bus, uint speed)
 static int msc313_spinor_set_mode(struct udevice *bus, uint mode)
 {
 	/* nothing to do */
+	printf("set mode: %u\n", mode);
+
+	if (mode & (SPI_TX_BYTE | SPI_TX_DUAL | SPI_TX_QUAD | SPI_TX_OCTAL)) {
+		dev_err(bus, "Only full duplex SIO TX is supported, mode: %x\n", mode);
+		return -EINVAL;
+	}
+
+	if (mode & (SPI_RX_SLOW | SPI_RX_DUAL | SPI_RX_QUAD | SPI_RX_OCTAL)) {
+		dev_err(bus, "Only full duplex SIO RX is supported, mode: %x\n", mode);
+		return -EINVAL;
+	}
+
 	return 0;
 }
 
