@@ -22,5 +22,5 @@
 &spi_flash {
 	compatible = "spi-nand";
 	spi-max-frequency = <40000000>;
-	spi-rx-bus-width = <4>;
+	//spi-rx-bus-width = <4>;
 };
