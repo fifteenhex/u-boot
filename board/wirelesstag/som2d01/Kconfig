@@ -7,7 +7,7 @@ config SYS_VENDOR
 	default "wirelesstag"
 
 config SYS_CONFIG_NAME
-        default "som2d01"
+	default "som2d01"
 
 #mstar-infinity2m-ssd201-wirelesstag-ido-som2d01 
 
@@ -18,7 +18,7 @@ config DEFAULT_DEVICE_TREE
 	default "mstar-infinity2m-ssd202d-wirelesstag-ido-som2d01"
 
 config MTDPARTS_DEFAULT
-	default "spi-nand0:-@2816K(UBI)"
+	default "mtdparts=spi-nand0:-@2816K(UBI)"
 
 config SPL_UBI
 	default y

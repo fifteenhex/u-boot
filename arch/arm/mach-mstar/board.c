@@ -17,6 +17,8 @@
 #include <ipl.h>
 #include <image.h>
 #include <chenxingv7.h>
+#include <jffs2/load_kernel.h>
+#include <mtd_node.h>
 
 #include <mstar/board.h>
 
@@ -266,9 +268,20 @@ __weak int embedded_dtb_select(void)
 	return 0;
 }
 
+int mstar_ft_board_setup(void *blob, struct bd_info *bd)
+{
+	static const struct node_info nodes[] = {
+		{ "mstar,msc313-isp", MTD_DEV_TYPE_SPINAND},
+	};
+
+	if (IS_ENABLED(CONFIG_FDT_FIXUP_PARTITIONS))
+		fdt_fixup_mtdparts(blob, nodes, ARRAY_SIZE(nodes));
+	return 0;
+}
+
 __weak int ft_board_setup(void *blob, struct bd_info *bd)
 {
-	return 0;
+	return mstar_ft_board_setup(blob, bd);
 }
 
 u32 mpllregs[5];

@@ -76,18 +76,24 @@ config MSTAR_MERCURY5
 config MSTAR_PIONEER3
 	bool "pioneer3 family"
 
+config MSTARV7_COMMON
+	bool
+	select MULTI_DTB_FIT
+	select FDT_FIXUP_PARTITIONS
+
 choice
      prompt "Board type"
 
 config TARGET_MSTARV7
 	bool "Generic MStar/SigmaStar v7 boards"
-	select MULTI_DTB_FIT
+	select MSTARV7_COMMON
 	select SPL_SPI
 
 config TARGET_BREADBEE
 	bool "Support breadbee boards"
 	depends on !MSTAR_MERCURY5
 	depends on !MSTAR_INFINITY2M
+	select MSTARV7_COMMON
 	select SPL_DM_SPI
 	select MSTAR_INFINITY1
 	select MSTAR_INFINITY3
@@ -108,7 +114,7 @@ config TARGET_BREADBEE
 if MSTAR_INFINITY2M
 config TARGET_DONGSHANPIONE
 	bool "Support DongShanPiOne"
-	select MULTI_DTB_FIT
+	select MSTARV7_COMMON
 	select PINCTRL
 	select PINCTRL_MSTAR
 	select MMC_MSTAR
@@ -133,7 +139,7 @@ config TARGET_DONGSHANPIONE
 
 config TARGET_SOM2D01
 	bool "Support SOM2D01"
-	select MULTI_DTB_FIT
+	select MSTARV7_COMMON
 	select PINCTRL
 	select PINCTRL_MSTAR
 	select MMC_MSTAR
@@ -144,7 +150,7 @@ config TARGET_SOM2D01
 
 config TARGET_UNITV2
 	bool "UnitV2"
-	select MULTI_DTB_FIT
+	select MSTARV7_COMMON
 	select PINCTRL
 	select PINCTRL_MSTAR
 	select MMC_MSTAR
@@ -155,7 +161,7 @@ config TARGET_UNITV2
 
 config TARGET_MIYOOMINI
 	bool "Miyoo Mini"
-	select MULTI_DTB_FIT
+	select MSTARV7_COMMON
 	select PINCTRL
 	select PINCTRL_MSTAR
 	select MMC_MSTAR

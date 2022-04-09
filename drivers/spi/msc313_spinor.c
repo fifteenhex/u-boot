@@ -196,7 +196,7 @@ static const struct dm_spi_ops msc313_spinor_ops = {
 };
 
 static const struct udevice_id msc313_spinor_ids[] = {
-	{ .compatible = "mstar,msc313-spinor" },
+	{ .compatible = "mstar,msc313-isp" },
 	{ }
 };
 

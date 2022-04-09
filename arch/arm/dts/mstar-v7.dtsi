@@ -191,7 +191,7 @@
 		u-boot,dm-pre-reloc;
 
 		isp: isp@1f001000 {
-			compatible = "mstar,msc313-spinor";
+			compatible = "mstar,msc313-isp";
 			#address-cells = <1>;
 			#size-cells = <0>;
 #if defined(CONFIG_SPL_DM_SPI_FLASH) || defined(CONFIG_SPL_SPI_NAND_SUPPORT)

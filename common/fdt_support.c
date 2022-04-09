@@ -889,7 +889,7 @@ static int fdt_node_set_part_info(void *blob, int parent_offset,
 
 		part = list_entry(pentry, struct part_info, link);
 
-		debug("%2d: %-20s0x%08llx\t0x%08llx\t%d\n",
+		printf("%2d: %-20s0x%08llx\t0x%08llx\t%d\n",
 			part_num, part->name, part->size,
 			part->offset, part->mask_flags);
 
@@ -991,29 +991,34 @@ void fdt_fixup_mtdparts(void *blob, const struct node_info *node_info,
 	int noff, parts;
 	bool inited = false;
 
+	printf("fix up partitions!\n");
+
 	for (i = 0; i < node_info_size; i++) {
 		idx = 0;
-
+		printf("fix up partitions 1!\n");
 		fdt_for_each_node_by_compatible(noff, blob, -1,
 						node_info[i].compat) {
 			const char *prop;
-
+			printf("fix up partitions 2!\n");
 			prop = fdt_getprop(blob, noff, "status", NULL);
 			if (prop && !strcmp(prop, "disabled"))
 				continue;
 
-			debug("%s: %s, mtd dev type %d\n",
+			printf("%s: %s, mtd dev type %d\n",
 				fdt_get_name(blob, noff, 0),
 				node_info[i].compat, node_info[i].type);
 
+			printf("fix up partitions 2.5!\n");
 			if (!inited) {
 				if (mtdparts_init() != 0)
 					return;
 				inited = true;
 			}
 
+			printf("fix up partitions 2.6!\n");
 			dev = device_find(node_info[i].type, idx++);
 			if (dev) {
+				printf("fix up partitions 3!\n");
 				parts = fdt_subnode_offset(blob, noff,
 							   "partitions");
 				if (parts < 0)
@@ -1022,6 +1027,7 @@ void fdt_fixup_mtdparts(void *blob, const struct node_info *node_info,
 				if (fdt_node_set_part_info(blob, parts, dev))
 					return; /* return on error */
 			}
+			printf("fix up partitions 4!\n");
 		}
 	}
 }
