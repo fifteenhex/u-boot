@@ -240,4 +240,8 @@ config SYS_SOC
 config SYS_LOAD_ADDR
 	default 0x24000000
 
+# Update some defaults
+config EFI_LOADER
+	default n
+
 endif
