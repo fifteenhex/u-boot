@@ -12,4 +12,25 @@ config SYS_CONFIG_NAME
 config MTDPARTS_DEFAULT
 	default "spi-nand0:509184K@15104K(UBI)"
 
+config SPL_UBI
+	default y
+config SPL_UBI_MAX_VOL_LEBS
+	default 256
+config SPL_UBI_MAX_PEB_SIZE
+	default 131072
+
+# Enough for 512MB
+config SPL_UBI_MAX_PEBS
+	default 4096
+config SPL_UBI_VOL_IDS
+	default 8
+config SPL_UBI_PEB_OFFSET
+	default 118
+config SPL_UBI_VID_OFFSET
+	default 2048
+config SPL_UBI_LEB_START
+	default 4096
+config SPL_UBI_LOAD_MONITOR_ID
+	default 0
+
 endif
