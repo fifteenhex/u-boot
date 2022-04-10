@@ -7,7 +7,7 @@
 
 #include "mstarv7.h"
 
-#define CONFIG_EXTRA_ENV_SETTINGS	"bootargs=console=ttyS0,115200 clk_ignore_unused "\
+#define CONFIG_EXTRA_ENV_SETTINGS	"bootargs=console=ttyS0,115200 clk_ignore_unused usbcore.autosuspend=-1 "\
 					"ubi.fm_autoconvert=1 ubi.mtd=2 ubi.block=0,rootfs root=/dev/ubiblock0_4\0"\
 					"bootcmd_rescue=ubi part UBI; ubi readvol ${loadaddr} rescue; bootm ${loadaddr}\0"\
 					"bootcmd=ubi part UBI; ubi readvol ${loadaddr} kernel; bootm ${loadaddr}\0"
