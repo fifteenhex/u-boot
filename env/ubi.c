@@ -159,6 +159,8 @@ static int env_ubi_load(void)
 	 */
 	memset(buf, 0x0, CONFIG_ENV_SIZE);
 
+	printf("ubi env load: 1\n");
+
 	if (ubi_part(CONFIG_ENV_UBI_PART, UBI_VID_OFFSET)) {
 		printf("\n** Cannot find mtd partition \"%s\"\n",
 		       CONFIG_ENV_UBI_PART);
@@ -166,12 +168,16 @@ static int env_ubi_load(void)
 		return -EIO;
 	}
 
+	printf("ubi env load: 2\n");
+
 	if (ubi_volume_read(CONFIG_ENV_UBI_VOLUME, buf, CONFIG_ENV_SIZE)) {
 		printf("\n** Unable to read env from %s:%s **\n",
 		       CONFIG_ENV_UBI_PART, CONFIG_ENV_UBI_VOLUME);
 		env_set_default(NULL, 0);
 		return -EIO;
 	}
+
+	printf("ubi env load: 3\n");
 
 	return env_import(buf, 1, H_EXTERNAL);
 }
