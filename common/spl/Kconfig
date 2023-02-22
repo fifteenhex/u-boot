@@ -787,10 +787,17 @@ config SPL_SPI_NAND_SUPPORT
 
 if SPL_SPI_NAND_SUPPORT
 
-config	SPL_SPI_NAND_SUPPORT_LONGSYS
+config SPL_SPI_NAND_SUPPORT_LONGSYS
 	bool "Support Longsys SPI NAND"
+	depends on SPL_SPI_NAND_SUPPORT
 	help
-	  xx
+	  Support Longsys SPI NAND in SPL
+
+config SPL_SPI_NAND_SUPPORT_WINBOND
+	bool "Support Winbond SPI NAND"
+	depends on SPL_SPI_NAND_SUPPORT
+	help
+	  Support Winbond SPI NAND in SPL
 
 endif
 

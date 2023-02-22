@@ -1272,6 +1272,7 @@ dtb-$(CONFIG_ARCH_MSTARV7) += mstar-v7.dtb \
 			      mstar-infinity3-msc313e.dtb \
 			      mstar-infinity6.dtb \
 			      mstar-pioneer3-ssd210-predita.dtb \
+			      mstar-pioneer3-ssd210-100ask-dongshanpipicow.dtb \
 			      mercury5.dtb
 
 include $(srctree)/scripts/Makefile.dts

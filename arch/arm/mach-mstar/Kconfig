@@ -247,6 +247,14 @@ config TARGET_PREDITA
 	select MSTARV7_SPINAND
 	select PINCTRL
 	select PINCTRL_MSTAR
+
+config TARGET_DONGSHANPIPICOW
+	bool "DongShanPi PicoW"
+	select MSTARV7_COMMON
+	select MSTARV7_SPINAND
+	select PINCTRL
+	select PINCTRL_MSTAR
+	select SPL_SPI_NAND_SUPPORT_WINBOND
 endif
 
 endchoice

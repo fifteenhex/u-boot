@@ -864,14 +864,18 @@ static const struct nand_ops spinand_ops = {
 #endif
 };
 
-#if CONFIG_SPL_BUILD
+#ifdef CONFIG_SPL_BUILD
 static const struct spinand_manufacturer *spinand_manufacturers[] = {
 	//&gigadevice_spinand_manufacturer,
+#ifdef CONFIG_SPL_SPI_NAND_SUPPORT_LONGSYS
 	&longsys_spinand_manufacturer,
+#endif
 	//&macronix_spinand_manufacturer,
 	//&micron_spinand_manufacturer,
 	//&toshiba_spinand_manufacturer,
-	//&winbond_spinand_manufacturer,
+#ifdef CONFIG_SPL_SPI_NAND_SUPPORT_WINBOND
+	&winbond_spinand_manufacturer,
+#endif
 	//&xincun_spinand_manufacturer,
 };
 #else
