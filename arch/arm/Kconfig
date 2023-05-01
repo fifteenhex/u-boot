@@ -1350,7 +1350,7 @@ config ARCH_MSTARV7
 	select PINCTRL_MSTAR
 	select RAM
 	select REGMAP
-	select SPL
+	select SPL if !MSTAR_USBUPDATER
 	select SPL_CLK
 	select SPL_DM
 	select SPL_DM_SEQ_ALIAS
