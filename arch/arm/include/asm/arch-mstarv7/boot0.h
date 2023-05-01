@@ -28,7 +28,7 @@
 	/* this is a checksum, doesn't always need to be right */
 	.long	0x0000
 
-__ipl_init :
+__ipl_init:
 #ifdef CONFIG_MSTAR_BANG_BOOT0
 	// output a bang on the console so we know we're alive
 	ldr	r0, =0x1f221000
