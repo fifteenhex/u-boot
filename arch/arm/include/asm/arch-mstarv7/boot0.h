@@ -37,6 +37,13 @@ __ipl_init :
 #endif
 
 #ifdef CONFIG_MSTAR_ENABLE_JTAG_BOOT0
+#ifdef CONFIG_MSTAR_PIONEER3
+	// this enables JTAG on sr_io{0..3} before doing anything
+	// so we can debug the SPL
+	ldr	r0, =0x1f207980
+	ldr	r1, =0x200
+	str	r1, [r0]
+#else
 	// this enables JTAG on spi0 before doing anything
 	// so we can debug the SPL
 	ldr	r0, =0x1f203c3c
