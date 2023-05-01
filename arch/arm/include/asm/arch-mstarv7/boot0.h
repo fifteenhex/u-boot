@@ -29,7 +29,7 @@
 	.long	0x0000
 
 __move_image:
-#ifdef CONFIG_MSTAR_USBUPDATER
+//#ifdef CONFIG_MSTAR_USBUPDATER
 	ldr	r0, =0x23e00000
 	ldr	r1, =CONFIG_SYS_TEXT_BASE
 	ldr	r2, =0x80000
@@ -43,7 +43,7 @@ __move_image_copy:
 	ldr	r0, =__ipl_init
 	/* this needs to be absolute */
 	bx	r0
-#endif
+//#endif
 
 __ipl_init:
 #ifdef CONFIG_MSTAR_BANG_BOOT0
