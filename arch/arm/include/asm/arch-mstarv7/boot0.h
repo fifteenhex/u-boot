@@ -50,6 +50,7 @@ __ipl_init :
 	ldr	r1, =0x2
 	str	r1, [r0]
 #endif
+#endif
 
 #ifdef CONFIG_MSTAR_BREAK_BOOT0
 	// this can be used to stop the cpu before uboot crashes
