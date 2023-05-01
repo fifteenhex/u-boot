@@ -1,6 +1,9 @@
 menu "MStar/SigmaStar v7 options"
 	depends on ARCH_MSTARV7
 
+config MSTAR_USBUPDATER
+	bool "u-boot is being loader by the usb updater"
+
 config MSTAR_IPL
 	bool "u-boot is being loaded by the vendor IPL"
 	imply SPI

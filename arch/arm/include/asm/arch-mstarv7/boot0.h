@@ -7,7 +7,7 @@
  */
 
 /* The first 4 bytes should be an instruction */
-	b __ipl_init
+	b __move_image
 
 #ifdef CONFIG_MSTAR_IPL
 	/* this is needed for the IPL to jump into our image */
@@ -27,6 +27,23 @@
 
 	/* this is a checksum, doesn't always need to be right */
 	.long	0x0000
+
+__move_image:
+#ifdef CONFIG_MSTAR_USBUPDATER
+	ldr	r0, =0x23e00000
+	ldr	r1, =CONFIG_SYS_TEXT_BASE
+	ldr	r2, =0x80000
+	ldr	r3, =0
+__move_image_copy:
+	ldr	r4, [r0, r3]
+	str	r4, [r1, r3]
+	add	r3, r3, #4
+	cmp	r2, r3
+	bne	__move_image_copy
+	ldr	r0, =__ipl_init
+	/* this needs to be absolute */
+	bx	r0
+#endif
 
 __ipl_init:
 #ifdef CONFIG_MSTAR_BANG_BOOT0
