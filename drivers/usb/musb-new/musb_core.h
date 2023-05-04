@@ -164,7 +164,9 @@ enum musb_g_ep0_state {
 #define musb_ep_select(_mbase, _epnum) \
 	musb_writeb((_mbase), MUSB_INDEX, (_epnum))
 #define	MUSB_EP_OFFSET			MUSB_TUSB_OFFSET
-
+#elif	defined(CONFIG_USB_MUSB_MSTAR)
+#define	MUSB_EP_OFFSET			MUSB_MSTAR_OFFSET
+#define musb_ep_select(_mbase, _epnum)	(((void)(_mbase)), ((void)(_epnum)))
 /* "flat" mapping: each endpoint has its own i/o address */
 #elif	defined(MUSB_FLAT_REG)
 #define musb_ep_select(_mbase, _epnum)	(((void)(_mbase)), ((void)(_epnum)))
@@ -464,7 +466,7 @@ static inline int musb_read_fifosize(struct musb *musb,
 	u8 reg = 0;
 
 	/* read from core using indexed model */
-	reg = musb_readb(mbase, MUSB_EP_OFFSET(epnum, MUSB_FIFOSIZE));
+	reg = musb_readb(mbase + MUSB_EP_OFFSET(epnum, 0), MUSB_FIFOSIZE);
 	/* 0's returned when no more endpoints */
 	if (!reg)
 		return -ENODEV;

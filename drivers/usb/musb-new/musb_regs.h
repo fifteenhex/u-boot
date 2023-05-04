@@ -213,6 +213,8 @@
 #if defined(CONFIG_USB_MUSB_TUSB6010) ||	\
 	defined(CONFIG_USB_MUSB_TUSB6010_MODULE)
 #define MUSB_FIFO_OFFSET(epnum)	(0x200 + ((epnum) * 0x20))
+#elif defined(CONFIG_USB_MUSB_MSTAR)
+#define MUSB_FIFO_OFFSET(epnum) (0x40 + ((epnum) + 8))
 #else
 #define MUSB_FIFO_OFFSET(epnum)	(0x20 + ((epnum) * 4))
 #endif
@@ -278,6 +280,11 @@
 #define MUSB_TUSB_OFFSET(_epnum, _offset)	\
 	(0x10 + _offset)
 #include "tusb6010.h"		/* Needed "only" for TUSB_EP0_CONF */
+#endif
+
+#if defined(CONFIG_USB_MUSB_MSTAR)
+#define MUSB_MSTAR_OFFSET(_epnum, _offset) \
+	(0x200 + (0x20 * _epnum))
 #endif
 
 #define MUSB_TXCSR_MODE			0x2000

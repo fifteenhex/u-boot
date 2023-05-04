@@ -4,6 +4,8 @@
  * Copyright (C) 2019 Stephan Gerhold
  */
 
+#define DEBUG
+
 #include <common.h>
 #include <dm.h>
 #include <generic-phy.h>
@@ -22,6 +24,39 @@ struct mstar_glue {
 	bool enabled;
 };
 #define to_mstar_glue(d)	container_of(d, struct mstar_glue, dev)
+
+void musb_write_fifo(struct musb_hw_ep *hw_ep, u16 len,
+				    const u8 *src)
+{
+	struct musb *musb = hw_ep->musb;
+	void __iomem *fifo = hw_ep->fifo;
+
+	if (unlikely(len == 0))
+		return;
+
+	dev_dbg(musb->controller, "%cX ep%d fifo %p count %d buf %p\n",
+			'T', hw_ep->epnum, fifo, len, src);
+
+	for (int i = 0; i < len; i++)
+		writeb(src[i], fifo);
+}
+
+void musb_read_fifo(struct musb_hw_ep *hw_ep, u16 len, u8 *dst)
+{
+	struct musb *musb = hw_ep->musb;
+	void __iomem *fifo = hw_ep->fifo;
+
+	if (unlikely(len == 0))
+		return;
+
+	dev_dbg(musb->controller, "%cX ep%d fifo %p count %d buf %p\n",
+			'R', hw_ep->epnum, fifo, len, dst);
+
+	for (int i = 0; i < len; i++) {
+		dst[i] = readb(fifo);
+		printf("0x%x - 0x%02x\n", i, dst[i]);
+	}
+}
 
 static int mstar_musb_enable(struct musb *musb)
 {
@@ -90,8 +125,15 @@ static int mstar_musb_init(struct musb *musb)
 {
 	struct mstar_glue *glue = to_mstar_glue(musb->controller);
 	int ret;
+	u8 power;
 
 	printf("%s:%d\n", __func__, __LINE__);
+
+	/* Reset the musb */
+	power = musb_readb(musb->mregs, MUSB_POWER);
+	power = power | MUSB_POWER_RESET;
+	musb_writeb(musb->mregs, MUSB_POWER, power);
+	mdelay(100);
 
 	musb->isr = mstar_musb_interrupt;
 
@@ -130,6 +172,7 @@ int dm_usb_gadget_handle_interrupts(struct udevice *dev)
 	struct mstar_glue *glue = dev_get_priv(dev);
 
 	glue->mdata.host->isr(0, glue->mdata.host);
+
 	return 0;
 }
 
@@ -141,26 +184,23 @@ static int mstar_musb_probe(struct udevice *dev)
 	void *base = dev_read_addr_ptr(dev);
 	int ret;
 
-	printf("%s:%d\n", __func__, __LINE__);
-
 	if (!base)
 		return -EINVAL;
-	printf("%s:%d\n", __func__, __LINE__);
+
 	//ret = generic_phy_get_by_name(dev, "usb", &glue->phy);
 	//if (ret) {
 	//	dev_err(dev, "failed to get USB PHY: %d\n", ret);
 	//	return ret;
 	//}
-	printf("%s:%d\n", __func__, __LINE__);
+
 	memset(&pdata, 0, sizeof(pdata));
 	pdata.platform_ops = &mstar_musb_ops;
 	pdata.config = &mstar_musb_hdrc_config;
-	printf("%s:%d\n", __func__, __LINE__);
 	pdata.mode = MUSB_PERIPHERAL;
 	host->host = musb_init_controller(&pdata, &glue->dev, base);
 	if (!host->host)
 		return -EIO;
-	printf("%s:%d\n", __func__, __LINE__);
+
 	return usb_add_gadget_udc(&glue->dev, &host->host->g);
 }
 

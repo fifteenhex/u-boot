@@ -215,7 +215,7 @@ static struct usb_phy_io_ops musb_ulpi_access = {
 
 /*-------------------------------------------------------------------------*/
 
-#if !defined(CONFIG_USB_MUSB_TUSB6010)
+#if !defined(CONFIG_USB_MUSB_TUSB6010) && !defined(CONFIG_USB_MUSB_MSTAR)
 
 /*
  * Load an endpoint's FIFO
@@ -258,7 +258,8 @@ void musb_write_fifo(struct musb_hw_ep *hw_ep, u16 len, const u8 *src)
 	}
 }
 
-#if !defined(CONFIG_USB_MUSB_AM35X) && !defined(CONFIG_USB_MUSB_PIC32)
+#if !defined(CONFIG_USB_MUSB_AM35X) && !defined(CONFIG_USB_MUSB_PIC32) \
+	&& !defined(CONFIG_USB_MUSB_MSTAR)
 /*
  * Unload an endpoint's FIFO
  */
