@@ -9,5 +9,5 @@
 #include "mstar-v7.dtsi"
 
 / {
-        compatible = "sstar,pioneer3", "mstar,chenxing-v7";
+	compatible = "sstar,pioneer3", "mstar,chenxing-v7";
 };

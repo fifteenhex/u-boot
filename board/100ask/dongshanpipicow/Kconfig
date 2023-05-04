@@ -41,4 +41,9 @@ config SPL_UBI_LEB_START
         default 4096
 config SPL_UBI_LOAD_MONITOR_ID
 	default 0
+
+config MTDPARTS_DEFAULT
+	default "spi-nand0:128K(gcis),128K(spl0),128K(spl1),-@384K(ubi)"
+
 endif
+

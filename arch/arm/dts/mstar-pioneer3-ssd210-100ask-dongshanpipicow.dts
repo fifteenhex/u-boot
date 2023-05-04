@@ -8,7 +8,11 @@
 #include "mstar-pioneer3-ssd210.dtsi"
 
 / {
+#ifdef CONFIG_MSTAR_USBUPDATER
+	model = "DongShan Pi PicoW usb updater";
+#else
 	model = "DongShan Pi PicoW";
+#endif
 	compatible = "sstar-pioneer3-ssd210",
 				 "mstar,mstar-v7";
 
@@ -26,3 +30,9 @@
 	compatible = "spi-nand";
 	status = "okay";
 };
+
+#ifdef CONFIG_MSTAR_USBUPDATER
+&otg0 {
+	status = "okay";
+};
+#endif

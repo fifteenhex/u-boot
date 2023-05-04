@@ -3,6 +3,14 @@ menu "MStar/SigmaStar v7 options"
 
 config MSTAR_USBUPDATER
 	bool "u-boot is being loader by the usb updater"
+	select USB
+	select USB_GADGET
+	select DM_USB_GADGET
+	select USB_MUSB_GADGET
+	select USB_MUSB_PIO_ONLY
+	select CMD_DFU
+	select USB_GADGET_DOWNLOAD
+	select DFU_MTD
 
 config MSTAR_IPL
 	bool "u-boot is being loaded by the vendor IPL"
