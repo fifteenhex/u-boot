@@ -94,6 +94,18 @@ config USB_MUSB_DISABLE_BULK_COMBINE_SPLIT
 
 endif
 
+if USB_MUSB_GADGET
+
+config USB_MUSB_MSTAR
+	bool "Enable MStar USB gadget controller"
+	depends on DM_USB && DM_USB_GADGET && ARCH_MSTARV7
+	default y
+	help
+	  Say y to enable support for the MUSB OTG USB controller used in
+	  MStar chips. The driver supports either gadget mode only.
+
+endif
+
 config USB_MUSB_PIO_ONLY
 	bool "Disable DMA (always use PIO)"
 	default y if USB_MUSB_AM35X || USB_MUSB_PIC32 || USB_MUSB_OMAP2PLUS || USB_MUSB_DSPS || USB_MUSB_SUNXI || USB_MUSB_MT85XX || USB_MUSB_UX500
