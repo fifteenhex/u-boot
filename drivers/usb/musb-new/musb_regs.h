@@ -214,7 +214,7 @@
 	defined(CONFIG_USB_MUSB_TUSB6010_MODULE)
 #define MUSB_FIFO_OFFSET(epnum)	(0x200 + ((epnum) * 0x20))
 #elif defined(CONFIG_USB_MUSB_MSTAR)
-#define MUSB_FIFO_OFFSET(epnum) (0x40 + ((epnum) + 8))
+#define MUSB_FIFO_OFFSET(epnum) (0x40 + ((epnum) * 8))
 #else
 #define MUSB_FIFO_OFFSET(epnum)	(0x20 + ((epnum) * 4))
 #endif

@@ -4,8 +4,6 @@
  * Copyright (C) 2019 Stephan Gerhold
  */
 
-#define DEBUG
-
 #include <common.h>
 #include <dm.h>
 #include <generic-phy.h>
@@ -52,10 +50,8 @@ void musb_read_fifo(struct musb_hw_ep *hw_ep, u16 len, u8 *dst)
 	dev_dbg(musb->controller, "%cX ep%d fifo %p count %d buf %p\n",
 			'R', hw_ep->epnum, fifo, len, dst);
 
-	for (int i = 0; i < len; i++) {
+	for (int i = 0; i < len; i++)
 		dst[i] = readb(fifo);
-		printf("0x%x - 0x%02x\n", i, dst[i]);
-	}
 }
 
 static int mstar_musb_enable(struct musb *musb)
