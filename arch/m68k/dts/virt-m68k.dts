@@ -1,0 +1,221 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * See: https://github.com/qemu/qemu/blob/master/hw/m68k/virt.c
+ */
+
+/dts-v1/;
+#include "mc68000.dtsi"
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	compatible = "qemu,virt-m68k";
+
+	aliases {
+		serial0 = &uart0;
+	};
+
+	chosen {
+		tick-timer = &timer;
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0x0 0x4000000>;
+	};
+
+	// to keep the phandles for the other pics
+	dummy {
+		xxx = <&pic0 &pic1 &pic2 &pic3 &pic4 &pic5 >;
+	};
+
+	soc {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges = <0xff000000 0xff000000 0x1000000>;
+
+#define PIC(NN) \
+		pic##NN: pic@NN { \
+			compatible = "google,goldfish-pic"; \
+			#interrupt-cells = <1>; \
+			reg = <0x0 0x200>; \
+			interrupt-controller; \
+			interrupts-extended = <&intc_vect NN>; \
+			status = "okay"; \
+		}
+
+		PIC(0);
+		PIC(1);
+		PIC(2);
+		PIC(3);
+		PIC(4);
+		PIC(5);
+
+		timer: timer@ff006000 {
+			compatible = "google,goldfish-timer";
+			reg = <0xff006000 0x18>;
+			u-boot,dm-pre-reloc;
+			interrupts-extended = <&pic5 0>;
+			status = "okay";
+		};
+
+		rtc: rtc@ff007000 {
+			compatible = "google,goldfish-rtc";
+			reg = <0xff007000 0x18>;
+			interrupts-extended = <&pic5 1>;
+			status = "okay";
+		};
+
+		uart0: uart@ff008000 {
+			compatible = "google,goldfish-tty";
+			reg = <0xff008000 0x4>;
+			interrupts-extended = <&pic0 31>;
+			u-boot,dm-pre-reloc;
+			status = "okay";
+		};
+
+		virt_ctrl: virt@ff009000 {
+			compatible = "qemu,virt-ctrl";
+			reg = <0xff009000 0x200>;
+			status = "okay";
+		};
+
+#define VIRTIO(NN) \
+		virtio@NN { \
+			compatible = "virtio,mmio"; \
+			reg = <0x0 0x200>; \
+			interrupts-extended = <&pic1 0>; \
+			status = "okay"; \
+		}
+
+		VIRTIO(0);
+		VIRTIO(1);
+		VIRTIO(2);
+		VIRTIO(3);
+		VIRTIO(4);
+		VIRTIO(5);
+		VIRTIO(6);
+		VIRTIO(7);
+		VIRTIO(8);
+		VIRTIO(9);
+		VIRTIO(10);
+		VIRTIO(11);
+		VIRTIO(12);
+		VIRTIO(13);
+		VIRTIO(14);
+		VIRTIO(15);
+		VIRTIO(16);
+		VIRTIO(17);
+		VIRTIO(18);
+		VIRTIO(19);
+		VIRTIO(20);
+		VIRTIO(21);
+		VIRTIO(22);
+		VIRTIO(23);
+		VIRTIO(24);
+		VIRTIO(25);
+		VIRTIO(26);
+		VIRTIO(27);
+		VIRTIO(28);
+		VIRTIO(29);
+		VIRTIO(30);
+		VIRTIO(31);
+		VIRTIO(32);
+		VIRTIO(33);
+		VIRTIO(34);
+		VIRTIO(35);
+		VIRTIO(36);
+		VIRTIO(37);
+		VIRTIO(38);
+		VIRTIO(39);
+		VIRTIO(40);
+		VIRTIO(41);
+		VIRTIO(42);
+		VIRTIO(43);
+		VIRTIO(44);
+		VIRTIO(45);
+		VIRTIO(46);
+		VIRTIO(47);
+		VIRTIO(48);
+		VIRTIO(49);
+		VIRTIO(50);
+		VIRTIO(51);
+		VIRTIO(52);
+		VIRTIO(53);
+		VIRTIO(54);
+		VIRTIO(55);
+		VIRTIO(56);
+		VIRTIO(57);
+		VIRTIO(58);
+		VIRTIO(59);
+		VIRTIO(60);
+		VIRTIO(61);
+		VIRTIO(62);
+		VIRTIO(63);
+		VIRTIO(64);
+		VIRTIO(65);
+		VIRTIO(66);
+		VIRTIO(67);
+		VIRTIO(68);
+		VIRTIO(69);
+		VIRTIO(70);
+		VIRTIO(71);
+		VIRTIO(72);
+		VIRTIO(73);
+		VIRTIO(74);
+		VIRTIO(75);
+		VIRTIO(76);
+		VIRTIO(77);
+		VIRTIO(78);
+		VIRTIO(79);
+		VIRTIO(80);
+		VIRTIO(81);
+		VIRTIO(82);
+		VIRTIO(83);
+		VIRTIO(84);
+		VIRTIO(85);
+		VIRTIO(86);
+		VIRTIO(87);
+		VIRTIO(88);
+		VIRTIO(89);
+		VIRTIO(90);
+		VIRTIO(91);
+		VIRTIO(92);
+		VIRTIO(93);
+		VIRTIO(94);
+		VIRTIO(95);
+		VIRTIO(96);
+		VIRTIO(97);
+		VIRTIO(98);
+		VIRTIO(99);
+		VIRTIO(100);
+		VIRTIO(101);
+		VIRTIO(102);
+		VIRTIO(103);
+		VIRTIO(104);
+		VIRTIO(105);
+		VIRTIO(106);
+		VIRTIO(107);
+		VIRTIO(108);
+		VIRTIO(109);
+		VIRTIO(110);
+		VIRTIO(111);
+		VIRTIO(112);
+		VIRTIO(113);
+		VIRTIO(114);
+		VIRTIO(115);
+		VIRTIO(116);
+		VIRTIO(117);
+		VIRTIO(118);
+		VIRTIO(119);
+		VIRTIO(120);
+		VIRTIO(121);
+		VIRTIO(122);
+		VIRTIO(123);
+		VIRTIO(124);
+		VIRTIO(125);
+		VIRTIO(126);
+		VIRTIO(127);
+	};
+};
