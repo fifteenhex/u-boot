@@ -28,6 +28,49 @@ struct m68k_mem_info {
  * Parse a virtual-m68k-specific record in the bootinfo
  */
 
+static void virt_fix_regs(void *fdt, const char *compat, void *base, int num, unsigned int space)
+{
+	int i, last_node = -1, ret;
+	fdt32_t newvalue[] = {
+			0,
+			cpu_to_fdt32(space),
+	};
+	for (i = 0; i < num; i++) {
+		/* Fill in the FDT */
+		last_node = fdt_node_offset_by_compatible(fdt, last_node, compat);
+
+		if (last_node < 0)
+			break;
+
+		newvalue[0] = base + (space * i);
+
+		ret = fdt_setprop_inplace(fdt, last_node, "reg", &newvalue, sizeof(newvalue));
+		if (ret)
+			panic("Couldn't set reg value");
+	}
+}
+
+static void virt_extended_irqs(void *fdt, const char *compat, int num, int first_intc, int irqs_per_intc)
+{
+	int i, last_node = -1, ret;
+	fdt32_t newvalue[2];
+
+	for (i = 0; i < num; i++) {
+		/* Fill in the FDT */
+		last_node = fdt_node_offset_by_compatible(fdt, last_node, compat);
+
+		newvalue[0] = cpu_to_fdt32((i / irqs_per_intc) + 2);
+		newvalue[1] = cpu_to_fdt32(i % irqs_per_intc);
+
+		if (last_node < 0)
+			break;
+
+		ret = fdt_setprop_inplace(fdt, last_node, "interrupts-extended", &newvalue, sizeof(newvalue));
+		if (ret)
+			panic("Couldn't set interrupts value");
+	}
+}
+
 static int virt_parse_bootinfo(const struct bi_record *record, void *fdt)
 {
 	int unknown = 0;
@@ -42,6 +85,7 @@ static int virt_parse_bootinfo(const struct bi_record *record, void *fdt)
 		virt_bi_data.pic.mmio = be32_to_cpup(data);
 		data += 4;
 		virt_bi_data.pic.irq = be32_to_cpup(data);
+		virt_fix_regs(fdt, "google,goldfish-pic", virt_bi_data.pic.mmio, 6, 0x1000);
 		break;
 	case BI_VIRT_GF_RTC_BASE:
 		virt_bi_data.rtc.mmio = be32_to_cpup(data);
@@ -62,26 +106,8 @@ static int virt_parse_bootinfo(const struct bi_record *record, void *fdt)
 		virt_bi_data.virtio.mmio = be32_to_cpup(data);
 		data += 4;
 		virt_bi_data.virtio.irq = be32_to_cpup(data);
-		{
-			int i, last_virtio = -1, ret;
-			fdt32_t newvalue[] = {
-					0,
-					cpu_to_fdt32(0x200),
-			};
-			for (i = 0; i < 128; i++) {
-				/* Fill in the FDT */
-				last_virtio = fdt_node_offset_by_compatible(fdt, last_virtio, "virtio,mmio");
-
-				if (last_virtio < 0)
-					break;
-
-				newvalue[0] = virt_bi_data.virtio.mmio + (0x200 * i);
-
-				ret = fdt_setprop_inplace(fdt, last_virtio, "reg", &newvalue, sizeof(newvalue));
-				if (ret)
-					panic("Couldn't set reg value");
-			}
-		}
+		virt_fix_regs(fdt, "virtio,mmio", virt_bi_data.virtio.mmio, 128, 0x200);
+		virt_extended_irqs(fdt, "virtio,mmio", 128, 1, 32);
 		break;
 	default:
 		unknown = 1;
