@@ -189,6 +189,30 @@ config TARGET_STMARK2
         select CF_DSPI
         select M54418
 
+config TARGET_QEMU
+	bool "Support QEMU virt machine"
+	select MC68000
+
+	# For populating the DT with the bootinfo data
+	select OF_BOARD_FIXUP
+
+	# For RTC and timer
+	select DM_RTC
+	select RTC_GOLDFISH
+	select GOLDFISH_TIMER
+
+	# For setting up the virt ctrl
+	select BOARD_EARLY_INIT_R
+	select MISC
+	select QEMU_VIRT_CTRL
+
+	select BLK
+	select VIRTIO_MMIO
+	select VIRTIO_BLK
+
+	# Cpu type doesn't select it
+	select M68K_HAVE_BOOTINFO
+
 endchoice
 
 source "board/BuS/eb_cpu5282/Kconfig"
@@ -205,6 +229,7 @@ source "board/freescale/m5329evb/Kconfig"
 source "board/freescale/m5373evb/Kconfig"
 source "board/sysam/amcore/Kconfig"
 source "board/sysam/stmark2/Kconfig"
+source "board/qemu/virt-m68k/Kconfig"
 
 config M68K_QEMU
 	bool "Build with workarounds for incomplete QEMU emulation"

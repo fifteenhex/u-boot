@@ -16,6 +16,7 @@ dtb-$(CONFIG_TARGET_M5329EVB) += M5329AFEE.dtb M5329BFEE.dtb
 dtb-$(CONFIG_TARGET_M5373EVB) += M5373EVB.dtb
 dtb-$(CONFIG_TARGET_AMCORE) += amcore.dtb
 dtb-$(CONFIG_TARGET_STMARK2) += stmark2.dtb
+dtb-$(CONFIG_TARGET_QEMU) += virt-m68k.dtb
 
 include $(srctree)/scripts/Makefile.dts
 
