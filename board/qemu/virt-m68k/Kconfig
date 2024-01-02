@@ -1,0 +1,18 @@
+if TARGET_QEMU
+
+config SYS_CPU
+	default "mc68000"
+
+config SYS_BOARD
+	default "virt-m68k"
+
+config SYS_VENDOR
+	default "qemu"
+
+config SYS_CONFIG_NAME
+	default "virt-m68k"
+
+config DEBUG_UART_BASE
+	default 0xff008000
+
+endif
