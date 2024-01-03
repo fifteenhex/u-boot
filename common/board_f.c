@@ -737,7 +737,8 @@ static int setup_reloc(void)
 		 * On all ColdFire arch cpu, monitor code starts always
 		 * just after the default vector table location, so at 0x400
 		 */
-		gd->reloc_off = gd->relocaddr - (CONFIG_TEXT_BASE + 0x400);
+		//gd->reloc_off = gd->relocaddr - (CONFIG_TEXT_BASE + 0x400);
+		gd->reloc_off = gd->relocaddr - (CONFIG_TEXT_BASE);
 #elif !defined(CONFIG_SANDBOX)
 		gd->reloc_off = gd->relocaddr - CONFIG_TEXT_BASE;
 #endif
