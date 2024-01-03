@@ -19,6 +19,16 @@
 #include <linux/io.h>
 #include "virtio_mmio.h"
 
+static u32 virtio_mmio_readl(void *addr)
+{
+	return le32_to_cpu(readl(addr));
+}
+
+static void virtio_mmio_writel(u32 val, void *addr)
+{
+	writel(cpu_to_le32(val), addr);
+}
+
 static int virtio_mmio_get_config(struct udevice *udev, unsigned int offset,
 				  void *buf, unsigned int len)
 {
@@ -73,6 +83,8 @@ static int virtio_mmio_set_config(struct udevice *udev, unsigned int offset,
 	__le16 w;
 	__le32 l;
 
+	printk("%s:%d\n", __func__, __LINE__);
+
 	if (priv->version == 1) {
 		const u8 *ptr = buf;
 		int i;
@@ -116,7 +128,7 @@ static int virtio_mmio_generation(struct udevice *udev, u32 *counter)
 	if (priv->version == 1)
 		*counter = 0;
 	else
-		*counter = readl(priv->base + VIRTIO_MMIO_CONFIG_GENERATION);
+		*counter = virtio_mmio_readl(priv->base + VIRTIO_MMIO_CONFIG_GENERATION);
 
 	return 0;
 }
@@ -125,7 +137,7 @@ static int virtio_mmio_get_status(struct udevice *udev, u8 *status)
 {
 	struct virtio_mmio_priv *priv = dev_get_priv(udev);
 
-	*status = readl(priv->base + VIRTIO_MMIO_STATUS) & 0xff;
+	*status = virtio_mmio_readl(priv->base + VIRTIO_MMIO_STATUS) & 0xff;
 
 	return 0;
 }
@@ -137,7 +149,7 @@ static int virtio_mmio_set_status(struct udevice *udev, u8 status)
 	/* We should never be setting status to 0 */
 	WARN_ON(status == 0);
 
-	writel(status, priv->base + VIRTIO_MMIO_STATUS);
+	virtio_mmio_writel(status, priv->base + VIRTIO_MMIO_STATUS);
 
 	return 0;
 }
@@ -147,7 +159,7 @@ static int virtio_mmio_reset(struct udevice *udev)
 	struct virtio_mmio_priv *priv = dev_get_priv(udev);
 
 	/* 0 status means a reset */
-	writel(0, priv->base + VIRTIO_MMIO_STATUS);
+	virtio_mmio_writel(0, priv->base + VIRTIO_MMIO_STATUS);
 
 	return 0;
 }
@@ -156,12 +168,12 @@ static int virtio_mmio_get_features(struct udevice *udev, u64 *features)
 {
 	struct virtio_mmio_priv *priv = dev_get_priv(udev);
 
-	writel(1, priv->base + VIRTIO_MMIO_DEVICE_FEATURES_SEL);
-	*features = readl(priv->base + VIRTIO_MMIO_DEVICE_FEATURES);
+	virtio_mmio_writel(1, priv->base + VIRTIO_MMIO_DEVICE_FEATURES_SEL);
+	*features = virtio_mmio_readl(priv->base + VIRTIO_MMIO_DEVICE_FEATURES);
 	*features <<= 32;
 
-	writel(0, priv->base + VIRTIO_MMIO_DEVICE_FEATURES_SEL);
-	*features |= readl(priv->base + VIRTIO_MMIO_DEVICE_FEATURES);
+	virtio_mmio_writel(0, priv->base + VIRTIO_MMIO_DEVICE_FEATURES_SEL);
+	*features |= virtio_mmio_readl(priv->base + VIRTIO_MMIO_DEVICE_FEATURES);
 
 	return 0;
 }
@@ -177,12 +189,12 @@ static int virtio_mmio_set_features(struct udevice *udev)
 		return -EINVAL;
 	}
 
-	writel(1, priv->base + VIRTIO_MMIO_DRIVER_FEATURES_SEL);
-	writel((u32)(uc_priv->features >> 32),
+	virtio_mmio_writel(1, priv->base + VIRTIO_MMIO_DRIVER_FEATURES_SEL);
+	virtio_mmio_writel((u32)(uc_priv->features >> 32),
 	       priv->base + VIRTIO_MMIO_DRIVER_FEATURES);
 
-	writel(0, priv->base + VIRTIO_MMIO_DRIVER_FEATURES_SEL);
-	writel((u32)uc_priv->features,
+	virtio_mmio_writel(0, priv->base + VIRTIO_MMIO_DRIVER_FEATURES_SEL);
+	virtio_mmio_writel((u32)uc_priv->features,
 	       priv->base + VIRTIO_MMIO_DRIVER_FEATURES);
 
 	return 0;
@@ -197,16 +209,16 @@ static struct virtqueue *virtio_mmio_setup_vq(struct udevice *udev,
 	int err;
 
 	/* Select the queue we're interested in */
-	writel(index, priv->base + VIRTIO_MMIO_QUEUE_SEL);
+	virtio_mmio_writel(index, priv->base + VIRTIO_MMIO_QUEUE_SEL);
 
 	/* Queue shouldn't already be set up */
-	if (readl(priv->base + (priv->version == 1 ?
+	if (virtio_mmio_readl(priv->base + (priv->version == 1 ?
 	    VIRTIO_MMIO_QUEUE_PFN : VIRTIO_MMIO_QUEUE_READY))) {
 		err = -ENOENT;
 		goto error_available;
 	}
 
-	num = readl(priv->base + VIRTIO_MMIO_QUEUE_NUM_MAX);
+	num = virtio_mmio_readl(priv->base + VIRTIO_MMIO_QUEUE_NUM_MAX);
 	if (num == 0) {
 		err = -ENOENT;
 		goto error_new_virtqueue;
@@ -220,7 +232,7 @@ static struct virtqueue *virtio_mmio_setup_vq(struct udevice *udev,
 	}
 
 	/* Activate the queue */
-	writel(virtqueue_get_vring_size(vq),
+	virtio_mmio_writel(virtqueue_get_vring_size(vq),
 	       priv->base + VIRTIO_MMIO_QUEUE_NUM);
 	if (priv->version == 1) {
 		u64 q_pfn = virtqueue_get_desc_addr(vq) >> PAGE_SHIFT;
@@ -237,27 +249,27 @@ static struct virtqueue *virtio_mmio_setup_vq(struct udevice *udev,
 			goto error_bad_pfn;
 		}
 
-		writel(PAGE_SIZE, priv->base + VIRTIO_MMIO_QUEUE_ALIGN);
-		writel(q_pfn, priv->base + VIRTIO_MMIO_QUEUE_PFN);
+		virtio_mmio_writel(PAGE_SIZE, priv->base + VIRTIO_MMIO_QUEUE_ALIGN);
+		virtio_mmio_writel(q_pfn, priv->base + VIRTIO_MMIO_QUEUE_PFN);
 	} else {
 		u64 addr;
 
 		addr = virtqueue_get_desc_addr(vq);
-		writel((u32)addr, priv->base + VIRTIO_MMIO_QUEUE_DESC_LOW);
-		writel((u32)(addr >> 32),
+		virtio_mmio_writel((u32)addr, priv->base + VIRTIO_MMIO_QUEUE_DESC_LOW);
+		virtio_mmio_writel((u32)(addr >> 32),
 		       priv->base + VIRTIO_MMIO_QUEUE_DESC_HIGH);
 
 		addr = virtqueue_get_avail_addr(vq);
-		writel((u32)addr, priv->base + VIRTIO_MMIO_QUEUE_AVAIL_LOW);
-		writel((u32)(addr >> 32),
+		virtio_mmio_writel((u32)addr, priv->base + VIRTIO_MMIO_QUEUE_AVAIL_LOW);
+		virtio_mmio_writel((u32)(addr >> 32),
 		       priv->base + VIRTIO_MMIO_QUEUE_AVAIL_HIGH);
 
 		addr = virtqueue_get_used_addr(vq);
-		writel((u32)addr, priv->base + VIRTIO_MMIO_QUEUE_USED_LOW);
-		writel((u32)(addr >> 32),
+		virtio_mmio_writel((u32)addr, priv->base + VIRTIO_MMIO_QUEUE_USED_LOW);
+		virtio_mmio_writel((u32)(addr >> 32),
 		       priv->base + VIRTIO_MMIO_QUEUE_USED_HIGH);
 
-		writel(1, priv->base + VIRTIO_MMIO_QUEUE_READY);
+		virtio_mmio_writel(1, priv->base + VIRTIO_MMIO_QUEUE_READY);
 	}
 
 	return vq;
@@ -267,10 +279,10 @@ error_bad_pfn:
 
 error_new_virtqueue:
 	if (priv->version == 1) {
-		writel(0, priv->base + VIRTIO_MMIO_QUEUE_PFN);
+		virtio_mmio_writel(0, priv->base + VIRTIO_MMIO_QUEUE_PFN);
 	} else {
-		writel(0, priv->base + VIRTIO_MMIO_QUEUE_READY);
-		WARN_ON(readl(priv->base + VIRTIO_MMIO_QUEUE_READY));
+		virtio_mmio_writel(0, priv->base + VIRTIO_MMIO_QUEUE_READY);
+		WARN_ON(virtio_mmio_readl(priv->base + VIRTIO_MMIO_QUEUE_READY));
 	}
 
 error_available:
@@ -282,13 +294,15 @@ static void virtio_mmio_del_vq(struct virtqueue *vq)
 	struct virtio_mmio_priv *priv = dev_get_priv(vq->vdev);
 	unsigned int index = vq->index;
 
+	printk("%s:%d\n", __func__, __LINE__);
+
 	/* Select and deactivate the queue */
-	writel(index, priv->base + VIRTIO_MMIO_QUEUE_SEL);
+	virtio_mmio_writel(index, priv->base + VIRTIO_MMIO_QUEUE_SEL);
 	if (priv->version == 1) {
-		writel(0, priv->base + VIRTIO_MMIO_QUEUE_PFN);
+		virtio_mmio_writel(0, priv->base + VIRTIO_MMIO_QUEUE_PFN);
 	} else {
-		writel(0, priv->base + VIRTIO_MMIO_QUEUE_READY);
-		WARN_ON(readl(priv->base + VIRTIO_MMIO_QUEUE_READY));
+		virtio_mmio_writel(0, priv->base + VIRTIO_MMIO_QUEUE_READY);
+		WARN_ON(virtio_mmio_readl(priv->base + VIRTIO_MMIO_QUEUE_READY));
 	}
 
 	vring_del_virtqueue(vq);
@@ -298,6 +312,8 @@ static int virtio_mmio_del_vqs(struct udevice *udev)
 {
 	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
 	struct virtqueue *vq, *n;
+
+	printk("%s:%d\n", __func__, __LINE__);
 
 	list_for_each_entry_safe(vq, n, &uc_priv->vqs, list)
 		virtio_mmio_del_vq(vq);
@@ -329,7 +345,7 @@ static int virtio_mmio_notify(struct udevice *udev, struct virtqueue *vq)
 	 * We write the queue's selector into the notification register
 	 * to signal the other end
 	 */
-	writel(vq->index, priv->base + VIRTIO_MMIO_QUEUE_NOTIFY);
+	virtio_mmio_writel(vq->index, priv->base + VIRTIO_MMIO_QUEUE_NOTIFY);
 
 	return 0;
 }
@@ -352,14 +368,14 @@ static int virtio_mmio_probe(struct udevice *udev)
 	u32 magic;
 
 	/* Check magic value */
-	magic = readl(priv->base + VIRTIO_MMIO_MAGIC_VALUE);
+	magic = virtio_mmio_readl(priv->base + VIRTIO_MMIO_MAGIC_VALUE);
 	if (magic != ('v' | 'i' << 8 | 'r' << 16 | 't' << 24)) {
 		debug("(%s): wrong magic value 0x%08x!\n", udev->name, magic);
 		return 0;
 	}
 
 	/* Check device version */
-	priv->version = readl(priv->base + VIRTIO_MMIO_VERSION);
+	priv->version = virtio_mmio_readl(priv->base + VIRTIO_MMIO_VERSION);
 	if (priv->version < 1 || priv->version > 2) {
 		debug("(%s): version %d not supported!\n",
 		      udev->name, priv->version);
@@ -367,7 +383,7 @@ static int virtio_mmio_probe(struct udevice *udev)
 	}
 
 	/* Check device ID */
-	uc_priv->device = readl(priv->base + VIRTIO_MMIO_DEVICE_ID);
+	uc_priv->device = virtio_mmio_readl(priv->base + VIRTIO_MMIO_DEVICE_ID);
 	if (uc_priv->device == 0) {
 		/*
 		 * virtio-mmio device with an ID 0 is a (dummy) placeholder
@@ -375,10 +391,11 @@ static int virtio_mmio_probe(struct udevice *udev)
 		 */
 		return 0;
 	}
-	uc_priv->vendor = readl(priv->base + VIRTIO_MMIO_VENDOR_ID);
+	/* This is actually used as little endian locally? noice */
+	uc_priv->vendor = cpu_to_le32(virtio_mmio_readl(priv->base + VIRTIO_MMIO_VENDOR_ID));
 
 	if (priv->version == 1)
-		writel(PAGE_SIZE, priv->base + VIRTIO_MMIO_GUEST_PAGE_SIZE);
+		virtio_mmio_writel(PAGE_SIZE, priv->base + VIRTIO_MMIO_GUEST_PAGE_SIZE);
 
 	debug("(%s): device (%d) vendor (%08x) version (%d)\n", udev->name,
 	      uc_priv->device, uc_priv->vendor, priv->version);
