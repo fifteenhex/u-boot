@@ -15,13 +15,34 @@
 #include <asm/processor.h>
 #include <asm/ptrace.h>
 
+#ifdef CONFIG_MC68000
+extern void _int_sled_4(void);
+extern void _int_sled_5(void);
+extern void _int_sled_8(void);
+#else
 extern void _exc_handler(void);
 extern void _int_handler(void);
+#endif
 
-static void show_frame(struct pt_regs *fp)
+static void show_frame(unsigned int vector_num, unsigned int format, unsigned int status,
+		struct pt_regs *fp)
 {
-	printf ("Vector Number: %d  Format: %02x  Fault Status: %01x\n\n", (fp->vector & 0x3fc) >> 2,
-		fp->format, (fp->vector & 0x3) | ((fp->vector & 0xc00) >> 8));
+	const char *name = "unknown";
+
+	switch (vector_num){
+	case 4:
+		name = "illegal instruction";
+		break;
+	case 5:
+		name = "divide by zero";
+		break;
+	case 8:
+		name = "privilege violation";
+		break;
+	}
+
+	printf ("Vector Number: %d (%s)  Format: %02x  Fault Status: %01x\n\n",
+			vector_num, name, format, status);
 	printf ("PC: %08lx    SR: %08lx    SP: %08lx\n", fp->pc, (long) fp->sr, (long) fp);
 	printf ("D0: %08lx    D1: %08lx    D2: %08lx    D3: %08lx\n",
 		fp->d0, fp->d1, fp->d2, fp->d3);
@@ -33,28 +54,39 @@ static void show_frame(struct pt_regs *fp)
 		fp->a4, fp->a5, fp->a6);
 }
 
+#ifdef CONFIG_MC68000
+static unsigned long int_handlers[256] = {
+		[4] = (unsigned long)_int_sled_4,
+		[5] = (unsigned long)_int_sled_5,
+		[8] = (unsigned long)_int_sled_8,
+};
+
+void exc_handler(int vec, int group, struct pt_regs *fp)
+{
+	printf("vec %d\n", vec);
+	show_frame(vec, group, 0, fp);
+}
+#else
+static unsigned long int_handlers[256] = {
+		[2 ... 24 ] = (unsigned long)_exc_handler,
+		[25 ... 31] = (unsigned long)_int_handler,
+		[32 ... 63] = (unsigned long)_exc_handler,
+		[64 ... 255] = (unsigned long)_int_handler,
+};
 void exc_handler(struct pt_regs *fp) {
 	printf("\n\n*** Unexpected exception ***\n");
-	show_frame (fp);
+	show_frame (((fp->vector & 0x3fc) >> 2), fp->format, (fp->vector & 0x3) | ((fp->vector & 0xc00) >> 8), fp);
 	printf("\n*** Please Reset Board! ***\n");
 	for(;;);
 }
-
+#endif
 static void trap_init(ulong value) {
 	unsigned long *vec = (ulong *)value;
 	int i;
 
-	for(i = 2; i < 25; i++) {
-		vec[i] = (unsigned long)_exc_handler;
-	}
-	for(i = 25; i < 32; i++) {
-		vec[i] = (unsigned long)_int_handler;
-	}
-	for(i = 32; i < 64; i++) {
-		vec[i] = (unsigned long)_exc_handler;
-	}
-	for(i = 64; i < 256; i++) {
-		vec[i] = (unsigned long)_int_handler;
+	for(i = 0; i < ARRAY_SIZE(int_handlers); i++) {
+		if (int_handlers[i])
+			vec[i] = int_handlers[i];
 	}
 
 	setvbr(value);		/* set vector base register to new table */
@@ -62,8 +94,11 @@ static void trap_init(ulong value) {
 
 int arch_initr_trap(void)
 {
+#ifdef CONFIG_MC68000
+	trap_init(0);
+#else
 	trap_init(CFG_SYS_SDRAM_BASE);
-
+#endif
 	return 0;
 }
 

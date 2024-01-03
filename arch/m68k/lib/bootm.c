@@ -28,6 +28,18 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static void set_clocks_in_mhz (struct bd_info *kbd);
 
+#if 0
+void arch_lmb_reserve(struct lmb *lmb)
+{
+	arch_lmb_reserve_generic(lmb, get_sp(), gd->ram_top, 1024);
+
+#ifdef CONFIG_MC68000
+	/* Don't let the vectors get overwritten */
+	lmb_reserve(lmb, 0, 0x400 - 1 /* fix me, this is just to make the LMB stuff happy for now*/);
+#endif
+}
+#endif
+
 int do_bootm_linux(int flag, struct bootm_info *bmi)
 {
 	struct bootm_headers *images = bmi->images;

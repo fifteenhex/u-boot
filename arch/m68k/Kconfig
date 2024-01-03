@@ -14,6 +14,13 @@ config M68K_HAVE_BOOTINFO
 	bool
 
 # processor family
+config MC68000
+	bool
+	select OF_CONTROL
+	select DM
+	select DM_SERIAL
+	select TIMER
+
 config MCF520x
 	select OF_CONTROL
 	select DM
