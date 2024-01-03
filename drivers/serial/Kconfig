@@ -510,6 +510,11 @@ config DEBUG_UART_XTENSA_SEMIHOSTING
 	  start up driver model. The driver will be available until the real
 	  driver model serial is running.
 
+config DEBUG_GOLDFISH_TTY
+	bool "goldfish"
+	help
+	  Goldfish
+
 endchoice
 
 config DEBUG_UART_BASE
