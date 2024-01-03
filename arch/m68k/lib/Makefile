@@ -13,6 +13,7 @@ ifeq ($(CONFIG_MC68000),y)
 obj-y	+= cache_mc68000.o
 obj-y	+= interrupts_mc68000.o
 obj-y	+= lmb.o
+lib-$(CONFIG_USE_PRIVATE_LIBGCC) += lb1sf68.o
 else
 obj-y	+= cache.o
 obj-y	+= interrupts.o
