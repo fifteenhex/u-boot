@@ -16,7 +16,9 @@ int arch_setup_bdinfo(void)
 {
 	struct bd_info *bd = gd->bd;
 
+#if defined(CONFIG_SYS_MBAR)
 	bd->bi_mbar_base = CFG_SYS_MBAR; /* base of internal registers */
+#endif
 
 	bd->bi_intfreq = gd->cpu_clk;	/* Internal Freq, in Hz */
 	bd->bi_busfreq = gd->bus_clk;	/* Bus Freq,      in Hz */
