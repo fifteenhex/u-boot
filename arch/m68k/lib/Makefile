@@ -9,8 +9,13 @@ lib-$(CONFIG_USE_PRIVATE_LIBGCC) += lshrdi3.o muldi3.o ashldi3.o ashrdi3.o
 
 obj-y	+= bdinfo.o
 obj-$(CONFIG_CMD_BOOTM) += bootm.o
+ifeq ($(CONFIG_MC68000),y)
+obj-y	+= cache_mc68000.o
+obj-y	+= interrupts_mc68000.o
+else
 obj-y	+= cache.o
 obj-y	+= interrupts.o
 obj-y	+= time.o
-obj-y	+= traps.o
 obj-y   += fec.o
+endif
+obj-y	+= traps.o

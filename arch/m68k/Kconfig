@@ -8,6 +8,13 @@ config STATIC_RELA
 	default y
 
 # processor family
+config MC68000
+	bool
+	select OF_CONTROL
+	select DM
+	select DM_SERIAL
+	select TIMER
+
 config MCF520x
 	select OF_CONTROL
 	select DM
