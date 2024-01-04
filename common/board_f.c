@@ -576,7 +576,7 @@ static int reserve_global_data(void)
 
 static int reserve_fdt(void)
 {
-	if (!IS_ENABLED(CONFIG_OF_EMBED)) {
+	if (IS_ENABLED(CONFIG_OF_BOARD_FIXUP) || !IS_ENABLED(CONFIG_OF_EMBED)) {
 		/*
 		 * If the device tree is sitting immediately above our image
 		 * then we must relocate it. If it is embedded in the data
@@ -674,7 +674,7 @@ static int init_post(void)
 
 static int reloc_fdt(void)
 {
-	if (!IS_ENABLED(CONFIG_OF_EMBED)) {
+	if (IS_ENABLED(CONFIG_OF_BOARD_FIXUP) || !IS_ENABLED(CONFIG_OF_EMBED)) {
 		if (gd->boardf->new_fdt) {
 			memcpy(gd->boardf->new_fdt, gd->fdt_blob,
 			       fdt_totalsize(gd->fdt_blob));
