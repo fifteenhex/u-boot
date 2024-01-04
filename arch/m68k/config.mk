@@ -7,6 +7,7 @@ PLATFORM_CPPFLAGS += -D__M68K__ -fPIC
 KBUILD_LDFLAGS    += -n -pie
 PLATFORM_RELFLAGS += -ffixed-d7 -msep-data
 LDFLAGS_FINAL     += -pie
+PLATFORM_ELFFLAGS += -B m68k -O elf32-m68k
 
 ifneq ($(LTO_ENABLE)$(CONFIG_USE_PRIVATE_LIBGCC),yy)
 LDFLAGS_FINAL += --gc-sections
