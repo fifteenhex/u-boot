@@ -21,6 +21,7 @@ typedef union
   DItype ll;
 } DIunion;
 
+DItype __ashldi3 (DItype u, word_type b) __attribute__((used));
 DItype __ashldi3 (DItype u, word_type b)
 {
 	DIunion w;
