@@ -10,4 +10,5 @@ PLATFORM_RELFLAGS += -ffixed-d7
 ifneq ($(CONFIG_M680x0),y)
 PLATFORM_RELFLAGS += -msep-data
 endif
+PLATFORM_ELFFLAGS += -B m68k -O elf32-m68k
 LDFLAGS_FINAL     += --gc-sections -pie
