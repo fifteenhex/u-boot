@@ -689,4 +689,10 @@ config SL28CPLD
 	  the base driver which provides common access methods for the
 	  sub-drivers.
 
+config QEMU_VIRT_CTRL
+	bool "QEMU Virt Ctrl"
+	depends on MISC
+	help
+	  QEMU Virt Ctrl system controller
+
 endmenu
