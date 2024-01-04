@@ -120,6 +120,7 @@ config M68K
 	select SYS_CACHE_SHIFT_4
 	select SUPPORT_BIG_ENDIAN
 	select SUPPORT_OF_CONTROL
+	select SYS_BIG_ENDIAN
 
 config MICROBLAZE
 	bool "MicroBlaze architecture"
@@ -576,7 +577,7 @@ source "board/keymile/Kconfig"
 
 choice
 	prompt "Endianness selection"
-	default SYS_BIG_ENDIAN if MIPS || MICROBLAZE
+	default SYS_BIG_ENDIAN if MIPS || MICROBLAZE || M68K
 	default SYS_LITTLE_ENDIAN
 	help
 	  Some boards can be configured for either little or big endian
