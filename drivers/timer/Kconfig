@@ -159,6 +159,13 @@ config DESIGNWARE_APB_TIMER
 	  Enables support for the Designware APB Timer driver. This timer is
 	  present on Altera SoCFPGA SoCs.
 
+config GOLDFISH_TIMER
+	bool "Goldfish Timer"
+	depends on TIMER
+	help
+	  Enables support for the Goldfish timer that is present in Android
+	  virtual devices, QEMU virt machines etc.
+
 config GXP_TIMER
 	bool "HPE GXP Timer"
 	depends on TIMER
