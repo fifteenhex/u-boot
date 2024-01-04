@@ -75,6 +75,8 @@ __weak void board_init_f_init_stack_protection(void)
  *   the calling context need it.
  */
 
+extern size_t sizeof_bootinfo(void);
+
 ulong board_init_f_alloc_reserve(ulong top)
 {
 	/* Reserve early malloc arena */
@@ -83,6 +85,12 @@ ulong board_init_f_alloc_reserve(ulong top)
 	top -= CONFIG_VAL(SYS_MALLOC_F_LEN);
 #endif
 #endif
+
+#ifdef CONFIG_M68K
+	/* Reserve space to copy the bootinfo records into before jumping */
+	top = rounddown(top - sizeof_bootinfo(), 16);
+#endif
+
 	/* LAST : reserve GD (rounded up to a multiple of 16 bytes) */
 	top = rounddown(top-sizeof(struct global_data), 16);
 
@@ -131,6 +139,7 @@ ulong board_init_f_alloc_reserve(ulong top)
  * (seemingly useless) incrementation causes no code increase.
  */
 
+size_t save_bootinfo(void *dst);
 void board_init_f_init_reserve(ulong base)
 {
 	struct global_data *gd_ptr;
@@ -153,6 +162,11 @@ void board_init_f_init_reserve(ulong base)
 
 	/* next alloc will be higher by one GD plus 16-byte alignment */
 	base += roundup(sizeof(struct global_data), 16);
+
+#if CONFIG_M68K
+	gd->bootinfo = base;
+	base += roundup(save_bootinfo(base), 16);
+#endif
 
 	/*
 	 * record early malloc arena start.
