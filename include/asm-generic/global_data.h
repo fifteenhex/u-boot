@@ -495,6 +495,14 @@ struct global_data {
 	 * @dmtag_list: List of DM tags
 	 */
 	struct list_head dmtag_list;
+
+#ifdef CONFIG_M68K
+	void *bootinfo;
+#endif
+
+#ifdef CONFIG_TARGET_QEMU
+	struct udevice *virt_ctrl;
+#endif
 };
 #ifndef DO_DEPS_ONLY
 static_assert(sizeof(struct global_data) == GD_SIZE);
