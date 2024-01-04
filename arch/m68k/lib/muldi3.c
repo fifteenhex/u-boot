@@ -54,6 +54,7 @@ typedef union
 	DItype ll;
 } DIunion;
 
+DItype __muldi3 (DItype u, DItype v) __attribute__((used));
 DItype __muldi3 (DItype u, DItype v)
 {
 	DIunion w;
