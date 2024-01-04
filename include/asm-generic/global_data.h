@@ -448,6 +448,14 @@ struct global_data {
 	 */
 	struct upl *upl;
 #endif
+
+#ifdef CONFIG_M68K_HAVE_BOOTINFO
+	void *bootinfo;
+#endif
+
+#ifdef CONFIG_TARGET_QEMU
+	struct udevice *virt_ctrl;
+#endif
 };
 #ifndef DO_DEPS_ONLY
 static_assert(sizeof(struct global_data) == GD_SIZE);
