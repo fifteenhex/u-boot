@@ -32,6 +32,25 @@ struct arch_global_data {
 
 #include <asm-generic/global_data.h>
 
+#if defined(LTO_ENABLE)
+/* If LTO is enabled we have to hide d7 to avoid multiple symbol declarations */
+#define DECLARE_GLOBAL_DATA_PTR
+#define gd	get_gd()
+
+static inline gd_t *get_gd(void)
+{
+	gd_t *gd_ptr;
+
+	__asm__ volatile("move.l %%d7, %0\n" : "=r" (gd_ptr));
+
+	return gd_ptr;
+}
+#else
 #define DECLARE_GLOBAL_DATA_PTR     register gd_t *gd asm ("d7")
+#endif
+static inline void arch_setup_gd(gd_t *new_gd)
+{
+	__asm__ volatile("move.l %0, %%d7\n" : : "r" (new_gd));
+}
 
 #endif /* __ASM_GBL_DATA_H */

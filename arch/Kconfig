@@ -112,6 +112,7 @@ config ARM
 
 config M68K
 	bool "M68000 architecture"
+	select ARCH_SUPPORTS_LTO
 	select HAVE_PRIVATE_LIBGCC
 	select USE_PRIVATE_LIBGCC
 	select SYS_BOOT_GET_CMDLINE
