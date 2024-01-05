@@ -188,7 +188,7 @@ unsigned long load_elf64_image_shdr(unsigned long addr)
  * A very simple ELF loader, assumes the image is valid, returns the
  * entry point address.
  *
- * The loader firstly reads the EFI class to see if it's a 64-bit image.
+ * The loader firstly reads the ELF class to see if it's a 64-bit image.
  * If yes, call the ELF64 loader. Otherwise continue with the ELF32 loader.
  */
 unsigned long load_elf_image_phdr(unsigned long addr)
