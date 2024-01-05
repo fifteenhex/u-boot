@@ -20,6 +20,24 @@
 #include <linux/linkage.h>
 #endif
 
+static bool elf_reserve_self(struct lmb *lmb, void *addr, size_t len)
+{
+#ifdef CONFIG_LMB
+	int ret = lmb_reserve(lmb, addr, len);
+	if (ret)
+		return true;
+#endif
+
+	return false;
+}
+
+static void elf_free_self(struct lmb *lmb, void *addr, size_t len)
+{
+#ifdef CONFIG_LMB
+	lmb_free(lmb, addr, len);
+#endif
+}
+
 static bool elf_check_lmb(struct lmb *lmb, void *dst, size_t len)
 {
 #ifdef CONFIG_LMB
@@ -54,6 +72,7 @@ unsigned long load_elf64_image_phdr(unsigned long addr)
 
 	lmb_init_and_reserve(&lmb, gd->bd, (void *)gd->fdt_blob);
 #endif
+	elf_reserve_self(&lmb, (void *) addr, 0x3F5C1C);
 
 	ehdr = (Elf64_Ehdr *)addr;
 	phdr = (Elf64_Phdr *)(addr + (ulong)ehdr->e_phoff);
@@ -78,6 +97,8 @@ unsigned long load_elf64_image_phdr(unsigned long addr)
 			    roundup(phdr->p_memsz, ARCH_DMA_MINALIGN));
 		++phdr;
 	}
+
+	elf_free_self(&lmb, (void *) addr, 0x3F5C1C);
 
 	if (ehdr->e_machine == EM_PPC64 && (ehdr->e_flags &
 					    EF_PPC64_ELFV1_ABI)) {
@@ -106,6 +127,7 @@ unsigned long load_elf64_image_shdr(unsigned long addr)
 
 	lmb_init_and_reserve(&lmb, gd->bd, (void *)gd->fdt_blob);
 #endif
+	elf_reserve_self(&lmb, (void *) addr, 0x3F5C1C);
 
 	ehdr = (Elf64_Ehdr *)addr;
 
@@ -152,6 +174,8 @@ unsigned long load_elf64_image_shdr(unsigned long addr)
 				rounddown(shdr->sh_addr, ARCH_DMA_MINALIGN));
 	}
 
+	elf_free_self(&lmb, (void *) addr, 0x3F5C1C);
+
 	if (ehdr->e_machine == EM_PPC64 && (ehdr->e_flags &
 					    EF_PPC64_ELFV1_ABI)) {
 		/*
@@ -184,6 +208,7 @@ unsigned long load_elf_image_phdr(unsigned long addr)
 
 	lmb_init_and_reserve(&lmb, gd->bd, (void *)gd->fdt_blob);
 #endif
+	elf_reserve_self(&lmb, (void *) addr, 0x3F5C1C);
 
 	ehdr = (Elf32_Ehdr *)addr;
 	if (ehdr->e_ident[EI_CLASS] == ELFCLASS64)
@@ -212,6 +237,8 @@ unsigned long load_elf_image_phdr(unsigned long addr)
 		++phdr;
 	}
 
+	elf_free_self(&lmb, (void *) addr, 0x3F5C1C);
+
 	return ehdr->e_entry;
 }
 
@@ -227,6 +254,7 @@ unsigned long load_elf_image_shdr(unsigned long addr)
 
 	lmb_init_and_reserve(&lmb, gd->bd, (void *)gd->fdt_blob);
 #endif
+	elf_reserve_self(&lmb, (void *) addr, 0x3F5C1C);
 
 	ehdr = (Elf32_Ehdr *)addr;
 	if (ehdr->e_ident[EI_CLASS] == ELFCLASS64)
@@ -274,6 +302,8 @@ unsigned long load_elf_image_shdr(unsigned long addr)
 				    ARCH_DMA_MINALIGN) -
 			    rounddown(shdr->sh_addr, ARCH_DMA_MINALIGN));
 	}
+
+	elf_free_self(&lmb, (void *) addr, 0x3F5C1C);
 
 	return ehdr->e_entry;
 }
