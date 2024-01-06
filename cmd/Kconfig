@@ -484,7 +484,7 @@ config CMD_CEDIT
 	  loading and saving of configuration as well as showing an editor.
 
 config CMD_ELF
-	bool "bootelf, bootvx"
+	bool "bootelf"
 	default y
 	select LIB_ELF
 	help
@@ -499,6 +499,11 @@ config CMD_ELF_FDT_SETUP
 	  Do FDT setup in bootelf command optionally by param -d, which
 	  allows to bring additional system info (e.g. /memory node) to
 	  the Operating System or application.
+
+config CMD_ELF_BOOTVX
+	bool "bootvx"
+	default y
+	depends on CMD_ELF
 
 config CMD_FDT
 	bool "Flattened Device Tree utility commands"
