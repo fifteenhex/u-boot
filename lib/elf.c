@@ -3,7 +3,7 @@
    Copyright (c) 2001 William L. Pitts
 */
 
-#define DEBUG 1
+//#define DEBUG 1
 
 #include <asm/global_data.h>
 #include <common.h>
@@ -279,15 +279,17 @@ unsigned long load_elf_image_shdr(unsigned long addr)
 			continue;
 		}
 
+		dst = (void *)(uintptr_t)shdr->sh_addr;
+
+		debug("!! %d %d\n", shdr->sh_name, sizeof(Elf32_Shdr));
 		if (strtab) {
-			debug("%sing %s @ 0x%08lx (%ld bytes)\n",
+			debug("%sing %s @0x%p (%ld bytes)\n",
 			      (shdr->sh_type == SHT_NOBITS) ? "Clear" : "Load",
 			       &strtab[shdr->sh_name],
-			       (unsigned long)shdr->sh_addr,
+			       dst,
 			       (long)shdr->sh_size);
 		}
 
-		dst = (void *)(uintptr_t)shdr->sh_addr;
 		if (elf_check_lmb(&lmb, dst, shdr->sh_size))
 			break;
 
