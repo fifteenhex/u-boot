@@ -7,8 +7,10 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+unsigned long __stack_chk_guard __attribute__((used));
 unsigned long __stack_chk_guard = (unsigned long)(0xfeedf00ddeadbeef & ~0UL);
 
+void __stack_chk_fail(void) __attribute__((used));
 void __stack_chk_fail(void)
 {
 	void *ra;
