@@ -109,12 +109,16 @@ struct mem_info {
 #define CPUB_68040		2
 #define CPUB_68060		3
 #define CPUB_COLDFIRE		4
+#define CPUB_68000		5
+#define CPUB_68010		6
 
 #define CPU_68020		(1 << CPUB_68020)
 #define CPU_68030		(1 << CPUB_68030)
 #define CPU_68040		(1 << CPUB_68040)
 #define CPU_68060		(1 << CPUB_68060)
 #define CPU_COLDFIRE		(1 << CPUB_COLDFIRE)
+#define CPU_68000		(1 << CPUB_68000)
+#define CPU_68010		(1 << CPUB_68010)
 
 #define FPUB_68881		0
 #define FPUB_68882		1
