@@ -13,10 +13,11 @@
 #include <asm/virt.h>
 #include <linux/printk.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
 static struct m68k_mem_info m68k_ramdisk;
 static char m68k_command_line[256 /*COMMAND_LINE_SIZE*/];
 
-unsigned long m68k_machtype;
 #define MACH_IS_VIRT (m68k_machtype == MACH_VIRT)
 
 struct m68k_mem_info {
@@ -116,6 +117,51 @@ static int virt_parse_bootinfo(const struct bi_record *record, void *fdt)
 	return unknown;
 }
 
+static void fix_cputype(unsigned long cputype, void *fdt)
+{
+	int node, intc_node;
+	int ret;
+	char *newvalue;
+	char *intc_68010 = "motorola,mc68010-intc-vect";
+
+	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "motorola,mc68000");
+	if (node < 0)
+		panic("Failed to find cpu node\n");
+
+	intc_node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "motorola,mc68000-intc-vect");
+	if (intc_node < 0)
+		panic("Failed to find intc node\n");
+
+	switch(cputype) {
+	case CPU_68000:
+		return;
+	case CPU_68010:
+		newvalue = "motorola,mc68010";
+		break;
+	case CPU_68020:
+		newvalue = "motorola,mc68020";
+		break;
+	case CPU_68030:
+		newvalue = "motorola,mc68030";
+		break;
+	case CPU_68040:
+		newvalue = "motorola,mc68040";
+		break;
+	case CPU_68060:
+		newvalue = "motorola,mc68060";
+		break;
+	default:
+		panic("Unknown CPU type: %lu\n", cputype);
+		break;
+	}
+
+	ret = fdt_setprop_inplace(fdt, node, "compatible", newvalue, strlen(newvalue)+1);
+	if (ret)
+		panic("Failed to update cpu compatible: %d\n", ret);
+
+	fdt_setprop_inplace(fdt, intc_node, "compatible", intc_68010, strlen(intc_68010)+1);
+}
+
 static void m68k_parse_bootinfo(const struct bi_record *record, void *fdt)
 {
 	const struct bi_record *first_record = record;
@@ -126,6 +172,7 @@ static void m68k_parse_bootinfo(const struct bi_record *record, void *fdt)
 		int unknown = 0;
 		const void *data = record->data;
 		uint16_t size = be16_to_cpu(record->size);
+		unsigned long m68k_machtype, cputype;
 
 		switch (tag) {
 		case BI_MACHTYPE:
@@ -133,9 +180,10 @@ static void m68k_parse_bootinfo(const struct bi_record *record, void *fdt)
 			break;
 
 		case BI_CPUTYPE:
+			cputype = be32_to_cpup(record->data);
+			fix_cputype(cputype, fdt);
 		case BI_FPUTYPE:
 		case BI_MMUTYPE:
-			/* Already set up by head.S */
 			break;
 
 		case BI_MEMCHUNK:
@@ -224,6 +272,8 @@ size_t bootinfo_memsz_f(void)
 		bi = (struct bi_record *)((unsigned long)bi + n);
 	}
 
+	printf("Did not find memory size!\n");
+
 	return 0;
 }
 
@@ -235,7 +285,16 @@ size_t sizeof_bootinfo(void)
 
 	while (be16_to_cpu(bi->tag) != BI_LAST) {
 		uint16_t n = be16_to_cpu(bi->size);
+		/* No size, probably not valid bootinfo */
+		if (!n)
+			return 0;
+
 		size += n;
+
+		/* Avoid infinite loops over bad bootinfo */
+		if(size > 512)
+			return 0;
+
 		bi = (struct bi_record *)((unsigned long)bi + n);
 	}
 
