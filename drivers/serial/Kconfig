@@ -515,6 +515,11 @@ config DEBUG_GOLDFISH_TTY
 	help
 	  Goldfish
 
+config DEBUG_DRAGONBALL_SERIAL
+	bool "dragonball"
+	help
+	  Dragonball
+
 endchoice
 
 config DEBUG_UART_BASE
@@ -526,6 +531,7 @@ config DEBUG_UART_BASE
 	default 0xe0000000 if DEBUG_UART_ZYNQ && ARCH_ZYNQ
 	default 0xff000000 if DEBUG_UART_PL011 && ARCH_VERSAL
 	default 0xf1920000 if DEBUG_UART_PL011 && (ARCH_VERSAL_NET || ARCH_VERSAL2)
+	default 0xfffff900 if DEBUG_DRAGONBALL_SERIAL
 	help
 	  This is the base address of your UART for memory-mapped UARTs.
 
@@ -734,6 +740,12 @@ config CORTINA_UART
 	help
 	  Select this to enable UART support for Cortina-Access UART devices
 	  found on CAxxxx SoCs.
+
+config DRAGONBALL_SERIAL
+	bool "Dragonball support"
+	depends on DM_SERIAL
+	help
+	  Dragonball
 
 config FSL_LPUART
 	bool "Freescale LPUART support"
