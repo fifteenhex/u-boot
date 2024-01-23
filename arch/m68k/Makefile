@@ -5,7 +5,7 @@ head-y := arch/m68k/cpu/$(CPU)/start.o
 libs-y += arch/m68k/cpu/$(CPU)/
 libs-y += arch/m68k/lib/
 
-cpuflags-$(CONFIG_MC68000)	:= -mcpu=68000
+cpuflags-$(CONFIG_MC68000)	:= -mcpu=68000 -mstrict-align
 cpuflags-$(CONFIG_M5208)	:= -mcpu=5208
 cpuflags-$(CONFIG_M5235)	:= -mcpu=5235 -fPIC
 cpuflags-$(CONFIG_M5249)	:= -mcpu=5249
