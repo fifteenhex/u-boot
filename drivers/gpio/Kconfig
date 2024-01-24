@@ -684,4 +684,10 @@ config RZG2L_GPIO
 	  Support the gpio functionality of the pin function controller (PFC)
 	  on the Renesas RZ/G2L SoC family.
 
+config DRAGONBALL_GPIO
+	bool "DragonBall GPIO driver"
+	depends on DM_GPIO
+	help
+	  DragonBall
+
 endif
