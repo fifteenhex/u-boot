@@ -744,4 +744,10 @@ config MPFS_GPIO
 	help
 		Enable to support the GPIO driver on Polarfire SoC
 
+config DRAGONBALL_GPIO
+	bool "DragonBall GPIO driver"
+	depends on DM_GPIO
+	help
+	  DragonBall
+
 endif
