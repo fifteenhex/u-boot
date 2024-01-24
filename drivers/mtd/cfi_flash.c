@@ -1967,7 +1967,7 @@ static int flash_detect_cfi(flash_info_t *info, struct cfi_qry *qry)
 {
 	debug("flash detect cfi\n");
 
-	for (info->portwidth = CONFIG_SYS_FLASH_CFI_WIDTH;
+	for (info->portwidth = FLASH_CFI_16BIT;
 	     info->portwidth <= FLASH_CFI_64BIT; info->portwidth <<= 1) {
 		for (info->chipwidth = FLASH_CFI_BY8;
 		     info->chipwidth <= info->portwidth;
