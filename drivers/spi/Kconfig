@@ -700,4 +700,9 @@ config SYNQUACER_SPI
 	  be used to access the SPI interface and SPI NOR flash on platforms
 	  embedding this HS-SPI IP core.
 
+config DRAGONBALL_SPI
+	bool "DragonBall SPI driver"
+	help
+	  DragonBall SPI
+
 endif # menu "SPI Support"
