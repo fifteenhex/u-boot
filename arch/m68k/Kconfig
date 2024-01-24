@@ -88,6 +88,7 @@ config MC68EZ328
 	select SPL_TIMER
 	select CMD_LOADB
 	select DRAGONBALL_TIMER
+	select CLK_DRAGONBALL_PLL
 
 config M5208
 	bool

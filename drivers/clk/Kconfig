@@ -264,6 +264,12 @@ config CLK_ZYNQMP
 	  This clock driver adds support for clock realted settings for
 	  ZynqMP platform.
 
+config CLK_DRAGONBALL_PLL
+	bool "Enable clock driver support for MC68EZ628"
+	select CLK_CCF
+	help
+	  DragonBall
+
 source "drivers/clk/adi/Kconfig"
 source "drivers/clk/analogbits/Kconfig"
 source "drivers/clk/at91/Kconfig"
