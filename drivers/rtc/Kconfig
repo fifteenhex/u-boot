@@ -315,4 +315,10 @@ config RTC_HT1380
 	  day of the week, date, month and year information. It is to be
 	  connected via 3 GPIO pins which work as reset, clock, and data.
 
+config RTC_DRAGONBALL
+	bool "DragonBall RTC driver"
+	depends on DM_RTC
+	help
+	  Dragonball
+
 endmenu
