@@ -133,5 +133,11 @@ config PWM_TI_ECAP
 	help
 	  PWM driver support for the ECAP controller found on TI SOCs.
 
+config PWM_DRAGONBALL
+	bool "Enable support for PWM found on DragonBall SoC's"
+	depends on DM_PWM
+	help
+	  Support for PWM hardware on DragonBall SoC.
+
 endif
 endmenu
