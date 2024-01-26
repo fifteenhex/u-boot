@@ -42,3 +42,4 @@ obj-$(CONFIG_$(PHASE_)RTC_SANDBOX) += sandbox_rtc.o
 obj-$(CONFIG_RTC_ABX80X) += abx80x.o
 obj-$(CONFIG_RTC_ZYNQMP) += zynqmp_rtc.o
 obj-$(CONFIG_RTC_DRAGONBALL) += dragonball_rtc.o
+obj-$(CONFIG_RTC_DS1305) += ds1305_rtc.o
