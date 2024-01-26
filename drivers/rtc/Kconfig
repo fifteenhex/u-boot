@@ -336,4 +336,10 @@ config RTC_DRAGONBALL
 	help
 	  Dragonball
 
+config RTC_DS1305
+	bool "Dallas DS1305/DS1306 RTC driver"
+	depends on DM_RTC
+	help
+	  DS1305/DS1306
+
 endmenu
