@@ -2,21 +2,28 @@
 #include <asm-offsets.h>
 #include <config.h>
 #include <asm/cache.h>
+#include <asm/dragonball/mc68ez328.h>
+
+#define DEBUG
 
 .macro __putch val
-	move.b	#\val,0xfffff907
+#ifdef DEBUG
+	move.b	#\val,(MC68EZ328_UART + MC68EZ328_UART_TXDATA)
 1:
-	move.w	0xfffff906,%d7
+	move.w	(MC68EZ328_UART + MC68EZ328_UART_TXFLAGS),%d7
 	and.w	#0x2000,%d7
 	beq		1b
+#endif
 .endm
 
 .macro __printch ch
+#ifdef DEBUG
 	move.l	%d7, -(%sp)
 	__putch \ch
 	__putch '\n'
 	__putch '\r'
 	move.l (%sp)+, %d7
+#endif
 .endm
 
 #ifndef CONFIG_SPL_BUILD
@@ -47,12 +54,59 @@ _initial_pc:
 .text
 .globl _start
 _start:
-#if 0
+
+/*
+ * Very early setup we do while running from flash
+ * with no access to SDRAM.
+ */
+
+#ifdef CONFIG_MC68EZ328
+	/* Disable the WDT to avoid getting reset */
+	move.l #MC68EZ328_RTC_WDT, %a0
+	clr.w (%a0)
+	/* Configure SCR to good state */
+	move.l #MC68EZ328_SCR, (%a0)
+	move.w #(MC68EZ328_SCR_BET + MC68EZ328_SCR_SO), (%a0)
+
+	/*
+	 * Clear port b and e to enable all dedicated functions
+	 * so we get cas/ras for sdram, serial, dwe for sdram.
+	 */
+	move.l #MC68EZ328_PORTS, %a0
+	clr.b %a0@(MC68EZ328_PORTS_PBSEL)
+	clr.b %a0@(MC68EZ328_PORTS_PESEL)
+
+	/* Really early UART init for debugging this code */
+	move.w #0x126, (MC68EZ328_UART + MC68EZ328_UART_UBAUD)
+	move.w #(MC68EZ328_UART_USTCNT_87 + MC68EZ328_UART_USTCNT_TXEN + MC68EZ328_UART_USTCNT_UEN), (MC68EZ328_UART + MC68EZ328_UART_USTCNT)
+	__putch '.'
+
+	/* Map flash */
+	move.l #MC68EZ328_GROUPBASEADDR, %a0
+	move.w #(CFG_SYS_FLASH_BASE >> 13), %a0@(MC68EZ328_CHIPSELECT_A)
+	move.w #0x01ed, %d0
+	move.l #MC68EZ328_CHIPSELECT, %a1
+	move.w %d0, %a1@(MC68EZ328_CHIPSELECT_A)
+
+	/* SDRAM config */
+	move.l #MC68EZ328_DRAMC, %a2
+	move.w #0x8f00, %a2@(MC68EZ328_DRAMC_DRAMMC)
+	move.w #0x9667, %a2@(MC68EZ328_DRAMC_DRAMC)
+	/* Set base address of SDRAM to 0 */
+	clr.w %a0@(MC68EZ328_GROUPBASEADDR_C)
+	/* Configure chipselect D */
+	move.w #0x069f, %a1@(MC68EZ328_CHIPSELECT_D)
+	__putch '_'
+#else
+#error
+#endif
+
+#if !defined(CONFIG_SPL_BUILD) && 1
 	/* Copy ourself from flash to SDRAM */
 	move.l #0, %a0
 	move.l #CFG_SYS_FLASH_BASE, %a1
 	move.l %a1, %a2
-	add.l  #0x40000, %a2
+	add.l  #_img_end, %a2
 _copy_from_flash_next:
 	cmp.l %a1, %a2
 	beq _copy_from_flash_done
@@ -90,7 +144,8 @@ bss_done:
 	 * then (and always) gd struct space will be reserved
 	 */
 	move.l %sp, -(%sp)
-	bsr board_init_f_alloc_reserve
+	move.l	#board_init_f_alloc_reserve, %a1
+	jsr (%a1)
 	__printch 'a'
 
 	/* update stack and frame-pointers */

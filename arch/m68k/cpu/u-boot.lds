@@ -92,6 +92,7 @@ SECTIONS
 
 	. = ALIGN(8);
 	_end = .;
+	PROVIDE (_img_end = .);
 
 	/* Leave some space at the end before BSS for bootinfo */
 	. = ALIGN(4096);
