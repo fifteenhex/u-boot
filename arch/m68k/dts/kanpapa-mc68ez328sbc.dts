@@ -1,0 +1,92 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ */
+
+/dts-v1/;
+#include "mc68ez328.dtsi"
+#include "dt-bindings/gpio/gpio.h"
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	compatible = "kanpapa,mc68ez328sbc";
+
+	memory {
+		device_type = "memory";
+		reg = <0x0 0x800000>;
+	};
+
+	/* Doesn't work? */
+	gpio-restart {
+		compatible = "gpio-restart";
+		gpios = <&gpio 4 7 GPIO_ACTIVE_LOW>;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		led1 {
+			gpios = <&gpio 3 2 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+		};
+		led2 {
+			gpios = <&gpio 3 3 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "mmc0";
+		};
+	};
+
+	flash@10000000 {
+		compatible = "cfi-flash";
+		reg = <0x10000000 0x800000>;
+		bank-width = <2>;
+		device-width = <1>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		partition@0 {
+			label = "u-boot";
+			reg = <0x0000000 0x100000>;
+			read-only;
+		};
+
+		kernel@100000 {
+			label = "kernel";
+			reg = <0x100000 0x200000>;
+		};
+
+		rootfs@300000 {
+			label = "rootfs";
+			reg = <0x300000 0x500000>;
+		};
+	};
+
+	mmc_3v3: fixedregulator@0 {
+		compatible = "regulator-fixed";
+		regulator-name = "mmc_3v3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		gpio = <&gpio 3 1 0>;
+		startup-delay-us = <500000>;
+		off-on-delay-us = <500000>;
+	};
+};
+
+&spi0 {
+	cs-gpios = <&gpio 1 1 GPIO_ACTIVE_HIGH>, <&gpio 3 0 GPIO_ACTIVE_LOW>;
+	status = "okay";
+	rtc@0 {
+		compatible = "dallas,ds1306";
+		reg = <0x0>;
+		clock-names = "xtal";
+		clocks = <&osc>;
+		spi-cs-high;
+		spi-cpha;
+		status = "okay";
+	};
+
+	mmc-slot@1 {
+		compatible = "mmc-spi-slot";
+		reg = <1>;
+		vmmc-supply = <&mmc_3v3>;
+		spi-max-frequency = <4000000>;
+		//cd-gpios = <&gpio &gpio 3 4 GPIO_ACTIVE_LOW>;
+	};
+};

@@ -73,6 +73,18 @@ config MCF5441x
 config MC68EZ328
 	bool
 	select MC68000
+	select SUPPORT_SPL
+	select SPL_SYS_MALLOC
+	select SPL_OF_CONTROL
+	select SPL_DM
+	select SPL_DM_SEQ_ALIAS
+	select SPL_FRAMEWORK_BOARD_INIT_F
+	select SPL_LIBGENERIC_SUPPORT
+	select SPL_SERIAL
+	select SPL_YMODEM_SUPPORT
+	select DRAGONBALL_SERIAL
+	select SPL_TIMER
+	select CMD_LOADB
 
 config M5208
 	bool
@@ -217,6 +229,11 @@ config TARGET_QEMU
 	# Cpu type doesn't select it
 	select M68K_HAVE_BOOTINFO
 
+config TARGET_MC68EZ328SBC
+	bool "Support kanpapa MC68EZ328 SBC"
+	select MC68EZ328
+	select SPL
+
 endchoice
 
 source "board/BuS/eb_cpu5282/Kconfig"
@@ -234,6 +251,7 @@ source "board/freescale/m5373evb/Kconfig"
 source "board/sysam/amcore/Kconfig"
 source "board/sysam/stmark2/Kconfig"
 source "board/qemu/virt-m68k/Kconfig"
+source "board/kanpapa/mc68ez328sbc/Kconfig"
 
 config M68K_QEMU
 	bool "Build with workarounds for incomplete QEMU emulation"
