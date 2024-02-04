@@ -1,0 +1,15 @@
+if TARGET_MC68EZ328SBC
+
+config SYS_CPU
+	default "mc68000"
+
+config SYS_BOARD
+	default "mc68ez328sbc"
+
+config SYS_VENDOR
+	default "kanpapa"
+
+config SYS_CONFIG_NAME
+	default "mc68ez328sbc"
+
+endif
