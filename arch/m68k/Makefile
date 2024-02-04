@@ -19,8 +19,7 @@ cpuflags-$(CONFIG_MCF5301x)	:= -mcpu=53015 -fPIC
 cpuflags-$(CONFIG_MCF532x)	:= -mcpu=5329 -fPIC
 cpuflags-$(CONFIG_MCF5441x)	:= -mcpu=54418 -fPIC
 
-PLATFORM_CPPFLAGS += $(cpuflags-y)
-
+PLATFORM_CPPFLAGS += $(cpuflags-y) -funsigned-char
 
 ldflags-$(CONFIG_MCF5441x)	:= --got=single
 
