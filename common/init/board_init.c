@@ -165,7 +165,8 @@ void board_init_f_init_reserve(ulong base)
 
 #if CONFIG_M68K
 	gd->bootinfo = base;
-	base += roundup(save_bootinfo(base), 16);
+	if (sizeof_bootinfo() != 0)
+		base += roundup(save_bootinfo(base), 16);
 #endif
 
 	/*
