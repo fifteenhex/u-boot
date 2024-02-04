@@ -85,6 +85,7 @@ done:
 	return size;
 }
 
+static unsigned char buf[BUF_SIZE] = { 0 };
 int spl_ymodem_load_image(struct spl_image_info *spl_image,
 			  struct spl_boot_device *bootdev)
 {
@@ -93,13 +94,18 @@ int spl_ymodem_load_image(struct spl_image_info *spl_image,
 	int res;
 	int ret;
 	connection_info_t info;
-	char buf[BUF_SIZE];
 	struct legacy_img_hdr *ih = NULL;
 	ulong addr = 0;
 
 	info.mode = xyzModem_ymodem;
 	ret = xyzModem_stream_open(&info, &err);
 	if (ret) {
+		/*
+		 * Even if we couldn't open a stream we need to call close
+		 * to flush the debugging buffer that might contain info
+		 * to help work out why we couldn't open the stream.
+		 */
+		xyzModem_stream_close(&err);
 		printf("spl: ymodem err - %s\n", xyzModem_error(err));
 		return ret;
 	}
@@ -142,6 +148,7 @@ int spl_ymodem_load_image(struct spl_image_info *spl_image,
 			size += res;
 	} else {
 		ih = (struct legacy_img_hdr *)buf;
+		spl_image->flags |= SPL_COPY_PAYLOAD_ONLY;
 		ret = spl_parse_image_header(spl_image, bootdev, ih);
 		if (ret)
 			goto end_stream;
@@ -151,22 +158,32 @@ int spl_ymodem_load_image(struct spl_image_info *spl_image,
 		else
 #endif
 			addr = spl_image->load_addr;
-		memcpy((void *)addr, buf, res);
-		ih = (struct legacy_img_hdr *)addr;
-		size += res;
-		addr += res;
 
-		while ((res = xyzModem_stream_read(buf, BUF_SIZE, &err)) > 0) {
-			memcpy((void *)addr, buf, res);
+		int offset = sizeof(*ih);
+		unsigned int residue = res - offset;
+		memcpy((void *)addr, buf + offset, residue);
+		//ih = (struct legacy_img_hdr *)addr;
+		size = residue;
+		addr += residue;
+
+		while ((res = xyzModem_stream_read((void *) addr, BUF_SIZE, &err)) > 0) {
+			//memcpy((void *)addr, buf, res);
 			size += res;
 			addr += res;
+
+			if (size >= spl_image->size)
+				break;
 		}
+
+		if (size != spl_image->size)
+			ret = -EIO;
 	}
 
 end_stream:
 	xyzModem_stream_close(&err);
 	xyzModem_stream_terminate(false, &getcymodem);
-
+	printf("r: %d, res: %d, l: 0x%p e: 0x%p\n", ret, res,
+			(void*)(spl_image->load_addr), (void*)(spl_image->entry_point));
 	printf("Loaded %lu bytes\n", size);
 
 #ifdef CONFIG_SPL_GZIP
