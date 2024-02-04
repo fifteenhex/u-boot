@@ -90,7 +90,9 @@ SECTIONS
 	}
 	__dyn_sym_end = .;
 
+	. = ALIGN(4);
 	_end = .;
+	PROVIDE (_img_end = .);
 
 	__bss_start = .;
 	.bss (NOLOAD)       :
