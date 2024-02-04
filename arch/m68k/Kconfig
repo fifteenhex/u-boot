@@ -70,6 +70,10 @@ config MCF5441x
 	bool
 
 # processor type
+config MC68EZ328
+	bool
+	select MC68000
+
 config M5208
 	bool
 	select MCF520x
