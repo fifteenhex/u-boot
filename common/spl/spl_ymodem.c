@@ -15,6 +15,7 @@
 #include <xyzModem.h>
 #include <linux/libfdt.h>
 
+
 #define BUF_SIZE 1024
 
 /*
@@ -170,7 +171,6 @@ int spl_ymodem_load_image(struct spl_image_info *spl_image,
 			//memcpy((void *)addr, buf, res);
 			size += res;
 			addr += res;
-
 			if (size >= spl_image->size)
 				break;
 		}
@@ -180,8 +180,8 @@ int spl_ymodem_load_image(struct spl_image_info *spl_image,
 	}
 
 end_stream:
-	xyzModem_stream_close(&err);
 	xyzModem_stream_terminate(false, &getcymodem);
+	xyzModem_stream_close(&err);
 	printf("r: %d, res: %d, l: 0x%p e: 0x%p\n", ret, res,
 			(void*)(spl_image->load_addr), (void*)(spl_image->entry_point));
 	printf("Loaded %lu bytes\n", size);
