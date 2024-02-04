@@ -6,6 +6,9 @@
  *
  * Licensed under the GPL-2 or later.
  */
+
+//#define DEBUG 1
+
 #include <errno.h>
 #include <log.h>
 #include <malloc.h>
@@ -70,6 +73,22 @@ struct mmc_spi_priv {
 	struct spi_slave *spi;
 };
 
+static int dm_mmc_spi_reinit(struct udevice *dev)
+{
+	printf("%s:%d\n", __func__, __LINE__);
+
+	u8 buf[(74/8) + 1];
+	memset(buf, 0xff, sizeof(buf));
+
+	dm_spi_claim_bus(dev);
+
+	/* Pulse sclk without asserting CS */
+	dm_spi_xfer(dev, sizeof(buf) * 8, buf, NULL, 0);
+
+	dm_spi_release_bus(dev);
+
+	return 0;
+}
 /**
  * mmc_spi_sendcmd() - send a command to the SD card
  *
@@ -488,6 +507,7 @@ static int mmc_spi_bind(struct udevice *dev)
 }
 
 static const struct dm_mmc_ops mmc_spi_ops = {
+	.reinit		= dm_mmc_spi_reinit,
 	.send_cmd	= dm_mmc_spi_request,
 	.set_ios	= dm_mmc_spi_set_ios,
 };
