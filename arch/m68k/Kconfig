@@ -20,6 +20,7 @@ config MC68000
 	select DM
 	select DM_SERIAL
 	select TIMER
+	select HAVE_SYS_UBOOT_START
 
 config MCF520x
 	select OF_CONTROL
