@@ -47,6 +47,9 @@ int do_bootelf(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	char *sload = NULL;
 	int rcode = 0;
 
+//	void (*omnomnom)(void) = NULL;
+//	omnomnom();
+
 	/* Consume 'bootelf' */
 	argc--; argv++;
 
