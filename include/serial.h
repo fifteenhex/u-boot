@@ -177,7 +177,7 @@ struct dm_serial_ops {
 	 * @ch: character to write
 	 * @return 0 if OK, -ve on error
 	 */
-	int (*putc)(struct udevice *dev, const char ch);
+	int (*putc)(struct udevice *dev, const unsigned char ch);
 	/**
 	 * puts() - Write a string
 	 *
@@ -195,7 +195,7 @@ struct dm_serial_ops {
 	 * @len: The length of the string to write.
 	 * @return The number of characters written on success, or -ve on error
 	 */
-	ssize_t (*puts)(struct udevice *dev, const char *s, size_t len);
+	ssize_t (*puts)(struct udevice *dev, const unsigned char *s, size_t len);
 	/**
 	 * pending() - Check if input/output characters are waiting
 	 *
