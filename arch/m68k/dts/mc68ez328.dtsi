@@ -1,0 +1,133 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright (C) 2021 Daniel Palmer <daniel@thingy.jp>
+ */
+
+#include "mc68000.dtsi"
+/ {
+	compatible = "motorola,mc68ez328";
+
+	aliases {
+		serial0 = &uart0;
+	};
+
+	chosen {
+		stdout-path = "/serial@fffff900:115200";
+		tick-timer = &timer0;
+	};
+
+	osc: osc {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <32768>;
+	};
+
+		uart0: serial@fffff900 {
+			compatible = "motorola,mc68ez328-uart";
+			reg = <0xfffff900 0xc>;
+			u-boot,dm-pre-reloc;
+			clock-names = "sysclk";
+			clocks = <&pll 1>;
+			interrupts-extended = <&dbintc 0x2>;
+			status = "okay";
+		};
+
+	soc {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges = <0xfffff000 0xfffff000 0x1000>;
+
+		sysctrl: syscon@fffff000 {
+		};
+
+		pll: pll@fffff200 {
+			compatible = "motorola,mc68ez328-pll";
+			#clock-cells = <1>;
+			reg = <0xfffff200 0x4>;
+			clock-names = "osc";
+			clocks = <&osc>;
+			clock-output-names = "dmaclk", "sysclk", "lcdclk";
+		};
+
+		dbintc: intc@fffff300 {
+			compatible = "motorola,mc68ez328-intc";
+			interrupt-controller;
+			#interrupt-cells = <1>;
+			reg = <0xfffff300 0x4>;
+			interrupt-parent = <&intc_user>;
+			interrupts = <0x1>, <0x2>, <0x3>, <0x4>,
+						 <0x5>, <0x6>, <0x7>;
+			status = "okay";
+		};
+
+		gpio: gpio@fffff400 {
+			compatible = "motorola,mc68ez328-gpio";
+			gpio-controller;
+			#gpio-cells = <3>;
+			reg = <0xfffff400 0x34>;
+			status = "okay";
+		};
+
+		pwm: pwm@fffff500 {
+			compatible = "motorola,mc68ez328-pwm";
+			reg = <0xfffff500 0x6>;
+			clock-names = "osc", "sysclk";
+			clocks = <&osc>, <&pll 1>;
+			status = "okay";
+		};
+
+		timer0: timer@fffff600 {
+			compatible = "motorola,mc68ez328-timer";
+			reg = <0xfffff600 0xc>;
+			u-boot,dm-pre-reloc;
+			clock-names = "osc"; /*, "sysclk";*/
+			clocks = <&osc>; /*, <&pll 1>;*/
+			interrupts-extended = <&dbintc 0x1>;
+			status = "okay";
+		};
+
+		spi0: spi@fffff800 {
+			compatible = "motorola,mc68ez328-spi";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0xfffff800 0x34>;
+			clock-names = "sysclk";
+			interrupts-extended = <&dbintc 0x0>;
+			clocks = <&pll 1>;
+		};
+
+		lcdc: lcdc@fffffa00 {
+			compatible = "motorola,mc68ez328-lcdc";
+			reg = <0xfffffa00 0x34>;
+			status = "okay";
+		};
+
+		rtc0: rtc@fffffb00 {
+			compatible = "motorola,mc68ez328-rtc";
+			reg = <0xfffffb00 0x34>;
+			clock-names = "osc";
+			clocks = <&osc>;
+			interrupt-names = "wdt", "rtc";
+			interrupts-extended = <&dbintc 0x3>, <&dbintc 0x4>;
+			status = "okay";
+		};
+
+		dramc: dramc@fffffc00 {
+			compatible = "motorola,mc68ez328-dramc";
+			reg = <0xfffffc00 0x34>;
+			clocks = <&osc>, <&pll 1>;
+			status = "okay";
+		};
+
+		icem: icem@fffffd00 {
+			compatible = "motorola,mc68ez328-icem";
+			reg = <0xfffffd00 0x34>;
+			status = "okay";
+		};
+	};
+};
+
+&cpu0 {
+	clocks = <&pll 1>; // sysclk
+};
