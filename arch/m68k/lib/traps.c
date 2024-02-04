@@ -16,9 +16,11 @@
 #include <asm/ptrace.h>
 
 #ifdef CONFIG_MC68000
+#define NULLTRAP 32
 extern void _int_sled_4(void);
 extern void _int_sled_5(void);
 extern void _int_sled_8(void);
+extern void _int_sled_32(void);
 #else
 extern void _exc_handler(void);
 extern void _int_handler(void);

@@ -3,35 +3,95 @@
 #include <config.h>
 #include <asm/cache.h>
 
+.macro __putch val
+	move.b	#\val,0xfffff907
+1:
+	move.w	0xfffff906,%d7
+	and.w	#0x2000,%d7
+	beq		1b
+.endm
+
+.macro __printch ch
+	move.l	%d7, -(%sp)
+	__putch \ch
+	__putch '\n'
+	__putch '\r'
+	move.l (%sp)+, %d7
+.endm
+
+#ifndef CONFIG_SPL_BUILD
 .text
 _vectors:
 _initial_sp:
 	/*
 	 * For real hardware we need the bottom of the image to have
-	 * space for the vectors, on QEMU we end up entering the ELF
-	 * at 0 and trying to run this.. we don't use the initial
-	 * sp either way so use it to jump over the vector table.
+	 * space for the vectors, on QEMU we enter the ELF at the entry
+	 * address and the initial stackpointer and PC are not used.
+	 * For real hardware we don't use the initial stack pointer.
+	 *
+	 * So we can do a little hack here. If we encode a trap instruction
+	 * here a null function pointer or otherwise jumping to 0 can be detected.
+	 *
+	 * With interrupts masked this will cause a dead lock which is better
+	 * than trying to execute whatever random garbage is in memory.
 	 */
-	jmp		0x400			/* Initial stack pointer */
+	// trap #1					/* Initial stack pointer */
+	 jmp	0x400
+	.balign 0x4
+
 _initial_pc:
 	.long (CFG_SYS_FLASH_BASE + _start)	/* Start of program Code */
 	.balign 0x400
+#endif
 
 .text
 .globl _start
 _start:
+#if 0
+	/* Copy ourself from flash to SDRAM */
+	move.l #0, %a0
+	move.l #CFG_SYS_FLASH_BASE, %a1
+	move.l %a1, %a2
+	add.l  #0x40000, %a2
+_copy_from_flash_next:
+	cmp.l %a1, %a2
+	beq _copy_from_flash_done
+	move.l (%a1)+, (%a0)+
+	bra _copy_from_flash_next
+_copy_from_flash_done:
+
+	move.l	#_from_sdram, %a1
+	jmp (%a1)
+_from_sdram:
+#endif
+
+
 	/* put relocation table address to a5 */
 	move.l  #__got_start, %a5
 
 	/* setup stack initially on top of the init ram */
 	move.l	#(CFG_SYS_INIT_RAM_ADDR + CFG_SYS_INIT_RAM_SIZE), %sp
 
+	/* BSS clear */
+	move.l #__bss_start, %a0
+	move.l #__bss_end, %a1
+bss_clear:
+	cmp.l %a0, %a1
+	beq	bss_done
+	clr.l (%a0)+
+	bra bss_clear
+bss_done:
+	/* */
+
+	__printch '!'
+
 	/*
 	 * if configured, malloc_f arena will be reserved first,
 	 * then (and always) gd struct space will be reserved
 	 */
-	move.l	%sp, -(%sp)
-	bsr		board_init_f_alloc_reserve
+	move.l %sp, -(%sp)
+	bsr board_init_f_alloc_reserve
+	__printch 'a'
 
 	/* update stack and frame-pointers */
 	move.l 	%d0, %sp
@@ -41,16 +101,23 @@ _start:
 	move.l	%d0, -(%sp)
 	move.l	#board_init_f_init_reserve, %a1
 	jsr		(%a1)
+	__printch 'b'
 
 	/* run low-level CPU init code (from flash) */
 	bsr		cpu_init_f
 	clr.l	%sp@-
+	__printch 'c'
 
 	/* run low-level board init code (from flash) */
 	move.l	#board_init_f, %a1
 	jsr		(%a1)
+	__printch 'd'
 
-	/* board_init_f() does not return */
+	/* board_init_f() does not return unless we didn't relocate*/
+	clr.l	%sp@-
+	clr.l	%sp@-
+	move.l	#board_init_r, %a1
+	jsr	(%a1)
 
 #define SAVE_ALL					\
 	/* space for 15 regs */			\
@@ -87,5 +154,6 @@ _int_sled_\num:
 int_sled 4 1 exc_handler
 int_sled 5 2 exc_handler
 int_sled 8 1 exc_handler
+int_sled 32 2 exc_handler
 
 .align 4
