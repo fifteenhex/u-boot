@@ -602,8 +602,15 @@ static int spl_load_image(struct spl_image_info *spl_image,
 		ulong dcrc = crc32_wd(0, (unsigned char *)spl_image->dcrc_data,
 				      spl_image->dcrc_length, CHUNKSZ_CRC32);
 		if (dcrc != spl_image->dcrc) {
-			puts("SPL: Image data CRC check failed!\n");
+			printf("SPL: Image data CRC check failed!, 0x%08x vs 0x%08x xxx\n", (unsigned int) dcrc, (unsigned int) spl_image->dcrc);
+#if 0
+			for (int bar = 0; bar < spl_image->dcrc_length; bar++) {
+				printf("%02x", ((u8*)spl_image->dcrc_data)[bar]);
+				if (((bar + 1) % 16) == 0)
+					printf("\n");
+			}
 			ret = -EINVAL;
+#endif
 		}
 	}
 #endif
