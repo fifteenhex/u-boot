@@ -718,4 +718,10 @@ config QEMU_VIRT_CTRL
 	help
 	  QEMU Virt Ctrl system controller
 
+config DRAGONBALL_INTC
+	bool "DragonBall interrupt controller"
+	depends on MISC
+	help
+	  DragonBall interrupt controller
+
 endmenu
