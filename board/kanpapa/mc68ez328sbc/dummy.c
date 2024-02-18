@@ -51,21 +51,34 @@ int board_fix_fdt(void *fdt)
 	return 0;
 }
 
-extern int dragonball_pll_beastmode(struct udevice *dev);
+int dragonball_pll_beastmode(struct udevice *plldev,
+							 struct udevice *timerdev,
+							 struct udevice *intcdev);
 
 int board_early_init_r(void)
 {
-	struct udevice *devp;
+	struct udevice *intcdev, *timerdev, *plldev;
 	int node, ret;
 
 	/* Lets get things cooking, bump up the cpu clock... */
+	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "motorola,mc68ez328-intc");
+	ret = uclass_get_device_by_of_offset(UCLASS_MISC, node, &intcdev);
+	if (ret)
+		return ret;
+
+	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "motorola,mc68ez328-timer");
+	ret = uclass_get_device_by_of_offset(UCLASS_TIMER, node, &timerdev);
+	if (ret)
+		return ret;
+
 	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "motorola,mc68ez328-pll");
-	ret = uclass_get_device_by_of_offset(UCLASS_CLK, node, &devp);
-	if (!ret) {
-		dragonball_pll_beastmode(devp);
-		/* Redo baud rate calculation since sysclk has changed */
-		serial_setbrg();
-	}
+	ret = uclass_get_device_by_of_offset(UCLASS_CLK, node, &plldev);
+	if (ret)
+		return ret;
+
+	dragonball_pll_beastmode(plldev, timerdev, intcdev);
+	/* Redo baud rate calculation since sysclk has changed */
+	serial_setbrg();
 
 	return 0;
 }
