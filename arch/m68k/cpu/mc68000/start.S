@@ -54,7 +54,18 @@ _initial_pc:
 #elif defined(CONFIG_TARGET_QEMU)
 	.long _start		/* Start of program Code */
 #endif
-	.balign 0x400
+
+. = 0x100
+	.long	dummy_intc_handler
+	.long	dummy_intc_handler
+	.long	dummy_intc_handler
+	.long	dummy_intc_handler
+	.long	dummy_intc_handler
+	.long	dummy_intc_handler
+	.long	dummy_intc_handler
+	.long	dummy_intc_handler
+
+.balign 0x400
 #endif
 
 .text
@@ -217,5 +228,9 @@ int_sled 4 1 exc_handler
 int_sled 5 2 exc_handler
 int_sled 8 1 exc_handler
 int_sled 32 2 exc_handler
+
+dummy_intc_handler:
+	move	#0x2700,%sr
+	rte
 
 .align 4
