@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 #include <asm-offsets.h>
 #include <config.h>
-#include <asm/cache.h>
 #include <asm/dragonball/mc68ez328.h>
 
 #define DEBUG
@@ -54,7 +53,26 @@ _initial_pc:
 #elif defined(CONFIG_TARGET_QEMU)
 	.long _start				/* Start of program Code */
 #endif
-	.balign 0x400
+
+. = 0x100
+intc_vect_0:
+	.long	dummy_intc_handler
+intc_vect_1:
+	.long	dummy_intc_handler
+intc_vect_2:
+	.long	dummy_intc_handler
+intc_vect_3:
+	.long	dummy_intc_handler
+intc_vect_4:
+	.long	dummy_intc_handler
+intc_vect_5:
+	.long	dummy_intc_handler
+intc_vect_6:
+	.long	dummy_intc_handler
+intc_vect_7:
+	.long	dummy_intc_handler
+
+.balign 0x400
 #endif
 
 .text
@@ -217,5 +235,16 @@ int_sled 4 1 exc_handler
 int_sled 5 2 exc_handler
 int_sled 8 1 exc_handler
 int_sled 32 2 exc_handler
+
+#if !defined(CONFIG_SPL_BUILD)
+.globl dummy_intc_handler
+dummy_intc_handler:
+	move	#0x2700,%sr
+	SAVE_ALL
+	move.l  #dragonball_intc_maskall, %a1
+	jsr (%a1)
+	RESTORE_ALL
+	rte
+#endif
 
 .align 4
