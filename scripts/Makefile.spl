@@ -420,7 +420,7 @@ LDFLAGS_$(SPL_BIN) += --build-id=none
 
 # Pick the best match (e.g. SPL_TEXT_BASE for SPL, TPL_TEXT_BASE for TPL)
 ifneq ($(CONFIG_$(SPL_TPL_)TEXT_BASE),)
-LDFLAGS_$(SPL_BIN) += -Ttext $(CONFIG_$(SPL_TPL_)TEXT_BASE)
+LDFLAGS_$(SPL_BIN) += -Ttext=$(CONFIG_$(SPL_TPL_)TEXT_BASE)
 endif
 
 ifdef CONFIG_TARGET_SOCFPGA_ARRIA10
@@ -500,7 +500,7 @@ quiet_cmd_u-boot-spl ?= LTO     $@
       cmd_u-boot-spl ?= \
 	(									\
 		cd $(obj) &&							\
-		$(CC) -nostdlib -nostartfiles $(LTO_FINAL_LDFLAGS) $(c_flags)	\
+		$(CC) -fuse-ld=bfd -nostdlib -nostartfiles $(LTO_FINAL_LDFLAGS) $(c_flags) \
 		$(KBUILD_LDFLAGS:%=-Wl,%) $(LDFLAGS_$(@F):%=-Wl,%)		\
 		$(patsubst $(obj)/%,%,$(u-boot-spl-init))			\
 		-Wl,--whole-archive						\
