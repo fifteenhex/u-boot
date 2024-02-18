@@ -19,7 +19,7 @@ SECTIONS
 {
 	.text :
 	{
-		CPUDIR/start.o (.text*)
+		KEEP(CPUDIR/start.o (.text*))
 		LDS_BOARD_TEXT
 
 		*(.text*)
