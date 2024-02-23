@@ -54,6 +54,7 @@ _initial_pc:
 	.long _start				/* Start of program Code */
 #endif
 
+#ifdef CONFIG_MC68EZ328
 . = 0x100
 intc_vect_0:
 	.long	dummy_intc_handler
@@ -71,6 +72,7 @@ intc_vect_6:
 	.long	dummy_intc_handler
 intc_vect_7:
 	.long	dummy_intc_handler
+#endif
 
 .balign 0x400
 #endif
@@ -85,9 +87,11 @@ _start:
  */
 
 #ifdef CONFIG_MC68EZ328
+_mc68ez328_startup:
 	/* Disable the WDT to avoid getting reset */
 	move.l #MC68EZ328_RTC_WDT, %a0
 	clr.w (%a0)
+_mc68ez328_startup_scr:
 	/* Configure SCR to good state */
 	move.l #MC68EZ328_SCR, (%a0)
 	move.w #(MC68EZ328_SCR_BET + MC68EZ328_SCR_SO), (%a0)
@@ -115,7 +119,7 @@ _start:
 	/* SDRAM config */
 	move.l #MC68EZ328_DRAMC, %a2
 	move.w #0x8f00, %a2@(MC68EZ328_DRAMC_DRAMMC)
-	move.w #0x9667, %a2@(MC68EZ328_DRAMC_DRAMC)
+	move.w #0x9607, %a2@(MC68EZ328_DRAMC_DRAMC)
 	/* Set base address of SDRAM to 0 */
 	clr.w %a0@(MC68EZ328_GROUPBASEADDR_C)
 	/* Configure chipselect D */
@@ -236,7 +240,7 @@ int_sled 5 2 exc_handler
 int_sled 8 1 exc_handler
 int_sled 32 2 exc_handler
 
-#if !defined(CONFIG_SPL_BUILD)
+#if defined(CONFIG_MC68EZ328) && !defined(CONFIG_SPL_BUILD)
 .globl dummy_intc_handler
 dummy_intc_handler:
 	move	#0x2700,%sr
