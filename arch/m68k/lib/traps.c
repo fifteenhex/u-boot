@@ -125,9 +125,3 @@ int arch_initr_trap(void)
 #endif
 	return 0;
 }
-
-void reset_cpu(void)
-{
-	/* TODO: Refactor all the do_reset calls to be reset_cpu() instead */
-	do_reset(NULL, 0, 0, NULL);
-}
