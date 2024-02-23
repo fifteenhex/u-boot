@@ -54,6 +54,7 @@ _initial_pc:
 	.long _start		/* Start of program Code */
 #endif
 
+#ifdef CONFIG_MC68EZ328
 . = 0x100
 intc_vect_0:
 	.long	dummy_intc_handler
@@ -71,6 +72,7 @@ intc_vect_6:
 	.long	dummy_intc_handler
 intc_vect_7:
 	.long	dummy_intc_handler
+#endif
 
 .balign 0x400
 #endif
@@ -236,7 +238,7 @@ int_sled 5 2 exc_handler
 int_sled 8 1 exc_handler
 int_sled 32 2 exc_handler
 
-#if !defined(CONFIG_SPL_BUILD)
+#if defined(CONFIG_MC68EZ328) && !defined(CONFIG_SPL_BUILD)
 .globl dummy_intc_handler
 dummy_intc_handler:
 	move	#0x2700,%sr
