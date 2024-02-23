@@ -115,7 +115,7 @@ _start:
 	/* SDRAM config */
 	move.l #MC68EZ328_DRAMC, %a2
 	move.w #0x8f00, %a2@(MC68EZ328_DRAMC_DRAMMC)
-	move.w #0x9667, %a2@(MC68EZ328_DRAMC_DRAMC)
+	move.w #0x9607, %a2@(MC68EZ328_DRAMC_DRAMC)
 	/* Set base address of SDRAM to 0 */
 	clr.w %a0@(MC68EZ328_GROUPBASEADDR_C)
 	/* Configure chipselect D */
