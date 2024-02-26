@@ -2,6 +2,8 @@
 /*
  */
 
+//#define DEBUG 1
+
 #include <clk.h>
 #include <debug_uart.h>
 #include <dm.h>
@@ -45,6 +47,29 @@ struct serial_dragonball_priv {
 	int baudrate;
 };
 
+struct serial_dragonball_cheat_table_entry {
+	unsigned long sysclk_rate;
+	int baud_rate;
+	u8 divisor;
+	u8 prescaler;
+};
+
+static const struct serial_dragonball_cheat_table_entry cheat_table[] =
+{
+	{
+		.sysclk_rate = 8290304,
+		.baud_rate = 9600,
+		.divisor = 0,
+		.prescaler = 54,
+	},
+	{
+		.sysclk_rate = 25198592,
+		.baud_rate = 9600,
+		.divisor = 2,
+		.prescaler = 41,
+	},
+};
+
 static int serial_dragonball_setbrg(struct udevice *dev, int baudrate) __attribute__ ((optimize(2)));
 static int serial_dragonball_setbrg(struct udevice *dev, int baudrate)
 {
@@ -54,6 +79,7 @@ static int serial_dragonball_setbrg(struct udevice *dev, int baudrate)
 	unsigned long sysclk_rate = clk_get_rate(&priv->sysclk);
 	unsigned int divpow, prescaler;
 	u16 baud = 0;
+	unsigned int i;
 
 	/* This takes a while don't do it again just for fun.. */
 	if ((priv->baudrate == baudrate) &&
@@ -63,6 +89,18 @@ static int serial_dragonball_setbrg(struct udevice *dev, int baudrate)
 	/* Current best match */
 	int bestdivpow, bestprescaler;
 	u32 bestdiff = ~0;
+
+	for (i = 0; i < ARRAY_SIZE(cheat_table); i++) {
+		const struct serial_dragonball_cheat_table_entry *entry = &cheat_table[i];
+
+		if ((entry->sysclk_rate == sysclk_rate) &&
+			(entry->baud_rate == baudrate)) {
+				debug("Found cheat entry\n");
+				bestdivpow = entry->divisor;
+				bestprescaler = entry->prescaler;
+				goto configure;
+		}
+	}
 
 	for (divpow = 0; divpow < 8; divpow++) {
 		u32 divisor = 1 << divpow;
@@ -78,8 +116,8 @@ static int serial_dragonball_setbrg(struct udevice *dev, int baudrate)
 				bestdivpow = divpow;
 				bestprescaler = prescaler;
 				bestdiff = diff;
-				debug("%u %d %lu %u %u %u\n",
-					   divisor, prescaler, sysclk_rate, target, freq, diff);
+				debug("%u(%u) %d %lu %u %u %u\n",
+					   divisor, divpow, prescaler, sysclk_rate, target, freq, diff);
 			}
 			/*
 			 * If the difference is now getting bigger again we have passed
@@ -92,7 +130,8 @@ static int serial_dragonball_setbrg(struct udevice *dev, int baudrate)
 		}
 	}
 
-	debug("%u\n", bestprescaler);
+configure:
+	debug("%u %u\n", bestdivpow, bestprescaler);
 
 	/* And here we goooo... */
 	baud |= bestdivpow << REG_UBAUD_DIVIDE_SHIFT;
