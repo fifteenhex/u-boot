@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <asm/global_data.h>
 #include <common.h>
 #include <command.h>
 #include <cpu_func.h>
@@ -11,6 +12,7 @@
 #include <env.h>
 #include <image.h>
 #include <log.h>
+#include <stdlib.h>
 #ifdef CONFIG_CMD_ELF_BOOTVX
 #include <net.h>
 #include <vxworks.h>
@@ -22,8 +24,10 @@
 #include <linux/linkage.h>
 #endif
 
+DECLARE_GLOBAL_DATA_PTR;
+
 /* Allow ports to override the default behavior */
-static unsigned long do_bootelf_exec(ulong (*entry)(int, char * const[]),
+unsigned long do_bootelf_exec(ulong (*entry)(int, char * const[]),
 				     int argc, char *const argv[])
 {
 	unsigned long ret;
@@ -37,6 +41,8 @@ static unsigned long do_bootelf_exec(ulong (*entry)(int, char * const[]),
 	return ret;
 }
 
+extern void m68k_create_bootinfo(void *dst);
+
 /* Interpreter command to boot an arbitrary ELF image from memory */
 int do_bootelf(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
@@ -46,6 +52,7 @@ int do_bootelf(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 #endif
 	unsigned long addr; /* Address of the ELF image */
 	unsigned long rc; /* Return value from user code */
+	unsigned long end;
 	char *sload = NULL;
 	int rcode = 0;
 
@@ -85,9 +92,9 @@ int do_bootelf(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		return 1;
 
 	if (sload && sload[1] == 'p')
-		addr = load_elf_image_phdr(addr);
+		addr = load_elf_image_phdr(addr, &end);
 	else
-		addr = load_elf_image_shdr(addr);
+		addr = load_elf_image_shdr(addr, &end);
 
 #if CONFIG_IS_ENABLED(CMD_ELF_FDT_SETUP)
 	if (fdt_addr) {
@@ -101,6 +108,9 @@ int do_bootelf(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 
 	if (!env_get_autostart())
 		return rcode;
+
+	printf("End of ELF for bootinfo is 0x%lx\n", end);
+	m68k_create_bootinfo(end);
 
 	printf("## Starting application at 0x%08lx ...\n", addr);
 	flush();

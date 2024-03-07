@@ -20,6 +20,8 @@
 #include <linux/linkage.h>
 #endif
 
+DECLARE_GLOBAL_DATA_PTR;
+
 static bool elf_reserve_self(struct lmb *lmb, void *addr, size_t len)
 {
 #ifdef CONFIG_LMB
@@ -198,7 +200,7 @@ unsigned long load_elf64_image_shdr(unsigned long addr)
  * The loader firstly reads the ELF class to see if it's a 64-bit image.
  * If yes, call the ELF64 loader. Otherwise continue with the ELF32 loader.
  */
-unsigned long load_elf_image_phdr(unsigned long addr)
+unsigned long load_elf_image_phdr(unsigned long addr, unsigned long *end)
 {
 	Elf32_Ehdr *ehdr; /* Elf header structure pointer */
 	Elf32_Phdr *phdr; /* Program header structure pointer */
@@ -220,6 +222,8 @@ unsigned long load_elf_image_phdr(unsigned long addr)
 	for (i = 0; i < ehdr->e_phnum; ++i) {
 		void *dst = (void *)(uintptr_t)phdr->p_paddr;
 		void *src = (void *)addr + phdr->p_offset;
+		if (end)
+			*end = dst + phdr->p_memsz;
 
 		debug("Loading phdr %i to 0x%p (%i bytes)\n",
 		      i, dst, phdr->p_filesz);
@@ -242,7 +246,7 @@ unsigned long load_elf_image_phdr(unsigned long addr)
 	return ehdr->e_entry;
 }
 
-unsigned long load_elf_image_shdr(unsigned long addr)
+unsigned long load_elf_image_shdr(unsigned long addr, unsigned long *end)
 {
 	Elf32_Ehdr *ehdr; /* Elf header structure pointer */
 	Elf32_Shdr *shdr; /* Section header structure pointer */
@@ -292,6 +296,9 @@ unsigned long load_elf_image_shdr(unsigned long addr)
 
 		if (elf_check_lmb(&lmb, dst, shdr->sh_size))
 			break;
+
+		if (end)
+			*end = dst + shdr->sh_size;
 
 		if (shdr->sh_type == SHT_NOBITS) {
 			memset(dst, 0, shdr->sh_size);
