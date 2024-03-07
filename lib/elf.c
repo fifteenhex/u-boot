@@ -20,6 +20,8 @@
 #include <linux/linkage.h>
 #endif
 
+DECLARE_GLOBAL_DATA_PTR;
+
 static bool elf_reserve_self(struct lmb *lmb, void *addr, size_t len)
 {
 #ifdef CONFIG_LMB
