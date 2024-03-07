@@ -69,6 +69,10 @@ static void dragonball_pll_recalc_rates(struct dragonball_pll_priv *priv)
 
 	debug("dmaclk: %lu, sysclk %lu, lcdclk %lu\n",
 			priv->dmaclk_rate, priv->sysclk_rate, priv->lcdclk_rate);
+
+	/* Update global data */
+	gd->cpu_clk = priv->sysclk_rate;
+	gd->bd->bi_intfreq = priv->sysclk_rate;
 }
 
 static ulong dragonball_pll_get_rate(struct clk *clk)
