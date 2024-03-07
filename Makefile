@@ -1300,7 +1300,7 @@ LDFLAGS_u-boot += -z notext $(call ld-option,--apply-dynamic-relocs)
 LDFLAGS_u-boot += --build-id=none
 
 ifeq ($(CONFIG_ARC)$(CONFIG_NIOS2)$(CONFIG_X86)$(CONFIG_XTENSA),)
-LDFLAGS_u-boot += -Ttext $(CONFIG_TEXT_BASE)
+LDFLAGS_u-boot += -Ttext=$(CONFIG_TEXT_BASE)
 endif
 
 # make the checker run with the right architecture
@@ -2061,7 +2061,7 @@ ifeq ($(LTO_ENABLE),y)
 quiet_cmd_u-boot__ ?= LTO     $@
       cmd_u-boot__ ?=								\
 		touch $(u-boot-main) ;						\
-		$(CC) -nostdlib -nostartfiles					\
+		$(CC) -fuse-ld=bfd -nostdlib -nostartfiles			\
 		$(LTO_FINAL_LDFLAGS) $(c_flags)					\
 		$(KBUILD_LDFLAGS:%=-Wl,%) $(LDFLAGS_u-boot:%=-Wl,%) -o $@	\
 		-T u-boot.lds $(u-boot-init)					\
