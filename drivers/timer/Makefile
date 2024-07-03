@@ -36,3 +36,4 @@ obj-$(CONFIG_IMX_GPT_TIMER)	+= imx-gpt-timer.o
 obj-$(CONFIG_XILINX_TIMER)	+= xilinx-timer.o
 obj-$(CONFIG_STARFIVE_TIMER)	+= starfive-timer.o
 obj-$(CONFIG_DRAGONBALL_TIMER) += dragonball_timer.o
+obj-$(CONFIG_PCC_TIMER) += pcc_timer.o
