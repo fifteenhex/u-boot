@@ -521,6 +521,7 @@ config DEBUG_UART_BASE
 	default 0xff000000 if DEBUG_UART_ZYNQ && ARCH_ZYNQMP
 	default 0xe0000000 if DEBUG_UART_ZYNQ && ARCH_ZYNQ
 	default 0xfffff900 if DEBUG_DRAGONBALL_SERIAL
+	default 0xfffe3002 if TARGET_MVME147
 	help
 	  This is the base address of your UART for memory-mapped UARTs.
 
