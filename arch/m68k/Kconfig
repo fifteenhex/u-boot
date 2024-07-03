@@ -238,6 +238,31 @@ config TARGET_MC68EZ328SBC
 	select MC68EZ328
 	select SPL
 
+config TARGET_MVME147
+	bool "Support Motorola MVME147"
+	select MC68000
+	select MC68030
+	select SUPPORT_SPL
+
+	# For populating the DT with the bootinfo data
+	select OF_BOARD_FIXUP
+	select SPL
+	select SPL_FRAMEWORK_BOARD_INIT_F
+
+	# Essential drivers
+	select WDT_PCC
+	select PCC_TIMER
+	select SCC_SERIAL
+
+	# For booting from SCSI
+	select SPL_SATA
+	select SCSI_WD33C93
+	select SPL_DOS_PARTITION
+
+	# For network
+	select LANCE
+	select LANCE_LANCE
+
 endchoice
 
 source "board/BuS/eb_cpu5282/Kconfig"
@@ -256,6 +281,7 @@ source "board/sysam/amcore/Kconfig"
 source "board/sysam/stmark2/Kconfig"
 source "board/qemu/virt-m68k/Kconfig"
 source "board/kanpapa/mc68ez328sbc/Kconfig"
+source "board/motorola/mvme147/Kconfig"
 
 config M68K_QEMU
 	bool "Build with workarounds for incomplete QEMU emulation"
