@@ -2,6 +2,7 @@
 #include <asm-offsets.h>
 #include <config.h>
 #include <asm/dragonball/mc68ez328.h>
+#include <asm/mvme147/mvme147.h>
 
 #define DEBUG
 
@@ -13,6 +14,13 @@
 	move.w	(MC68EZ328_UART + MC68EZ328_UART_TXFLAGS),%d7
 	and.w	#0x2000,%d7
 	beq		1b
+#elif defined(CONFIG_TARGET_MVME147)
+	move.b #\val,(MVME147_SERIAL0_RXTX)
+1:
+	move.b #0, (MVME147_SERIAL0_REG)
+	move.b (MVME147_SERIAL0_REG), %d7
+	and.b   #0x4,%d7
+	beq	1b
 #endif
 #endif
 .endm
@@ -53,6 +61,10 @@ _initial_pc:
 #elif defined(CONFIG_TARGET_QEMU)
 	.long _start				/* Start of program Code */
 #endif
+
+. = 0xc
+_address_exception:
+	.long __addressexception
 
 #ifdef CONFIG_MC68EZ328
 . = 0x100
@@ -126,6 +138,15 @@ _mc68ez328_startup_scr:
 	move.w #(0x060e + MC68EZ328_CHIPSELECT_BSW + MC68EZ328_CHIPSELECT_WS_1 + MC68EZ328_CHIPSELECT_EN), %a1@(MC68EZ328_CHIPSELECT_D)
 	__putch '_'
 #elif defined(CONFIG_TARGET_QEMU)
+#elif defined(CONFIG_TARGET_MVME147)
+___xxx__:
+	__putch 'm'
+	__putch 'v'
+	__putch 'm'
+	__putch 'e'
+	__putch '1'
+	__putch '4'
+	__putch '7'
 #else
 #error
 #endif
@@ -218,6 +239,12 @@ bss_done:
 .globl _fault
 _fault:
 	bra	_fault
+
+.globl __addressexception
+__addressexception:
+	__printch '@'
+	jmp .
+
 
  .macro int_sled num group func
 .globl _int_sled_\num
