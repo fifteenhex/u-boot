@@ -99,9 +99,11 @@ _start:
  */
 
 #ifdef CONFIG_MC68EZ328
+_mc68ez328_startup:
 	/* Disable the WDT to avoid getting reset */
 	move.l #MC68EZ328_RTC_WDT, %a0
 	clr.w (%a0)
+_mc68ez328_startup_scr:
 	/* Configure SCR to good state */
 	move.l #MC68EZ328_SCR, (%a0)
 	move.w #(MC68EZ328_SCR_BET + MC68EZ328_SCR_SO), (%a0)
