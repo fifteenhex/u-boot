@@ -14,7 +14,7 @@
 
 	chosen {
 		stdout-path = "/serial@fffe3002:9600";
-		//tick-timer = &timer;
+		tick-timer = &timer0;
 	};
 
 	memory {
@@ -35,5 +35,22 @@
                 #address-cells = <1>;
                 #size-cells = <1>;
 
+		pcc: pcc@fffe1000 {
+			compatible = "motorola,mvme147-pcc", "syscon";
+			reg = <0xfffe1000 0x30>;
+			u-boot,dm-pre-reloc;
+			status = "okay";
+			timer0: timer@0 {
+				compatible = "motorola,mvme147-pcc-timer";
+				u-boot,dm-pre-reloc;
+				status = "okay";
+			};
+
+			timer1: timer@1 {
+				compatible = "motorola,mvme147-pcc-timer";
+				u-boot,dm-pre-reloc;
+				status = "okay";
+			};
+		};		
 	};
 };
