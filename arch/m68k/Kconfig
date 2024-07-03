@@ -221,7 +221,12 @@ config TARGET_QEMU
 
 	select BLK
 	select VIRTIO_MMIO
-	select VIRTIO_BLK	
+	select VIRTIO_BLK
+
+config TARGET_MC68EZ328SBC
+	bool "Support kanpapa MC68EZ328 SBC"
+	select MC68EZ328
+	select SPL
 
 config TARGET_MVME147
 	bool "Support Motorola MVME147"
@@ -231,6 +236,7 @@ config TARGET_MVME147
 	# For populating the DT with the bootinfo data
 	select OF_BOARD_FIXUP
 	select SPL
+	select SPL_FRAMEWORK_BOARD_INIT_F
 
 endchoice
 

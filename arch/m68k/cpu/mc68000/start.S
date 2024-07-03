@@ -2,6 +2,7 @@
 #include <asm-offsets.h>
 #include <config.h>
 #include <asm/dragonball/mc68ez328.h>
+#include <asm/mvme147/mvme147.h>
 
 #define DEBUG
 
@@ -13,6 +14,13 @@
 	move.w	(MC68EZ328_UART + MC68EZ328_UART_TXFLAGS),%d7
 	and.w	#0x2000,%d7
 	beq		1b
+#elif defined(CONFIG_TARGET_MVME147)
+	move.b #\val,(MVME147_SERIAL0_RXTX)
+1:
+	move.b #0, (MVME147_SERIAL0_REG)
+	move.b (MVME147_SERIAL0_REG), %d7
+	and.b   #0x4,%d7
+	beq	1b
 #endif
 #endif
 .endm
@@ -129,6 +137,14 @@ _start:
 	__putch '_'
 #elif defined(CONFIG_TARGET_QEMU)
 #elif defined(CONFIG_TARGET_MVME147)
+___xxx__:
+	__putch 'm'
+	__putch 'v'
+	__putch 'm'
+	__putch 'e'
+	__putch '1'
+	__putch '4'
+	__putch '7'
 #else
 #error
 #endif
