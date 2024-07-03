@@ -520,6 +520,11 @@ config DEBUG_DRAGONBALL_SERIAL
 	help
 	  Dragonball
 
+config DEBUG_SCC_SERIAL
+	bool "scc"
+	help
+	  SCC
+
 endchoice
 
 config DEBUG_UART_BASE
@@ -747,6 +752,12 @@ config DRAGONBALL_SERIAL
 	depends on DM_SERIAL
 	help
 	  Dragonball
+
+config SCC_SERIAL
+	bool "Zilog SCC support"
+	depends on DM_SERIAL
+	help
+	  SCC
 
 config FSL_LPUART
 	bool "Freescale LPUART support"
