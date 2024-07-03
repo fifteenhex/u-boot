@@ -63,6 +63,7 @@ obj-$(CONFIG_XEN_SERIAL) += serial_xen.o
 obj-$(CONFIG_S5P4418_PL011_SERIAL) += serial_s5p4418_pl011.o
 obj-$(CONFIG_TARGET_QEMU) += serial_goldfish.o
 obj-$(CONFIG_DRAGONBALL_SERIAL) += serial_dragonball.o
+obj-$(CONFIG_SCC_SERIAL) += serial_scc.o
 ifndef CONFIG_SPL_BUILD
 obj-$(CONFIG_USB_TTY) += usbtty.o
 endif
