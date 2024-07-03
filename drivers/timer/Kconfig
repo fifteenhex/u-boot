@@ -353,4 +353,10 @@ config DRAGONBALL_TIMER
 	help
 	  DragonBall timer
 
+config PCC_TIMER
+	bool "MVME147 PCC timer support"
+	depends on TIMER
+	help
+	  MVME147 PCC timer
+
 endmenu
