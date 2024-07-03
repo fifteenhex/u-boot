@@ -15,7 +15,7 @@ SECTIONS
 	.text :
 	{
 		__image_copy_start = .;
-		CPUDIR/start.o (.text*)
+		KEEP(CPUDIR/start.o (.text*))
 		*(.text*)
 		_etext = .;
 		PROVIDE (etext = .);

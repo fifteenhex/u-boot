@@ -6,6 +6,7 @@
 enum {
 	BOOT_DEVICE_UART,
 	BOOT_DEVICE_NOR,
+	BOOT_DEVICE_SATA,
 };
 
 #endif

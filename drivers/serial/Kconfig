@@ -532,6 +532,7 @@ config DEBUG_UART_BASE
 	default 0xff000000 if DEBUG_UART_PL011 && ARCH_VERSAL
 	default 0xf1920000 if DEBUG_UART_PL011 && (ARCH_VERSAL_NET || ARCH_VERSAL2)
 	default 0xfffff900 if DEBUG_DRAGONBALL_SERIAL
+	default 0xfffe3002 if TARGET_MVME147
 	help
 	  This is the base address of your UART for memory-mapped UARTs.
 
