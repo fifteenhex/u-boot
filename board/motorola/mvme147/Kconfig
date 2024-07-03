@@ -1,0 +1,15 @@
+if TARGET_MVME147
+
+config SYS_CPU
+	default "mc68000"
+
+config SYS_BOARD
+	default "mvme147"
+
+config SYS_VENDOR
+	default "motorola"
+
+config SYS_CONFIG_NAME
+	default "mvme147"
+
+endif

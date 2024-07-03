@@ -54,6 +54,10 @@ _initial_pc:
 	.long _start		/* Start of program Code */
 #endif
 
+. = 0xc
+_address_exception:
+	.long __addressexception
+
 #ifdef CONFIG_MC68EZ328
 . = 0x100
 intc_vect_0:
@@ -124,6 +128,7 @@ _start:
 	move.w #(0x060e + MC68EZ328_CHIPSELECT_BSW + MC68EZ328_CHIPSELECT_WS_1 + MC68EZ328_CHIPSELECT_EN), %a1@(MC68EZ328_CHIPSELECT_D)
 	__putch '_'
 #elif defined(CONFIG_TARGET_QEMU)
+#elif defined(CONFIG_TARGET_MVME147)
 #else
 #error
 #endif
@@ -216,6 +221,12 @@ bss_done:
 .globl _fault
 _fault:
 	bra	_fault
+
+.globl __addressexception
+__addressexception:
+	__printch '@'
+	jmp .
+
 
  .macro int_sled num group func
 .globl _int_sled_\num

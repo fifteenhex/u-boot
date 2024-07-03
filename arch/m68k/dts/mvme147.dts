@@ -1,0 +1,32 @@
+// SPDX-License-Identifier: GPL-2.0+
+
+/dts-v1/;
+#include "mc68030.dtsi"
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	compatible = "motorola,mvme147";
+
+	aliases {
+		//serial0 = &uart0;
+	};
+
+	chosen {
+		//tick-timer = &timer;
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0x0 0x4000000>;
+	};
+
+        soc {
+                compatible = "simple-bus";
+                #address-cells = <1>;
+                #size-cells = <1>;
+		uart0: serial@fffe3002 {
+			reg = <0xfffe3002 0x2>;
+		};
+	};
+};
