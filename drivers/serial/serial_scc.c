@@ -13,17 +13,32 @@
 #include <serial.h>
 #include <linux/delay.h>
 
+#define SCC_REG_READ0						0
+#define SCC_REG_READ0_RXCHARACTERAVAILABLE	BIT(0)
+#define SCC_REG_READ0_TXBUFFEREMPTY			BIT(2)
+
 struct serial_scc_priv {
 	void *base;
 };
 
+static inline u8 serial_scc_read_reg(struct serial_scc_priv *priv, unsigned int which)
+{
+	writeb(which, priv->base);
+	return readb(priv->base);
+}
+
+static inline bool serial_scc_have_char(struct serial_scc_priv *priv)
+{
+	if (serial_scc_read_reg(priv, SCC_REG_READ0) &
+			SCC_REG_READ0_RXCHARACTERAVAILABLE)
+				return true;
+
+	return false;
+}
+
 static int serial_scc_setbrg(struct udevice *dev, int baudrate)
 {
 	return 0;
-}
-
-static inline void serial_scc_reset(struct serial_scc_priv *priv)
-{
 }
 
 static int serial_scc_putc(struct udevice *dev, const unsigned char ch)
@@ -32,27 +47,31 @@ static int serial_scc_putc(struct udevice *dev, const unsigned char ch)
 	u8 status;
 
 	do {
-		writeb(0, priv->base);
-		status = readb(priv->base);
-	} while (!(status & 0x4));
+		status = serial_scc_read_reg(priv, SCC_REG_READ0);
+	} while (!(status & SCC_REG_READ0_TXBUFFEREMPTY));
 
 	writeb(ch, priv->base + 1);
 
 	return 0;
 }
 
-static inline bool serial_scc_tryc(struct serial_scc_priv *priv)
-{
-	return 0;
-}
-
 static int serial_scc_getc(struct udevice *dev)
 {
+	struct serial_scc_priv *priv = dev_get_priv(dev);
+
+	if(serial_scc_have_char(priv))
+		return readb(priv->base + 1);
+
 	return -EAGAIN;
 }
 
 static int serial_scc_pending(struct udevice *dev, bool input)
 {
+	struct serial_scc_priv *priv = dev_get_priv(dev);
+
+	if (input && serial_scc_have_char(priv))
+		return 1;
+
 	return 0;
 }
 
@@ -83,17 +102,15 @@ static int serial_scc_probe(struct udevice *dev)
 {
 	struct serial_scc_priv *priv = dev_get_priv(dev);
 
-	debug("probe!\n");
-
-        priv->base = dev_read_addr_ptr(dev);
+	priv->base = dev_read_addr_ptr(dev);
 
 	return 0;
 }
 
 static const struct dm_serial_ops serial_scc_ops = {
-	.setbrg = serial_scc_setbrg,
-	.putc = serial_scc_putc,
-	.getc = serial_scc_getc,
+	.setbrg  = serial_scc_setbrg,
+	.putc    = serial_scc_putc,
+	.getc    = serial_scc_getc,
 	.pending = serial_scc_pending,
 };
 
