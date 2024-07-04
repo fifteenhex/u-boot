@@ -25,12 +25,10 @@ void cpu_init_f(void)
 
 }
 
-size_t bootinfo_memsz_f(void);
 int dram_init(void)
 {
 	/* Correct size will be in the DT but this is still too early. */
-	//gd->ram_size = bootinfo_memsz_f();
-	gd->ram_size = 0x800000;
+	gd->ram_size = 0x1000000;
 
 	return 0;
 }
@@ -42,12 +40,8 @@ void reset_cpu(void)
 	}
 }
 
-extern void bootinfo_fix_fdt(void *fdt);
-
 int board_fix_fdt(void *fdt)
 {
-	bootinfo_fix_fdt(fdt);
-
 	return 0;
 }
 
