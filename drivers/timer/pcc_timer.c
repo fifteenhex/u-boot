@@ -2,7 +2,6 @@
 /*
  */
 
-#include <asm/io.h>
 #include <clk-uclass.h>
 #include <common.h>
 #include <div64.h>
@@ -10,145 +9,74 @@
 #include <errno.h>
 #include <fdt_support.h>
 #include <timer.h>
+#include <regmap.h>
+#include <syscon.h>
 
-#define REG_TCTL					0x0
-#define REG_TCTL_TEN				BIT(0)
-#define REG_TCTL_IRQEN				BIT(4)
-#define REG_TCTL_FRR				BIT(8)
-#define REG_TCTL_CLKSOURCE_SHIFT	1
-#define REG_TCTL_CLKSOURCE_MASK		0x7
-#define REG_TPRER	0x2
-#define REG_TCMP	0x4
-#define REG_TCR		0x6
-#define REG_TCN		0x8
-#define REG_TSTAT	0xa
+#define CTRL_ENABLE BIT(0)
+#define CTRL_ENACNT BIT(1)
+#define CTRL_CLROVF BIT(2)
+#define CTRL_OVF_SHIFT 4
+#define CTRL_OVR_MASK 0xf
 
-#define CLKSOURCE_SYSCLK		0x1
-#define CLKSOURCE_SYSCLKDIV16	0x2
-#define CLKSOURCE_TIN			0x3
-#define CLKSOURCE_32K			0x4
-
-#define INTC_TIMERIRQ	1
-
-struct dragonball_timer_priv {
-	void *base;
-	u16 last;
-	u32 offset;
-#ifndef CONFIG_SPL_BUILD
-	struct clk osc, sysclk;
-#endif
+struct pcc_timer_priv {
+	struct regmap *pcc16, *pcc8;
+	uint32_t overflows;
 };
 
-static u64 dragonball_timer_get_count(struct udevice *dev)
+static u64 pcc_timer_get_count(struct udevice *dev)
 {
-	struct dragonball_timer_priv *priv = dev_get_priv(dev);
-	u16 cnt;
+	struct pcc_timer_priv *priv = dev_get_priv(dev);
+	uint ctrl, cnt;
+	u64 ticks;
 
-	/*
-	 * The counter is only 16 bits wide, make it look like
-	 * it's 32 bits.
-	 *
-	 * If the current count is lower than the last then the
-	 * counter has wrapped around at least once.
-	 */
-	cnt = readw(priv->base + REG_TCN);
-	if (cnt < priv->last)
-		priv->offset += (1 << 16);
-	priv->last = cnt;
+	regmap_read(priv->pcc16, 2, &cnt);
+	regmap_read(priv->pcc8, 1, &ctrl);
+	regmap_write(priv->pcc8, 1, CTRL_ENACNT |
+								CTRL_ENABLE |
+								CTRL_CLROVF);
 
-	return priv->offset + cnt;
+	priv->overflows += (ctrl >> CTRL_OVF_SHIFT) & CTRL_OVR_MASK;
+
+	ticks = (priv->overflows << 16);
+	ticks += cnt;
+
+	return ticks;
 }
 
-static int dragonball_timer_probe(struct udevice *dev)
+static int pcc_timer_probe(struct udevice *dev)
 {
-	struct dragonball_timer_priv *priv = dev_get_priv(dev);
-	struct timer_dev_priv *uc_priv = dev_get_uclass_priv(dev);
-	unsigned int prescaler = 128;
-	int ret;
+	struct pcc_timer_priv *priv = dev_get_priv(dev);
 
-	priv->base = dev_read_addr_ptr(dev);
+	priv->pcc16 = syscon_regmap_lookup_by_phandle(dev, "pcc16");
+	if (IS_ERR(priv->pcc16))
+		return -ENODEV;
 
-#ifdef CONFIG_SPL_BUILD
-#else
-	ret = clk_get_by_name(dev, "osc", &priv->osc);
-//	if (ret)
-//		return ret;
+	priv->pcc8 = syscon_regmap_lookup_by_phandle(dev, "pcc8");
+	if (IS_ERR(priv->pcc8))
+		return -ENODEV;
 
-	ret = clk_get_by_name_optional(dev, "sysclk", &priv->sysclk);
-//	if (ret)
-//		return ret;
-
-	ret = clk_prepare_enable(&priv->osc);
-//	if (ret)
-//		return ret;
-
-//	uc_priv->clock_rate = clk_get_rate(&priv->osc);
-#endif
-
-	priv->last = 0;
-	priv->offset = 0;
-	writew(prescaler - 1, priv->base + REG_TPRER);
-	uc_priv->clock_rate = 32768 / prescaler;
-
-	writew((CLKSOURCE_32K << REG_TCTL_CLKSOURCE_SHIFT)
-			| REG_TCTL_TEN | REG_TCTL_FRR,
-			priv->base + REG_TCTL);
+	regmap_write(priv->pcc8, 1, CTRL_ENACNT |
+							    CTRL_ENABLE |
+								CTRL_CLROVF);
 
 	return 0;
 }
 
-extern int dragonball_intc_unmask(struct udevice *dev, unsigned int which);
-extern int dragonball_intc_mask(struct udevice *dev, unsigned int which);
-
-void dragonball_timer_arm_timer_wakeup(struct udevice *timerdev, struct udevice *intcdev)
-{
-	struct dragonball_timer_priv *priv = dev_get_priv(timerdev);
-	u16 tcn;
-	u16 tctl;
-
-	/* Set TCMP to about 60ms in the future */
-	tcn = readw(priv->base + REG_TCN);
-	writew(tcn + 0xf, priv->base + REG_TCMP);
-
-	dragonball_intc_unmask(intcdev, INTC_TIMERIRQ);
-	tctl = readw(priv->base + REG_TCTL);
-	tctl |= REG_TCTL_IRQEN;
-	writew(tctl, priv->base + REG_TCTL);
-}
-
-void dragonball_timer_disarm_timer_wakeup(struct udevice *timerdev, struct udevice *intcdev)
-{
-	struct dragonball_timer_priv *priv = dev_get_priv(timerdev);
-	u16 tctl, tstat;
-
-	/* Mask the interrupt */
-	tctl = readw(priv->base + REG_TCTL);
-	tctl &= ~REG_TCTL_IRQEN;
-	writew(tctl, priv->base + REG_TCTL);
-
-	/* Clear the interrupt, must read the register first */
-	tstat = readw(priv->base + REG_TSTAT);
-	writew(0, priv->base + REG_TSTAT);
-
-	/* Tell intc to mask it too */
-	dragonball_intc_mask(intcdev, INTC_TIMERIRQ);
-}
-
-static const struct timer_ops dragonball_timer_ops = {
-	.get_count = dragonball_timer_get_count,
+static const struct timer_ops pcc_timer_ops = {
+	.get_count = pcc_timer_get_count,
 };
 
-static const struct udevice_id dragonball_timer_ids[] = {
-	{ .compatible = "motorola,mc68ez328-timer", },
+static const struct udevice_id pcc_timer_ids[] = {
+	{ .compatible = "motorola,mvme147-pcc-timer", },
 	{ }
 };
 
-U_BOOT_DRIVER(dragonball_timer) = {
-	.name = "dragonball_timer",
-	.id = UCLASS_TIMER,
-	.of_match = of_match_ptr(dragonball_timer_ids),
-	.probe = dragonball_timer_probe,
-	.ops = &dragonball_timer_ops,
-	.flags = DM_FLAG_PRE_RELOC,
-	.priv_auto	= sizeof(struct dragonball_timer_priv),
+U_BOOT_DRIVER(pcc_timer) = {
+	.name      = "pcc_timer",
+	.id        = UCLASS_TIMER,
+	.of_match  = of_match_ptr(pcc_timer_ids),
+	.probe     = pcc_timer_probe,
+	.ops       = &pcc_timer_ops,
+	.flags     = DM_FLAG_PRE_RELOC,
+	.priv_auto = sizeof(struct pcc_timer_priv),
 };
