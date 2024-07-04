@@ -21,7 +21,9 @@
  *
  *==========================================================================
  */
-//#define DEBUG 1
+
+#define DEBUG 1
+
 #include <xyzModem.h>
 #include <stdarg.h>
 #include <time.h>
@@ -227,13 +229,13 @@ static unsigned char *zm_bp;
 static void
 zm_new (void)
 {
-  zm_bp = zm_buf;
+	zm_bp = zm_buf;
 }
 
 static void
 zm_save (unsigned char c)
 {
-  *zm_bp++ = c;
+	*zm_bp++ = c;
 }
 
 static void
@@ -270,7 +272,7 @@ static int xyzModem_sync_packet_start(void) {
 
 	while (!hdr_found) {
 		res = xyzModem_getchar(&c);
-		ZM_DEBUG (zm_save (c));
+		ZM_DEBUG(zm_save (c));
 		if (res) {
 			hdr_chars++;
 			switch (c) {
@@ -387,35 +389,48 @@ static int xyzModem_validate_message(const struct xyz *_xyz)
 	return 0;
 }
 
+#define XXX_LOGERR(v) ZM_DEBUG(zm_dprintf("ERR(%d) %d\n", v, __LINE__))
+
 static int xyzModem_get_hdr(void) {
 	int res;
 
-	ZM_DEBUG (zm_new ());
+	/* Flush the log buffer */
+	ZM_DEBUG(zm_new());
+
 	res = xyzModem_sync_packet_start();
-	if (res)
+	if (res) {
+		XXX_LOGERR(res);
 		goto err;
+	}
 
 	if (xyz.tx_ack) {
-		putc( ACK);
+		putc(ACK);
 		xyz.tx_ack = false;
 	}
 
 	res = xyzModem_read_block(&xyz);
-	if (res)
+	if (res) {
+		XXX_LOGERR(res);
 		goto err;
+	}
 
 	res = xyzModem_read_data();
-	if (res <= 0)
+	if (res <= 0) {
+		XXX_LOGERR(res);
 		goto err;
+	}
 
 	res = xyzModem_read_checksum(&xyz);
-	if (res)
+	if (res) {
+		XXX_LOGERR(res);
 		goto err;
+	}
 
 	res = xyzModem_validate_message(&xyz);
-	if (res)
+	if (res) {
+		XXX_LOGERR(res);
 		goto err;
-
+	}
 	/* If we get here, the message passes [structural] muster */
 	return 0;
 
@@ -427,9 +442,9 @@ err:
 static ulong xyzModem_get_initial_timeout(void) {
 	/* timeout is in seconds, non-positive timeout value is infinity */
 #if CONFIG_IS_ENABLED(ENV_SUPPORT)
-  const char *timeout_str = env_get("loadxy_timeout");
-  if (timeout_str)
-    return 1000 * simple_strtol(timeout_str, NULL, 10);
+	const char *timeout_str = env_get("loadxy_timeout");
+	if (timeout_str)
+		return 1000 * simple_strtol(timeout_str, NULL, 10);
 #endif
 	return 1000 * CONFIG_CMD_LOADXY_TIMEOUT;
 }
@@ -514,6 +529,7 @@ int xyzModem_stream_read(char *buf, int size, int *err) {
 	int stat, total, len;
 	int retries;
 
+	*err = 0;
 	total = 0;
 	stat = xyzModem_cancel;
 
@@ -569,7 +585,7 @@ int xyzModem_stream_read(char *buf, int size, int *err) {
 						break;
 					} else if (xyz.blk == ((xyz.next_blk - 1) & 0xFF)) {
 						/* Just re-ACK this so sender will get on with it */
-						putc( ACK);
+						putc(ACK);
 						continue; /* Need new header */
 					} else {
 						stat = xyzModem_sequence;
@@ -583,13 +599,12 @@ int xyzModem_stream_read(char *buf, int size, int *err) {
 					putc( ACK);
 					ZM_DEBUG (zm_dprintf ("ACK (%d)\n", __LINE__));
 					if (xyz.mode == xyzModem_ymodem) {
-						putc(
-								(xyz.crc_mode ? 'C' : NAK));
+						putc((xyz.crc_mode ? 'C' : NAK));
 						xyz.total_retries++;
 						ZM_DEBUG (zm_dprintf ("Reading Final Header\n"));
 						stat = xyzModem_get_hdr();
-						putc( ACK);
-						ZM_DEBUG (zm_dprintf ("FINAL ACK (%d)\n", __LINE__));
+						putc(ACK);
+						ZM_DEBUG(zm_dprintf ("FINAL ACK (%d)\n", __LINE__));
 					} else
 						stat = 0;
 					xyz.at_eof = true;
@@ -598,7 +613,7 @@ int xyzModem_stream_read(char *buf, int size, int *err) {
 
 				putc( (xyz.crc_mode ? 'C' : NAK));
 				xyz.total_retries++;
-				ZM_DEBUG (zm_dprintf ("NAK (%d)\n", __LINE__));
+				ZM_DEBUG (zm_dprintf ("NAK (%d,%d)\n", __LINE__, len));
 			}
 			if (stat < 0 && (!xyz.first_xmodem_packet
 					|| stat != xyzModem_timeout)) {
@@ -671,7 +686,7 @@ void xyzModem_stream_terminate(bool abort, int (*getc)(void)) {
 		 */
 		ZM_DEBUG (zm_dprintf ("Trailing gunk:\n"));
 		while ((c = (*getc)()) > -1)
-			; ZM_DEBUG (zm_dprintf ("\n"));
+			ZM_DEBUG (zm_dprintf ("\n"));
 		/*
 		 * Make a small delay to give terminal programs like minicom
 		 * time to get control again after their file transfer program
