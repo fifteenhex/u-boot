@@ -2,9 +2,11 @@
 #include <elf.h>
 #include <asm/sections.h>
 
-#define R_68K_32	1
+#define R_68K_32		1
+#define R_68K_JMP_SLOT	21
 #define R_68K_RELATIVE	22
 
+void relocate_code(ulong start_addr_sp, gd_t *new_gd, ulong relocaddr);
 void relocate_code(ulong start_addr_sp, gd_t *new_gd, ulong relocaddr)
 {
 	void (*reloc_board_init_r)(gd_t *gd, ulong dest) = board_init_r;
@@ -52,13 +54,18 @@ void relocate_code(ulong start_addr_sp, gd_t *new_gd, ulong relocaddr)
 			offset += new_gd->relocaddr;
 			*((u32 *)offset) = newval;
 			break;
+		case R_68K_JMP_SLOT:
+			// I don't think this should be in our final binary but
+			// for some reason with 030 turned on it happens
+			break;
 		default:
-			panic("Relocation failed, don't know what to do with rela at %p\n", rel);
+			panic("Relocation failed, don't know what to do with rela at %p, r_info: 0x%x\n",
+					rel, rel->r_info);
 			break;
 		}
 	}
 
-	printf("Relocation point of no return, new SP %p\n", new_gd->start_addr_sp);
+	printf("Relocation point of no return, new SP %p\n", (void*) new_gd->start_addr_sp);
 
 	/* Fix the GOT pointer */
 	__asm__ __volatile__("add.l %0, %%a5" : : "m" (new_gd->relocaddr));

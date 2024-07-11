@@ -137,6 +137,9 @@ config M54418
 	bool
 	select MCF5441x
 
+config MC68030
+	bool
+
 # peripherals
 config CF_DSPI
 	bool
@@ -231,6 +234,7 @@ config TARGET_MC68EZ328SBC
 config TARGET_MVME147
 	bool "Support Motorola MVME147"
 	select MC68000
+	select MC68030
 	select SUPPORT_SPL
 
 	# For populating the DT with the bootinfo data
