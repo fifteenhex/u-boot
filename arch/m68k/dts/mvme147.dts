@@ -10,6 +10,7 @@
 
 	aliases {
 		serial0 = &uart0;
+		ethernet0 = &lance;
 	};
 
 	chosen {
@@ -57,6 +58,20 @@
 			u-boot,dm-pre-reloc;
 			reg-io-width = <1>;
 			status = "okay";
+		};
+
+		lance: ethernet@fffe1800 {
+			compatible = "amd,am7990";
+			reg = <0xfffe1800 0x4>;
+		};
+
+		vmechip: vmechip@fffe2000 {
+			reg = <0xfffe2000 0x20>;
+		};
+
+		scsi: scsi@fffe4000 {
+			compatible = "wdc,wd33c93";
+			reg = <0xfffe4000 0x4>;
 		};
 	};
 
