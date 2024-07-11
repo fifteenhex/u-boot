@@ -43,6 +43,7 @@ struct regmap *syscon_get_regmap(struct udevice *dev)
 static int syscon_pre_probe(struct udevice *dev)
 {
 	struct syscon_uc_info *priv = dev_get_uclass_priv(dev);
+	int ret;
 
 	/* Special case for PCI devices, which don't have a regmap */
 	if (device_get_uclass_id(dev->parent) == UCLASS_PCI)
@@ -73,7 +74,12 @@ static int syscon_pre_probe(struct udevice *dev)
 	return regmap_init_mem_plat(dev, plat->reg, sizeof(plat->reg[0]),
 				    ARRAY_SIZE(plat->reg) / 2, &priv->regmap);
 #else
-	return regmap_init_mem(dev_ofnode(dev), &priv->regmap);
+	ret = regmap_init_mem(dev_ofnode(dev), &priv->regmap);
+	if (ret)
+		return ret;
+	priv->regmap->width = dev_read_u32_default(dev, "reg-io-width", 0);
+	//printf("setting width to %d\n", priv->regmap->width);
+	return 0;
 #endif
 }
 
