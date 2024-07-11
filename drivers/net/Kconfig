@@ -672,6 +672,19 @@ config PCNET
 	  This driver supports AMD PCnet series fast ethernet family of
 	  PCI chipsets/adapters.
 
+config LANCE
+	bool "AMD LANCE/ILACC series Ethernet controller driver"
+	help
+	  LANCE and ILACC ethernet controllers
+
+config LANCE_LANCE
+	bool "LANCE support"
+	depends on LANCE
+
+config LANCE_ILACC
+	bool "ILACC support"
+	depends on LANCE
+
 source "drivers/net/qe/Kconfig"
 
 config RTL8139
