@@ -38,13 +38,13 @@ static int getcymodem(void) {
 static ulong ymodem_read_fit(struct spl_load_info *load, ulong offset,
 			     ulong size, void *addr)
 {
-	int res, err, buf_offset;
+	int res, buf_offset;
 	struct ymodem_fit_info *info = load->priv;
 	char *buf = info->buf;
 	ulong copy_size = size;
 
 	while (info->image_read < offset) {
-		res = xyzModem_stream_read(buf, BUF_SIZE, &err);
+		res = xyzModem_stream_read(buf, BUF_SIZE);
 		if (res <= 0)
 			break;
 
@@ -68,7 +68,7 @@ static ulong ymodem_read_fit(struct spl_load_info *load, ulong offset,
 	}
 
 	while (info->image_read < offset + size) {
-		res = xyzModem_stream_read(buf, BUF_SIZE, &err);
+		res = xyzModem_stream_read(buf, BUF_SIZE);
 		if (res <= 0)
 			break;
 
@@ -99,19 +99,19 @@ int spl_ymodem_load_image(struct spl_image_info *spl_image,
 	ulong addr = 0;
 
 	info.mode = xyzModem_ymodem;
-	ret = xyzModem_stream_open(&info, &err);
+	ret = xyzModem_stream_open(&info);
 	if (ret) {
 		/*
 		 * Even if we couldn't open a stream we need to call close
 		 * to flush the debugging buffer that might contain info
 		 * to help work out why we couldn't open the stream.
 		 */
-		xyzModem_stream_close(&err);
-		printf("spl: ymodem err - %s\n", xyzModem_error(err));
+		xyzModem_stream_close();
+		printf("spl: ymodem err - %s\n", xyzModem_error(ret));
 		return ret;
 	}
 
-	res = xyzModem_stream_read(buf, BUF_SIZE, &err);
+	res = xyzModem_stream_read(buf, BUF_SIZE);
 	if (res <= 0)
 		goto end_stream;
 
@@ -124,7 +124,7 @@ int spl_ymodem_load_image(struct spl_image_info *spl_image,
 		size += res;
 		addr += res;
 
-		while ((res = xyzModem_stream_read(buf, BUF_SIZE, &err)) > 0) {
+		while ((res = xyzModem_stream_read(buf, BUF_SIZE)) > 0) {
 			memcpy((void *)addr, buf, res);
 			size += res;
 			addr += res;
@@ -145,7 +145,7 @@ int spl_ymodem_load_image(struct spl_image_info *spl_image,
 		ret = spl_load_simple_fit(spl_image, &load, 0, (void *)buf);
 		size = info.image_read;
 
-		while ((res = xyzModem_stream_read(buf, BUF_SIZE, &err)) > 0)
+		while ((res = xyzModem_stream_read(buf, BUF_SIZE)) > 0)
 			size += res;
 	} else {
 		ih = (struct legacy_img_hdr *)buf;
@@ -167,7 +167,7 @@ int spl_ymodem_load_image(struct spl_image_info *spl_image,
 		size = residue;
 		addr += residue;
 
-		while ((res = xyzModem_stream_read((void *) addr, BUF_SIZE, &err)) > 0) {
+		while ((res = xyzModem_stream_read((void *) addr, BUF_SIZE)) > 0) {
 			//memcpy((void *)addr, buf, res);
 			size += res;
 			addr += res;
@@ -175,15 +175,19 @@ int spl_ymodem_load_image(struct spl_image_info *spl_image,
 				break;
 		}
 
-		if (size != spl_image->size)
+		/*
+		 * If there is no error but the size in the header
+		 * doesn't match assume that we got truncated data
+		 */
+		if (!ret && (size != spl_image->size))
 			ret = -EIO;
 	}
 
 end_stream:
 	xyzModem_stream_terminate(false, &getcymodem);
-	xyzModem_stream_close(&err);
-	printf("r: %d, res: %d, l: 0x%p e: 0x%p\n", ret, res,
-			(void*)(spl_image->load_addr), (void*)(spl_image->entry_point));
+	xyzModem_stream_close();
+	printf("r: %d, res: %d, l: 0x%p e: 0x%p\n",
+			ret, res, (void*)(spl_image->load_addr), (void*)(spl_image->entry_point));
 	printf("Loaded %lu bytes\n", size);
 
 #ifdef CONFIG_SPL_GZIP

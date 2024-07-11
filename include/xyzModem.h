@@ -40,6 +40,7 @@
 #define xyzModem_frame    -6
 #define xyzModem_cksum    -7
 #define xyzModem_sequence -8
+#define xyzModem_repeat		-9
 
 #define xyzModem_close 1
 #define xyzModem_abort 2
@@ -51,18 +52,14 @@
 #define diag_printf printf
 #define diag_vsprintf vsprintf
 
-#define CYGACC_CALL_IF_DELAY_US(x) udelay(x)
-
 typedef struct {
-    char *filename;
-    int   mode;
-    int   chan;
+	int mode;
 } connection_info_t;
 
-int   xyzModem_stream_open(connection_info_t *info, int *err);
-void  xyzModem_stream_close(int *err);
-void  xyzModem_stream_terminate(bool method, int (*getc)(void));
-int   xyzModem_stream_read(char *buf, int size, int *err);
+int xyzModem_stream_open(connection_info_t *info);
+void xyzModem_stream_close(void);
+void xyzModem_stream_terminate(bool method, int (*getc)(void));
+int xyzModem_stream_read(char *buf, int size);
 const char *xyzModem_error(int err);
 
 #endif /* _XYZMODEM_H_ */
