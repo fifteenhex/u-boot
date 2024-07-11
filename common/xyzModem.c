@@ -32,6 +32,8 @@
 #include <env.h>
 #include <vsprintf.h>
 
+#define CORNAK(__xyz) putc((__xyz->crc_mode ? 'C' : NAK));
+
 /* Assumption - run xyzModem protocol over the console port */
 
 /* Values magic to the protocol */
@@ -53,26 +55,36 @@ struct xyz {
 	u8 pkt[1024];
 	u8 crc1, crc2;
 
+	/* stats */
+	int opened;
+	int total_RX;
+	int total_SOH;
+	int total_STX;
+	int total_CAN;
+
 	unsigned char next_blk; /* Expected block */
 	int len, mode, total_retries;
-	int total_SOH, total_STX, total_CAN;
-	bool crc_mode, at_eof, tx_ack;
+
+	bool crc_mode, at_eof;
 	bool first_xmodem_packet;
 	ulong initial_time, timeout;
 	unsigned long file_length, read_length;
+
+	/* The last packet needs to be ack'd */
+	bool tx_ack;
 };
 
-static struct xyz xyz;
+static struct xyz _xyz;
 
 /* 2 seconds */
-#define xyzModem_CHAR_TIMEOUT            2000
+#define xyzModem_CHAR_TIMEOUT            1000
 #define xyzModem_MAX_RETRIES             20
 #define xyzModem_MAX_RETRIES_WITH_CRC    10
 /* Wait for 3 CAN before quitting */
 #define xyzModem_CAN_COUNT                3
 
 /* Get a char but don't wait forever */
-static int xyzModem_getchar(char *c) {
+static int xyzModem_getchar(struct xyz *xyz, char *c) {
 	ulong now = get_timer(0);
 
 	schedule();
@@ -81,6 +93,7 @@ static int xyzModem_getchar(char *c) {
 			int ret = getchar();
 			if (ret >= 0) {
 				*c = ret;
+				xyz->total_RX++;
 				return 1;
 			} else if (ret != -EAGAIN)
 				return 0;
@@ -92,7 +105,7 @@ static int xyzModem_getchar(char *c) {
 	return 0;
 }
 
-static int xyzModem_getchars(char *c, unsigned int n) {
+static int xyzModem_getchars(struct xyz *xyz, char *c, unsigned int n) {
 	ulong now;
 	int i, charsread = 0;
 	const int blksz = 16;
@@ -109,8 +122,10 @@ static int xyzModem_getchars(char *c, unsigned int n) {
 
 		for (i = 0; (i < blksz) && (charsread < n); i++) {
 			int ret = getchar();
-			if (ret >= 0)
+			if (ret >= 0) {
+				xyz->total_RX++;
 				c[charsread++] = ret;
+			}
 			else if (ret != -EAGAIN)
 				return ret;
 		}
@@ -122,13 +137,13 @@ static int xyzModem_getchars(char *c, unsigned int n) {
 }
 
 /* Validate a hex character */
-__inline__ static bool _is_hex(char c) {
+static inline bool _is_hex(char c) {
 	return (((c >= '0') && (c <= '9')) || ((c >= 'A') && (c <= 'F'))
 			|| ((c >= 'a') && (c <= 'f')));
 }
 
 /* Convert a single hex nibble */
-__inline__ static int _from_hex(char c) {
+static inline int _from_hex(char c) {
 	int ret = 0;
 
 	if ((c >= '0') && (c <= '9')) {
@@ -142,7 +157,7 @@ __inline__ static int _from_hex(char c) {
 }
 
 /* Convert a character to lower case */
-__inline__ static char _tolower(char c) {
+static inline char _tolower(char c) {
 	if ((c >= 'A') && (c <= 'Z')) {
 		c = (c - 'A') + 'a';
 	}
@@ -188,80 +203,18 @@ static bool parse_num(char *s, unsigned long *val, char **es, char *delim) {
 	return true;
 }
 
-#if defined(DEBUG) && !CONFIG_IS_ENABLED(USE_TINY_PRINTF)
-/*
- * Note: this debug setup works by storing the strings in a fixed buffer
- */
-static char zm_debug_buf[8192] = { 0 };
-static char *zm_out = zm_debug_buf;
-static char *zm_out_start = zm_debug_buf;
-
-static int
-zm_dprintf(char *fmt, ...)
-{
-	int len;
-	va_list args;
-
-	va_start(args, fmt);
-	len = diag_vsprintf(zm_out, fmt, args);
-	va_end(args);
-	zm_out += len;
-	return len;
-}
-
-static void
-zm_flush (void)
-{
-  puts(zm_debug_buf);
-  memset(zm_out_start, 0, zm_out - zm_out_start);
-  zm_out = zm_out_start;
-}
-
-static void
-zm_dump_buf (void *buf, int len)
-{
-
-}
-
-static unsigned char zm_buf[2048];
-static unsigned char *zm_bp;
-
-static void
-zm_new (void)
-{
-	zm_bp = zm_buf;
-}
-
-static void
-zm_save (unsigned char c)
-{
-	*zm_bp++ = c;
-}
-
-static void
-zm_dump (int line)
-{
-//  zm_dprintf ("Packet at line: %d\n", line);
-//  zm_dump_buf (zm_buf, zm_bp - zm_buf);
-}
-
-#define ZM_DEBUG(x) x
-#else
-#define ZM_DEBUG(x)
-#endif
-
 /* Wait for the line to go idle */
-static void xyzModem_flush(void) {
+static void xyzModem_flush(struct xyz *xyz) {
 	int res;
 	char c;
 	while (true) {
-		res = xyzModem_getchar(&c);
+		res = xyzModem_getchar(xyz, &c);
 		if (!res)
 			return;
 	}
 }
 
-static int xyzModem_sync_packet_start(void) {
+static int xyzModem_sync_packet_start(struct xyz *xyz) {
 	char c;
 	int res;
 	bool hdr_found = false;
@@ -271,22 +224,22 @@ static int xyzModem_sync_packet_start(void) {
 	hdr_chars = 0;
 
 	while (!hdr_found) {
-		res = xyzModem_getchar(&c);
-		ZM_DEBUG(zm_save (c));
+		res = xyzModem_getchar(xyz, &c);
+		//ZM_DEBUG(zm_save(c));
 		if (res) {
 			hdr_chars++;
 			switch (c) {
 			case SOH:
-				xyz.total_SOH++;
+				xyz->total_SOH++;
 			case STX:
 				if (c == STX)
-					xyz.total_STX++;
+					xyz->total_STX++;
 				hdr_found = true;
 				break;
 			case CAN:
 			case ETX:
-				xyz.total_CAN++;
-				ZM_DEBUG (zm_dump (__LINE__));
+				xyz->total_CAN++;
+				//ZM_DEBUG(zm_dump(__LINE__));
 				if (++can_total == xyzModem_CAN_COUNT) {
 					return xyzModem_cancel;
 				} else {
@@ -297,7 +250,7 @@ static int xyzModem_sync_packet_start(void) {
 				/* EOT only supported if no noise */
 				if (hdr_chars == 1) {
 					putc(ACK);
-					ZM_DEBUG (zm_dprintf ("ACK on EOT #%d\n", __LINE__));ZM_DEBUG (zm_dump (__LINE__));
+					log_info("ACK on EOT #%d\n", __LINE__);
 					return xyzModem_eof;
 				}
 			default:
@@ -306,49 +259,50 @@ static int xyzModem_sync_packet_start(void) {
 			}
 		} else {
 			/* Data stream timed out */
-			xyzModem_flush(); /* Toss any current input */
-			ZM_DEBUG (zm_dump (__LINE__));
-			CYGACC_CALL_IF_DELAY_US(250000);
+			xyzModem_flush(xyz); /* Toss any current input */
+			udelay(250000);
 			return xyzModem_timeout;
 		}
 	}
 
-	if (hdr_found)
-		xyz.len = (c == SOH) ? 128 : 1024;
+	if (hdr_found) {
+		xyz->len = (c == SOH) ? 128 : 1024;
+		//ZM_DEBUG(zm_dprintf("Header found, %d\n", xyz->len));
+	}
 
 	return 0;
 }
 
-static int xyzModem_read_block(struct xyz *_xyz)
+static int xyzModem_read_block(struct xyz *xyz)
 {
 	int ret;
 
-	ret = xyzModem_getchar(&_xyz->blk);
-	if (!ret)
+	ret = xyzModem_getchar(xyz, &xyz->blk);
+	if (ret == 0)
 		return xyzModem_timeout;
 
-	ret = xyzModem_getchar(&_xyz->cblk);
-	if (!ret)
+	ret = xyzModem_getchar(xyz, &xyz->cblk);
+	if (ret == 0)
 		return xyzModem_timeout;
 
 	return 0;
 }
 
-static int xyzModem_read_data(void)
+static int xyzModem_read_data(struct xyz *xyz)
 {
-	return xyzModem_getchars(xyz.pkt, xyz.len);
+	return xyzModem_getchars(xyz, xyz->pkt, xyz->len);
 }
 
-static int xyzModem_read_checksum(struct xyz *_xyz)
+static int xyzModem_read_checksum(struct xyz *xyz)
 {
 	int res;
 
-	res = xyzModem_getchar(&_xyz->crc1);
+	res = xyzModem_getchar(xyz, &xyz->crc1);
 	if (!res)
 		return xyzModem_timeout;
 
-	if (xyz.crc_mode) {
-		res = xyzModem_getchar(&_xyz->crc2);
+	if (xyz->crc_mode) {
+		res = xyzModem_getchar(xyz, &xyz->crc2);
 		if (!res)
 			return xyzModem_timeout;
 	}
@@ -356,32 +310,31 @@ static int xyzModem_read_checksum(struct xyz *_xyz)
 	return 0;
 }
 
-static int xyzModem_validate_message(const struct xyz *_xyz)
+static int xyzModem_validate_message(const struct xyz *xyz)
 {
-	int i;
 
 	/* Validate the block number */
-	if ((_xyz->blk ^ _xyz->cblk) != 0xFF) {
+	if ((xyz->blk ^ xyz->cblk) != 0xFF) {
 		return xyzModem_frame;
 	}
 
 	/* Verify checksum/CRC */
-	if (xyz.crc_mode) {
-		u16 cksum = crc16_ccitt(0, xyz.pkt, xyz.len);
-		if (cksum != ((xyz.crc1 << 8) | xyz.crc2)) {
-			ZM_DEBUG (zm_dprintf ("CRC error - recvd: %02x%02x, computed: %x\n",
-							xyz.crc1, xyz.crc2, cksum & 0xFFFF));
+	if (xyz->crc_mode) {
+		u16 cksum = crc16_ccitt(0, xyz->pkt, xyz->len);
+		if (cksum != ((xyz->crc1 << 8) | xyz->crc2)) {
+			log_err("CRC error - recvd: %02x%02x, computed: %x\n",
+							xyz->crc1, xyz->crc2, cksum & 0xFFFF);
 			return xyzModem_cksum;
 		}
 	} else {
+		int i;
 		unsigned short cksum = 0;
-		for (i = 0; i < xyz.len; i++) {
-			cksum += xyz.pkt[i];
+		for (i = 0; i < xyz->len; i++) {
+			cksum += xyz->pkt[i];
 		}
-		if (xyz.crc1 != (cksum & 0xFF)) {
-			ZM_DEBUG (zm_dprintf
-					("Checksum error - recvd: %x, computed: %x\n", xyz.crc1,
-							cksum & 0xFF));
+		if (xyz->crc1 != (cksum & 0xFF)) {
+			log_err("Checksum error - recvd: %x, computed: %x\n", xyz->crc1,
+							cksum & 0xFF);
 			return xyzModem_cksum;
 		}
 	}
@@ -389,53 +342,42 @@ static int xyzModem_validate_message(const struct xyz *_xyz)
 	return 0;
 }
 
-#define XXX_LOGERR(v) ZM_DEBUG(zm_dprintf("ERR(%d) %d\n", v, __LINE__))
-
-static int xyzModem_get_hdr(void) {
+static int xyzModem_get_hdr(struct xyz *xyz) {
 	int res;
 
-	/* Flush the log buffer */
-	ZM_DEBUG(zm_new());
-
-	res = xyzModem_sync_packet_start();
-	if (res) {
-		XXX_LOGERR(res);
-		goto err;
-	}
-
-	if (xyz.tx_ack) {
+	/* If we need to ACK the previous packet do that now */
+	if (xyz->tx_ack) {
 		putc(ACK);
-		xyz.tx_ack = false;
+		xyz->tx_ack = false;
 	}
 
-	res = xyzModem_read_block(&xyz);
-	if (res) {
-		XXX_LOGERR(res);
+	/* Sync with the start of the next packet */
+	res = xyzModem_sync_packet_start(xyz);
+	if (res)
 		goto err;
-	}
 
-	res = xyzModem_read_data();
-	if (res <= 0) {
-		XXX_LOGERR(res);
+	res = xyzModem_read_block(xyz);
+	if (res)
 		goto err;
-	}
 
-	res = xyzModem_read_checksum(&xyz);
-	if (res) {
-		XXX_LOGERR(res);
+	res = xyzModem_read_data(xyz);
+	if (res <= 0)
 		goto err;
-	}
 
-	res = xyzModem_validate_message(&xyz);
-	if (res) {
-		XXX_LOGERR(res);
+	res = xyzModem_read_checksum(xyz);
+	if (res)
 		goto err;
-	}
+
+	res = xyzModem_validate_message(xyz);
+	if (res)
+		goto err;
+
 	/* If we get here, the message passes [structural] muster */
 	return 0;
 
 err:
-	xyzModem_flush();
+	//log_err("Failed to get header: %d\n", res);
+	xyzModem_flush(xyz);
 	return res;
 }
 
@@ -449,19 +391,20 @@ static ulong xyzModem_get_initial_timeout(void) {
 	return 1000 * CONFIG_CMD_LOADXY_TIMEOUT;
 }
 
-static void xyzModem_parse_ymodemhdr(void)
+static void xyzModem_parse_ymodemhdr(struct xyz *xyz)
 {
-	char *bufp = xyz.pkt;
+	char *bufp = xyz->pkt;
 	/* skip filename */
 	while (*bufp++)
 		;
 	/* get the length */
-	parse_num(bufp, &xyz.file_length, NULL, " ");
+	parse_num(bufp, &xyz->file_length, NULL, " ");
 	/* The rest of the file name data block quietly discarded */
-	xyz.tx_ack = true;
+	xyz->tx_ack = true;
 }
 
-int xyzModem_stream_open(connection_info_t *info, int *err) {
+int xyzModem_stream_open(connection_info_t *info) {
+	struct xyz *xyz = &_xyz;
 	int stat = 0;
 	int retries = xyzModem_MAX_RETRIES;
 	int crc_retries = xyzModem_MAX_RETRIES_WITH_CRC;
@@ -475,184 +418,215 @@ int xyzModem_stream_open(connection_info_t *info, int *err) {
 	}
 #endif
 
-	memset(&xyz, 0, sizeof(xyz));
-	xyz.crc_mode = true;
-	xyz.mode = info->mode;
-	xyz.initial_time = get_timer(0);
-	xyz.timeout = xyzModem_get_initial_timeout();
+	/* Set default state */
+	memset(xyz, 0, sizeof(*xyz));
+	xyz->crc_mode = true;
+	xyz->mode = info->mode;
+	xyz->initial_time = get_timer(0);
+	xyz->timeout = xyzModem_get_initial_timeout();
 
-	putc((xyz.crc_mode ? 'C' : NAK));
+	/* Tell the sender we are here */
+	CORNAK(xyz);
 
-	if (xyz.mode == xyzModem_xmodem) {
-		/* X-modem doesn't have an information header - exit here */
-		xyz.first_xmodem_packet = true;
-		xyz.next_blk = 1;
-		return 0;
+	/* X-modem doesn't have an information header - exit here */
+	if (xyz->mode == xyzModem_xmodem) {
+		xyz->first_xmodem_packet = true;
+		xyz->next_blk = 1;
+		goto opened;
 	}
 
-	while (!(xyz.timeout && get_timer(xyz.initial_time) > xyz.timeout)) {
+	/* For ymodem get the information header */
+	while (!(xyz->timeout && get_timer(xyz->initial_time) > xyz->timeout)) {
 		if (--retries <= 0) {
 			retries = xyzModem_MAX_RETRIES;
 			crc_retries = xyzModem_MAX_RETRIES_WITH_CRC;
-			xyz.crc_mode = true;
+			xyz->crc_mode = true;
 		}
 
-		stat = xyzModem_get_hdr();
-		if (stat == 0) {
+		stat = xyzModem_get_hdr(xyz);
+		if (!stat) {
 			/* Y-modem file information header */
-			if (xyz.blk == 0)
-				xyzModem_parse_ymodemhdr();
-			xyz.next_blk = 1;
-			xyz.len = 0;
-			return 0;
+			if (xyz->blk == 0)
+				xyzModem_parse_ymodemhdr(xyz);
+			xyz->next_blk = 1;
+			xyz->len = 0;
+
+			goto opened;
 		} else if (stat == xyzModem_timeout) {
 			if (--crc_retries <= 0)
-				xyz.crc_mode = false;
+				xyz->crc_mode = false;
 
 			/* Extra delay for startup */
-			CYGACC_CALL_IF_DELAY_US(5 * 100000);
+			udelay(5 * 100000);
 
-			putc((xyz.crc_mode ? 'C' : NAK));
-			xyz.total_retries++;
-			ZM_DEBUG (zm_dprintf ("NAK (%d)\n", __LINE__));
+			CORNAK(xyz);
+			xyz->total_retries++;
+			log_debug("NAK (%d)\n", __LINE__);
 		}
-		if (stat == xyzModem_cancel)
-			break;
+		else if (stat == xyzModem_cancel)
+			return stat;
 	}
 
-	*err = stat;
-	ZM_DEBUG (zm_flush ());
 	return -1;
+
+opened:
+	xyz->opened++;
+	return 0;
 }
 
-int xyzModem_stream_read(char *buf, int size, int *err) {
+static int xyzModem_stream_read_handle_valid_pkt(struct xyz *xyz)
+{
+	if (xyz->mode == xyzModem_xmodem && xyz->first_xmodem_packet)
+		xyz->first_xmodem_packet = false;
+
+	if (xyz->blk != xyz->next_blk) {
+		/* We got a repeat of the previous packet */
+		if (xyz->blk == ((xyz->next_blk - 1) & 0xFF))
+			return xyzModem_repeat;
+
+		return xyzModem_sequence;
+	}
+
+	xyz->tx_ack = true;
+	//ZM_DEBUG (zm_dprintf
+	//	("ACK block %d (%d)\n", xyz->blk, __LINE__));
+	xyz->next_blk = (xyz->next_blk + 1) & 0xFF;
+	if (xyz->mode == xyzModem_xmodem
+			|| xyz->file_length == 0) {
+		/* Data blocks can be padded with ^Z (EOF) characters */
+		/* This code tries to detect and remove them */
+		char *bufp = xyz->pkt;
+		if ((bufp[xyz->len - 1] == EOF)
+				&& (bufp[xyz->len - 2] == EOF)
+				&& (bufp[xyz->len - 3] == EOF)) {
+			while (xyz->len && (bufp[xyz->len - 1] == EOF)) {
+				xyz->len--;
+			}
+		}
+	}
+
+	/*
+	 * See if accumulated length exceeds that of the file.
+	 * If so, reduce size (i.e., cut out pad bytes)
+	 * Only do this for Y-modem (and Z-modem should it ever
+	 * be supported since it can fall back to Y-modem mode).
+	 */
+	if (xyz->mode != xyzModem_xmodem
+			&& 0 != xyz->file_length) {
+		xyz->read_length += xyz->len;
+		if (xyz->read_length > xyz->file_length) {
+			xyz->len -= (xyz->read_length - xyz->file_length);
+		}
+	}
+
+	return 0;
+}
+
+int xyzModem_stream_read(char *buf, int size) {
+	struct xyz *xyz = &_xyz;
 	int stat, total, len;
 	int retries;
 
-	*err = 0;
 	total = 0;
 	stat = xyzModem_cancel;
 
 	/* Try and get 'size' bytes into the buffer */
-	while (!xyz.at_eof && xyz.len >= 0 && (size > 0)) {
-		if (xyz.len == 0) {
+	while (!xyz->at_eof && xyz->len >= 0 && (size > 0)) {
+		if (xyz->len == 0) {
 			retries = xyzModem_MAX_RETRIES;
 
 			while (retries-- > 0) {
-				if (xyz.first_xmodem_packet && xyz.timeout
-						&& get_timer(xyz.initial_time) > xyz.timeout) {
-					*err = xyzModem_timeout;
-					xyz.len = -1;
-					return total;
+				if (xyz->first_xmodem_packet && xyz->timeout
+						&& get_timer(xyz->initial_time) > xyz->timeout) {
+					xyz->len = -1;
+					return xyzModem_timeout;
 				}
 
-				stat = xyzModem_get_hdr();
-				if (stat == 0) {
-					if (xyz.mode == xyzModem_xmodem && xyz.first_xmodem_packet)
-						xyz.first_xmodem_packet = false;
-					if (xyz.blk == xyz.next_blk) {
-						xyz.tx_ack = true;
-						//ZM_DEBUG (zm_dprintf
-						//	("ACK block %d (%d)\n", xyz.blk, __LINE__));
-						xyz.next_blk = (xyz.next_blk + 1) & 0xFF;
-						if (xyz.mode == xyzModem_xmodem
-								|| xyz.file_length == 0) {
-							/* Data blocks can be padded with ^Z (EOF) characters */
-							/* This code tries to detect and remove them */
-							char *bufp = xyz.pkt;
-							if ((bufp[xyz.len - 1] == EOF)
-									&& (bufp[xyz.len - 2] == EOF)
-									&& (bufp[xyz.len - 3] == EOF)) {
-								while (xyz.len && (bufp[xyz.len - 1] == EOF)) {
-									xyz.len--;
-								}
-							}
-						}
+				stat = xyzModem_get_hdr(xyz);
+				if (!stat) {
+					stat = xyzModem_stream_read_handle_valid_pkt(xyz);
 
-						/*
-						 * See if accumulated length exceeds that of the file.
-						 * If so, reduce size (i.e., cut out pad bytes)
-						 * Only do this for Y-modem (and Z-modem should it ever
-						 * be supported since it can fall back to Y-modem mode).
-						 */
-						if (xyz.mode != xyzModem_xmodem
-								&& 0 != xyz.file_length) {
-							xyz.read_length += xyz.len;
-							if (xyz.read_length > xyz.file_length) {
-								xyz.len -= (xyz.read_length - xyz.file_length);
-							}
-						}
+					/* Packet handled, get outta here */
+					if (!stat)
 						break;
-					} else if (xyz.blk == ((xyz.next_blk - 1) & 0xFF)) {
-						/* Just re-ACK this so sender will get on with it */
+
+					/*
+					 * Sender resent the last packet, ACK it and do another
+					 * loop to get the packet we actually wanted
+					 */
+					if (stat == xyzModem_repeat) {
 						putc(ACK);
-						continue; /* Need new header */
-					} else {
-						stat = xyzModem_sequence;
+						continue;
 					}
 				}
-				if (stat == xyzModem_cancel) {
+
+				if (stat == xyzModem_cancel)
 					break;
-				}
 
 				if (stat == xyzModem_eof) {
-					putc( ACK);
-					ZM_DEBUG (zm_dprintf ("ACK (%d)\n", __LINE__));
-					if (xyz.mode == xyzModem_ymodem) {
-						putc((xyz.crc_mode ? 'C' : NAK));
-						xyz.total_retries++;
-						ZM_DEBUG (zm_dprintf ("Reading Final Header\n"));
-						stat = xyzModem_get_hdr();
+					putc(ACK);
+					log_info("ACK (%d)\n", __LINE__);
+					if (xyz->mode == xyzModem_ymodem) {
+						CORNAK(xyz);
+						xyz->total_retries++;
+						log_info("Reading Final Header\n");
+						stat = xyzModem_get_hdr(xyz);
 						putc(ACK);
-						ZM_DEBUG(zm_dprintf ("FINAL ACK (%d)\n", __LINE__));
+						log_info("FINAL ACK (%d)\n", __LINE__);
 					} else
 						stat = 0;
-					xyz.at_eof = true;
+					xyz->at_eof = true;
 					break;
 				}
 
-				putc( (xyz.crc_mode ? 'C' : NAK));
-				xyz.total_retries++;
-				ZM_DEBUG (zm_dprintf ("NAK (%d,%d)\n", __LINE__, len));
+				CORNAK(xyz);
+				xyz->total_retries++;
+				//log_err("NAK (%d,%d)\n", __LINE__, len);
 			}
-			if (stat < 0 && (!xyz.first_xmodem_packet
+			if (stat < 0 && (!xyz->first_xmodem_packet
 					|| stat != xyzModem_timeout)) {
-				*err = stat;
-				xyz.len = -1;
+				xyz->len = -1;
 				return total;
 			}
 		}
 		/* Don't "read" data from the EOF protocol package */
-		if (!xyz.at_eof && xyz.len > 0) {
-			len = xyz.len;
+		if (!xyz->at_eof && xyz->len > 0) {
+			len = xyz->len;
 			if (size < len)
 				len = size;
-			memcpy(buf, xyz.pkt, len);
+			memcpy(buf, xyz->pkt, len);
 			size -= len;
 			buf += len;
 			total += len;
-			xyz.len -= len;
+			xyz->len -= len;
 		}
 	}
 
 	return total;
 }
 
-void xyzModem_stream_close(int *err) {
-	ZM_DEBUG (zm_dprintf
-			("xyzModem - %s mode, %d(SOH)/%d(STX)/%d(CAN) packets, %d retries\n",
-					xyz.crc_mode ? "CRC" : "Cksum", xyz.total_SOH, xyz.total_STX,
-					xyz.total_CAN, xyz.total_retries)); ZM_DEBUG (zm_flush ());
+void xyzModem_stream_close() {
+	struct xyz *xyz = &_xyz;
+
+	log_err("xyzModem - %s mode, opened:%d %d(RX), %d(SOH)/%d(STX)/%d(CAN) packets, %d retries\n",
+					xyz->crc_mode ? "CRC" : "Cksum",
+					xyz->opened,
+					xyz->total_RX,
+					xyz->total_SOH,
+					xyz->total_STX,
+					xyz->total_CAN,
+					xyz->total_retries);
 }
 
 /* Need to be able to clean out the input buffer, so have to take the */
 /* getc */
 void xyzModem_stream_terminate(bool abort, int (*getc)(void)) {
+	struct xyz *xyz = &_xyz;
 	int c;
 
 	if (abort) {
-		ZM_DEBUG (zm_dprintf ("!!!! TRANSFER ABORT !!!!\n"));
-		switch (xyz.mode) {
+		log_info("!!!! TRANSFER ABORT !!!!\n");
+		switch (xyz->mode) {
 		case xyzModem_xmodem:
 		case xyzModem_ymodem:
 			/* The X/YMODEM Spec seems to suggest that multiple CAN followed by an equal */
@@ -666,33 +640,33 @@ void xyzModem_stream_terminate(bool abort, int (*getc)(void)) {
 			putc(BSP);
 			putc(BSP);
 			/* Now consume the rest of what's waiting on the line. */
-			ZM_DEBUG (zm_dprintf ("Flushing serial line.\n"));
-			xyzModem_flush();
-			xyz.at_eof = true;
+			log_debug("Flushing serial line.\n");
+			xyzModem_flush(xyz);
+			xyz->at_eof = true;
 			break;
 #ifdef xyzModem_zmodem
-	case xyzModem_zmodem:
+		case xyzModem_zmodem:
 	  /* Might support it some day I suppose. */
 #endif
 			break;
 		}
 	} else {
-		ZM_DEBUG (zm_dprintf ("Engaging cleanup mode...\n"));
+		log_info("Engaging cleanup mode...\n");
 		/*
 		 * Consume any trailing crap left in the inbuffer from
 		 * previous received blocks. Since very few files are an exact multiple
 		 * of the transfer block size, there will almost always be some gunk here.
 		 * If we don't eat it now, RedBoot will think the user typed it.
 		 */
-		ZM_DEBUG (zm_dprintf ("Trailing gunk:\n"));
+		log_info("Trailing gunk:\n");
 		while ((c = (*getc)()) > -1)
-			ZM_DEBUG (zm_dprintf ("\n"));
+			log_info("\n");
 		/*
 		 * Make a small delay to give terminal programs like minicom
 		 * time to get control again after their file transfer program
 		 * exits.
 		 */
-		CYGACC_CALL_IF_DELAY_US(250000);
+		udelay(250000);
 	}
 }
 

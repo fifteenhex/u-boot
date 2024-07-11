@@ -1012,12 +1012,12 @@ static ulong load_serial_ymodem(ulong offset, int mode)
 
 	size = 0;
 	info.mode = mode;
-	res = xyzModem_stream_open(&info, &err);
+	res = xyzModem_stream_open(&info);
 	if (!res) {
 
 		err = 0;
 		while ((res =
-			xyzModem_stream_read(ymodemBuf, 1024, &err)) > 0) {
+			xyzModem_stream_read(ymodemBuf, 1024)) > 0) {
 			store_addr = addr + offset;
 			size += res;
 			addr += res;
@@ -1042,9 +1042,9 @@ static ulong load_serial_ymodem(ulong offset, int mode)
 			}
 
 		}
-		if (err) {
+		if (res <= 0) {
 			xyzModem_stream_terminate((err == xyzModem_cancel) ? false : true, &getcxmodem);
-			xyzModem_stream_close(&err);
+			xyzModem_stream_close();
 			printf("\n%s\n", xyzModem_error(err));
 			return (~0); /* Download aborted */
 		}
@@ -1059,7 +1059,7 @@ static ulong load_serial_ymodem(ulong offset, int mode)
 	}
 
 	xyzModem_stream_terminate(false, &getcxmodem);
-	xyzModem_stream_close(&err);
+	xyzModem_stream_close();
 
 	flush_cache(offset, ALIGN(size, ARCH_DMA_MINALIGN));
 
