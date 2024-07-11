@@ -109,4 +109,6 @@ SECTIONS
 	}
 	__bss_end = . ;
 	PROVIDE (end = .);
+
+	/DISCARD/ : { *(.plt*) }
 }

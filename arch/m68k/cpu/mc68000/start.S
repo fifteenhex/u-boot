@@ -4,7 +4,7 @@
 #include <asm/dragonball/mc68ez328.h>
 #include <asm/mvme147/mvme147.h>
 
-#define DEBUG
+//#define DEBUG
 
 .macro __putch val
 #ifdef DEBUG
