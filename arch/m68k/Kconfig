@@ -8,6 +8,7 @@ config STATIC_RELA
 	default y
 
 # processor family
+#config MC680x0
 config MC68000
 	bool
 	select OF_CONTROL
@@ -137,8 +138,27 @@ config M54418
 	bool
 	select MCF5441x
 
+#config MC68000
+#	bool
+#	select MC680x0
+
+config MC68020
+	bool
+#	select MC680x0
+
 config MC68030
 	bool
+#	select MC680x0
+	select MC68000
+
+config MC68040
+	bool
+#	select MC680x0
+	select MC68000
+
+config MC68060
+	bool
+#	select MC680x0
 
 # peripherals
 config CF_DSPI
