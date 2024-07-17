@@ -92,4 +92,10 @@
 		pcc8 = <&pcc8>;
 		status = "okay";
 	};
+
+	wdt: wdt@0 {
+		compatible = "motorola,mvme147-pcc-wdt";
+		pcc8 = <&pcc8>;
+		status = "okay";
+	};
 };
