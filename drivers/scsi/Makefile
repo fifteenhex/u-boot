@@ -9,11 +9,13 @@ ifdef CONFIG_SCSI
 obj-$(CONFIG_$(PHASE_)BOOTSTD) += scsi_bootdev.o
 obj-$(CONFIG_SANDBOX) += sandbox_scsi.o
 obj-$(CONFIG_SANDBOX) += scsi_emul.o
+obj-$(CONFIG_SCSI_WD33C93) += scsi_wd33c93.o
 endif
 endif
 
 ifdef CONFIG_XPL_BUILD
 ifdef CONFIG_SPL_SATA
 obj-$(CONFIG_SCSI) += scsi.o scsi-uclass.o
+obj-$(CONFIG_SCSI_WD33C93) += scsi_wd33c93.o
 endif
 endif
