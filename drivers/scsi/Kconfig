@@ -8,3 +8,8 @@ config SCSI
 	  interfaces as well as protocols for controlling devices and
 	  tranferring data. For every device configuration (IDs/LUNs) a block
 	  device is created with RAW read/write and filesystem support.
+
+config SCSI_WD33C93
+	bool "wd33c93 scsi support"
+	depends on SCSI
+	select REGMAP
