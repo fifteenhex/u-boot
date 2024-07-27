@@ -1029,7 +1029,7 @@ static ulong load_serial_ymodem(ulong offset, int mode)
 						  store_addr, res);
 				if (rc != 0) {
 					xyzModem_stream_terminate(true, &getcxmodem);
-					xyzModem_stream_close(&err);
+					xyzModem_stream_close();
 					printf("\n");
 					flash_perror(rc);
 					return (~0);
