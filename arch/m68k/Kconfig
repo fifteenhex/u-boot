@@ -241,6 +241,17 @@ config TARGET_MVME147
 	select OF_BOARD_FIXUP
 	select SPL
 	select SPL_FRAMEWORK_BOARD_INIT_F
+	select WDT_PCC
+	select PCC_TIMER
+
+	# For booting from SCSI
+	select SPL_SATA
+	select SCSI_WD33C93
+	select SPL_DOS_PARTITION
+
+	# For network
+	select LANCE
+	select LANCE_LANCE
 
 config TARGET_E17
 	bool "Support ELTEC E17"
