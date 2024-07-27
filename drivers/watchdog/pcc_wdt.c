@@ -77,7 +77,7 @@ static const struct udevice_id pcc_wdt_ids[] = {
 };
 
 U_BOOT_DRIVER(wdt_gpio) = {
-	.name = "wdt_gpio",
+	.name = "wdt_pcc",
 	.id = UCLASS_WDT,
 	.of_match = pcc_wdt_ids,
 	.ops = &pcc_wdt_ops,
