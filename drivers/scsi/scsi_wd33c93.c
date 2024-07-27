@@ -17,7 +17,7 @@
 #include <syscon.h>
 #include <asm/mvme147/mvme147.h>
 
-#define DEBUG
+#define DEBUG 1
 #define PIO
 
 
@@ -163,7 +163,7 @@ static void wd33c93_scsi_dump_regs(struct wd33c93_scsi_priv *priv)
 	printf("pcc byte counter: 0x%08x\n", bytecount);
 #endif
 
-	printf("status: 0x%02x\n", wd33c93_scsi_read_status(priv));
+	debug("status: 0x%02x\n", wd33c93_scsi_read_status(priv));
 #if 0
 	for (int i = 0; i < 0x1b; i++) {
 		if (i == REG_DATA)
@@ -189,7 +189,7 @@ static inline void wd33c93_scsi_do_cmd(struct wd33c93_scsi_priv *priv, u8 cmd)
 		if (!(status & STATUS_CIP))
 			break;
 
-		printf("waiting for command to process: status: 0x%02x, phase: 0x%02x\n",
+		debug("waiting for command to process: status: 0x%02x, phase: 0x%02x\n",
 				(unsigned int) status, (unsigned int) phase);
 	} while(true);
 
@@ -248,7 +248,7 @@ static int wd33c93_scsi_read_fifo(struct wd33c93_scsi_priv *priv, void *data, si
 			if (status & STATUS_DBR)
 				break;
 
-			printf("waiting for fifo 0x%02x for byte %d\n",
+			debug("waiting for fifo 0x%02x for byte %d\n",
 					status, i);
 		} while(true);
 
@@ -276,13 +276,15 @@ static void wd33c93_scsi_wait_int(struct wd33c93_scsi_priv *priv, u8* scsi_statu
 			break;
 
 		if (!(status & STATUS_BUSY)) {
-			printf("xx\n");
+			debug("Busy status cleared without interrupt\n");
 			break;
 		}
 
-		printf("waiting for int: status: 0x%02x\n",
+		debug("waiting for int: status: 0x%02x\n",
 				(unsigned int) status);
 
+		/* yield */
+		mdelay(1);
 	} while(true);
 
 	if (scsi_status)
@@ -300,9 +302,9 @@ static int wd33c9c_scsi_exec_select(struct wd33c93_scsi_priv *priv,
 	wd33c93_scsi_wait_int(priv, &scsi_status);
 
 	if (scsi_status == (STATUS_SUCCESS | STATUS_CODE_INITIATOR))
-		printf("Became initiator with target %d\n", target);
+		debug("Became initiator with target %d\n", target);
 	else {
-		printf("Failed to select target %d\n", target);
+		debug("Failed to select target %d\n", target);
 		return -EIO;
 	}
 
@@ -322,7 +324,7 @@ static int wd33c93_scsi_do_trsf_info(struct wd33c93_scsi_priv *priv, size_t len)
 static int wd33c93_scsi_exec_sendcmd(struct wd33c93_scsi_priv *priv,
 									 struct scsi_cmd *req)
 {
-	printf("%s:%d - 0x%02x\n",__func__, __LINE__, (unsigned int) req->cmd[0]);
+	debug("%s:%d - 0x%02x\n",__func__, __LINE__, (unsigned int) req->cmd[0]);
 
 	/* Start a transfer */
 	wd33c93_scsi_do_trsf_info(priv, req->cmdlen);
@@ -347,10 +349,6 @@ static int wd33c93_scsi_exec_datain(struct wd33c93_scsi_priv *priv,
 
 	ret = wd33c93_scsi_read_fifo(priv, req->pdata, len);
 
-	for (int i = 0; i < len; i++) {
-		printf("0x%02x:0x%02x\n", i, (unsigned) ((u8*)(req->pdata))[i]);
-	}
-
 	return ret;
 }
 
@@ -358,7 +356,7 @@ static int wd33c93_scsi_exec_getstatus(struct wd33c93_scsi_priv *priv,
 										struct scsi_cmd *req,
 										u8* status)
 {
-	printf("%s:%d\n",__func__, __LINE__);
+	debug("%s:%d\n",__func__, __LINE__);
 	int ret;
 
 	/* Start a transfer for a single byte*/
@@ -384,8 +382,11 @@ static int wd33c93_scsi_exec(struct udevice *dev, struct scsi_cmd *req)
 	u8 scsi_status;
 	u8 cmd_status = S_GOOD;
 
-	printf("%s:%d\n",__func__, __LINE__);
-	wd33c93_scsi_dump_regs(priv);
+	debug("%s:%d\n",__func__, __LINE__);
+
+	//wd33c93_scsi_read_status(priv);
+
+	//wd33c93_scsi_dump_regs(priv);
 
 	ret = wd33c9c_scsi_exec_select(priv, req);
 	if (ret)
@@ -398,31 +399,31 @@ static int wd33c93_scsi_exec(struct udevice *dev, struct scsi_cmd *req)
 		wd33c93_scsi_wait_int(priv, &scsi_status);
 
 		/* Work out what to do next */
-		printf("scsi state after transfer 0x%02x\n", scsi_status);
+		debug("scsi state after transfer info 0x%02x\n", scsi_status);
 		switch(scsi_status & STATUS_MASK) {
 		case STATUS_SUCCESS:
-			printf("success\n");
+			debug("success\n");
 			if (scsi_status & STATUS_HAVE_MCI) {
 				switch (scsi_status & MCI_MASK){
 				case MCI_DATA_IN:
-					printf("Target requests data in\n");
+					debug("Target requests data in\n");
 					ret = wd33c93_scsi_exec_datain(priv, req);
 					if (ret < 0)
 						goto err_eio;
 					break;
 				case MCI_STATUS:
-					printf("Target requests status\n");
+					debug("Target requests status\n");
 					ret = wd33c93_scsi_exec_getstatus(priv, req, &cmd_status);
 					break;
 				case MCI_MESSAGE_IN:
-					printf("Target requests message in\n");
+					debug("Target requests message in\n");
 					wd33c93_scsi_exec_msgin(priv, req);
 					break;
 				}
 			}
 			break;
 		case STATUS_PAUSED:
-			printf("paused\n");
+			debug("transfer info paused\n");
 			wd33c93_scsi_do_cmd(priv, COMMAND_NEGATE_ACK);
 			break;
 		case STATUS_ERROR:
@@ -448,7 +449,7 @@ done:
 		return -EIO;
 	}
 
-	printf("exec completed\n");
+	debug("exec completed\n");
 
 	return 0;
 
@@ -467,7 +468,7 @@ static int wd33c93_scsi_bus_reset(struct udevice *dev)
 	ownid = wd33c93_scsi_read_reg(priv, REG_OWNID);
 	control = wd33c93_scsi_read_reg(priv, REG_CONTROL);
 
-	printf("%s:%d, ownid: 0x%02x, control: 0x%02x\n",
+	debug("%s:%d, ownid: 0x%02x, control: 0x%02x\n",
 			__func__, __LINE__, ownid, control);
 
 	mvme147_scsi_reset(priv->pcc8, true);
@@ -500,7 +501,7 @@ static int wd33c93_scsi_probe(struct udevice *dev)
 	struct scsi_plat *scsi_plat = dev_get_uclass_plat(dev);
 	struct wd33c93_scsi_priv *priv = dev_get_priv(dev);
 
-	printf("%s:%d\n", __func__, __LINE__);
+	debug("%s:%d\n", __func__, __LINE__);
 
 	scsi_plat->max_id = 7;
 	scsi_plat->max_lun = 1;
