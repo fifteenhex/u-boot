@@ -62,5 +62,7 @@ int interrupt_init(void)
 
 int cpu_init_r(void)
 {
+	icache_enable();
+
 	return 0;
 }
