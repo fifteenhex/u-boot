@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-#ifdef CONFIG_MC68030
+#if defined(CONFIG_MC68030)
 #define MC68030_CACR_EI	BIT(0)
 #define MC68030_CACR_ED	BIT(8)
 
@@ -23,15 +23,30 @@ static inline void mc68030_set_cacr(u32 cacr)
 {
 	asm volatile ("movec %0,%%cacr" : : "r" (cacr));
 }
-#endif
 
-void flush_cache(ulong start_addr, ulong size)
+void icache_enable(void)
 {
+	mc68030_set_cacr(mc68030_get_cacr() | MC68030_CACR_EI);
+}
+
+void icache_disable(void)
+{
+	mc68030_set_cacr(mc68030_get_cacr() & ~MC68030_CACR_EI);
 }
 
 int icache_status(void)
 {
 	return (mc68030_get_cacr() & MC68030_CACR_EI) ? 1 : 0;
+}
+
+void dcache_enable(void)
+{
+	mc68030_set_cacr(mc68030_get_cacr() | MC68030_CACR_ED);
+}
+
+void dcache_disable(void)
+{
+	mc68030_set_cacr(mc68030_get_cacr() & ~MC68030_CACR_ED);
 }
 
 int dcache_status(void)
@@ -46,28 +61,42 @@ int dcache_status(void)
 	return (mc68030_get_cacr() & MC68030_CACR_ED) ? 1 : 0;
 }
 
+
+#else
 void icache_enable(void)
 {
-	mc68030_set_cacr(mc68030_get_cacr() | MC68030_CACR_EI);
 }
 
 void icache_disable(void)
 {
-	mc68030_set_cacr(mc68030_get_cacr() & ~MC68030_CACR_EI);
 }
 
-void icache_invalid(void)
+int icache_status(void)
 {
+	return 0;
 }
 
 void dcache_enable(void)
 {
-	mc68030_set_cacr(mc68030_get_cacr() | MC68030_CACR_ED);
 }
 
 void dcache_disable(void)
 {
-	mc68030_set_cacr(mc68030_get_cacr() & ~MC68030_CACR_ED);
+}
+
+
+int dcache_status(void)
+{
+	return 0;
+}
+#endif
+
+void flush_cache(ulong start_addr, ulong size)
+{
+}
+
+void icache_invalid(void)
+{
 }
 
 void dcache_invalid(void)
