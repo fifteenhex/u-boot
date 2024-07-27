@@ -36,6 +36,24 @@
 		#address-cells = <1>;
 		#size-cells = <1>;
 
+		rom0: rom@ff800000 {
+			reg = <0xff800000 0x200000>;
+		};
+
+		rom1: rom@ffa00000 {
+			reg = <0xffa00000 0x200000>;
+		};
+
+		/* Used by bug */
+		bbram0: nvram@fffe0000 {
+			reg = <0xfffe0000 0x7f8>;
+		};
+
+		/* Free for us to use? */
+		bbram1: nvram@fffe0800 {
+			reg = <0xfffe0800 0x800>;
+		};
+
 		pcc32: syscon@fffe1000 {
 			compatible = "motorola,mvme147-pcc", "syscon";
 			reg = <0xfffe1000 0xf>;
@@ -70,8 +88,11 @@
 		};
 
 		scsi: scsi@fffe4000 {
-			compatible = "wdc,wd33c93";
-			reg = <0xfffe4000 0x4>;
+			compatible = "wdc,wd33c93b";
+			reg = <0xfffe4000 0x20>;
+			/* clk == 10MHz */
+			pcc32 = <&pcc32>;
+			pcc8 = <&pcc8>;
 		};
 	};
 
