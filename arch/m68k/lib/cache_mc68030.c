@@ -2,6 +2,8 @@
 #include <asm/cache.h>
 #include <linux/bitops.h>
 
+#include "cache_mc68030.h"
+
 #define MC68030_CACR_EI	BIT(0)
 #define MC68030_CACR_ED	BIT(8)
 
@@ -74,7 +76,7 @@ int icache_status(void)
 
 void dcache_enable(void)
 {
-	dcahce_enable_mc68030();
+	dcache_enable_mc68030();
 }
 
 void dcache_disable(void)
