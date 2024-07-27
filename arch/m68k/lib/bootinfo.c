@@ -119,18 +119,23 @@ static int virt_parse_bootinfo(const struct bi_record *record, void *fdt)
 
 static void fix_cputype(unsigned long cputype, void *fdt)
 {
-	int node, intc_node;
+	int node, intc_vect_node, intc_user_node;
 	int ret;
 	char *newvalue;
-	char *intc_68010 = "motorola,mc68010-intc-vect";
+	char *intc_vect_68010 = "motorola,mc68010-intc-vect";
+	char *intc_user_68010 = "motorola,mc68010-intc-user";
 
 	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "motorola,mc68000");
 	if (node < 0)
 		panic("Failed to find cpu node\n");
 
-	intc_node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "motorola,mc68000-intc-vect");
-	if (intc_node < 0)
+	intc_vect_node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "motorola,mc68000-intc-vect");
+	if (intc_vect_node < 0)
 		panic("Failed to find intc node\n");
+
+	intc_user_node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "motorola,mc68000-intc-user");
+	if (intc_user_node < 0)
+		panic("Failed to find intc user node\n");
 
 	switch(cputype) {
 	case CPU_68000:
@@ -159,7 +164,8 @@ static void fix_cputype(unsigned long cputype, void *fdt)
 	if (ret)
 		panic("Failed to update cpu compatible: %d\n", ret);
 
-	fdt_setprop_inplace(fdt, intc_node, "compatible", intc_68010, strlen(intc_68010)+1);
+	fdt_setprop_inplace(fdt, intc_vect_node, "compatible", intc_vect_68010, strlen(intc_vect_68010)+1);
+	fdt_setprop_inplace(fdt, intc_user_node, "compatible", intc_user_68010, strlen(intc_user_68010)+1);
 }
 
 static void m68k_parse_bootinfo(const struct bi_record *record, void *fdt)
