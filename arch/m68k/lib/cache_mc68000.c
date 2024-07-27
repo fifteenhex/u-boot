@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-#if defined(CONFIG_MC68030) //|| defined(CONFIG_TARGET_QEMU)
+#if defined(CONFIG_MC68030) || defined(CONFIG_TARGET_QEMU)
 #else
 void icache_enable(void)
 {

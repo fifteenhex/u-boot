@@ -19,32 +19,32 @@ static inline void mc68030_set_cacr(u32 cacr)
 	asm volatile ("movec %0,%%cacr" : : "r" (cacr));
 }
 
-void icache_enable(void)
+void icache_enable_mc68030(void)
 {
 	mc68030_set_cacr(mc68030_get_cacr() | MC68030_CACR_EI);
 }
 
-void icache_disable(void)
+void icache_disable_mc68030(void)
 {
 	mc68030_set_cacr(mc68030_get_cacr() & ~MC68030_CACR_EI);
 }
 
-int icache_status(void)
+int icache_status_mc68030(void)
 {
 	return (mc68030_get_cacr() & MC68030_CACR_EI) ? 1 : 0;
 }
 
-void dcache_enable(void)
+void dcache_enable_mc68030(void)
 {
 	mc68030_set_cacr(mc68030_get_cacr() | MC68030_CACR_ED);
 }
 
-void dcache_disable(void)
+void dcache_disable_mc68030(void)
 {
 	mc68030_set_cacr(mc68030_get_cacr() & ~MC68030_CACR_ED);
 }
 
-int dcache_status(void)
+int dcache_status_mc68030(void)
 {
 	u32 vbr;
 
@@ -56,3 +56,34 @@ int dcache_status(void)
 	return (mc68030_get_cacr() & MC68030_CACR_ED) ? 1 : 0;
 }
 
+#if !defined(CONFIG_TARGET_QEMU)
+void icache_enable(void)
+{
+	icache_enable_mc68030();
+}
+
+void icache_disable(void)
+{
+	icache_disable_mc68030();
+}
+
+int icache_status(void)
+{
+	return icache_status_mc68030();
+}
+
+void dcache_enable(void)
+{
+	dcahce_enable_mc68030();
+}
+
+void dcache_disable(void)
+{
+	dcache_disable_mc68030();
+}
+
+int dcache_status(void)
+{
+	return dcache_status_mc68030();
+}
+#endif
