@@ -10,9 +10,15 @@ lib-$(CONFIG_USE_PRIVATE_LIBGCC) += lshrdi3.o muldi3.o ashldi3.o ashrdi3.o
 obj-y	+= bdinfo.o
 obj-$(CONFIG_CMD_BOOTM) += bootm.o
 ifeq ($(CONFIG_MC68000),y)
+obj-$(CONFIG_TARGET_QEMU) += cache_dt.o
 obj-y	+= cache_mc68000.o
+CFLAGS_cache_mc68030.o := -mcpu=68030 -fno-lto
+obj-$(CONFIG_MC68030)$(CONFIG_TARGET_QEMU) += cache_mc68030.o
 obj-y	+= interrupts_mc68000.o
 lib-$(CONFIG_USE_PRIVATE_LIBGCC) += lb1sf68.o
+
+obj-$(CONFIG_MC68040)$(CONFIG_TARGET_QEMU) += cache_mc68040.o
+
 else
 obj-y	+= cache.o
 obj-y	+= interrupts.o
