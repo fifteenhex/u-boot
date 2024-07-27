@@ -38,7 +38,7 @@ static void pcc_timer_collect_overflows(struct pcc_timer_priv *priv)
 	uint ctrl, overflows;
 
 	/* Messing with the ctrl bits to clear the overflows seems to
-	 * case missing an overflow sometimes, disabling the counter
+	 * cause missing an overflow sometimes, disabling the counter
 	 * to read the overflows and clear them while avoid missing
 	 * an overflow seems to make the overflows always read as
 	 * zero.
