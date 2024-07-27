@@ -2,12 +2,13 @@
 /*
  */
 
-#include <linux/litex.h>
+//#define DEBUG
 
 #include <dm.h>
 #include <dm/device_compat.h>
 #include <net.h>
 #include <linux/delay.h>
+#include <asm/io.h>
 
 #define LANCE_TMDS	1
 #define LANCE_RMDS	16
@@ -17,8 +18,6 @@
 #define LANCE_STACK_U32(_x,_v)	\
 	_x[0] = _v & 0xffff;		\
 	_x[1] = (_v >> 16) & 0xffff
-
-#define LANCE_BCNT(_len) (_len | (0xf << 12))
 
 #define CSR0_INIT	BIT(0)
 #define CSR0_STRT	BIT(1)
@@ -223,7 +222,7 @@ static void lance_set_rmd(struct lance_rmd *rmd, void *buf, u32 flags)
 	u32 addr = (rxbuffaddr & 0xffffff) |
 						 DESCRIPTOR_OWN;
 	LANCE_STACK_U32(rmd->addr,addr);
-	rmd->bcnt = LANCE_BCNT(LANCE_RXBUFFSZ);
+	rmd->bcnt = LANCE_RXBUFFSZ;
 	rmd->mcnt = 0;
 }
 
@@ -359,7 +358,7 @@ static void lance_set_tmd(struct lance_tmd *tmd, void *packet, int len)
 	unsigned int txbuffaddr = (unsigned int) packet;
 	u32 addr;
 
-	tmd->bcnt = LANCE_BCNT(-len);
+	tmd->bcnt = -len;
 	tmd->flags = 0;
 
 	addr = (txbuffaddr & 0xffffff);
@@ -373,8 +372,9 @@ static int lance_send(struct udevice *dev, void *packet, int len)
 {
 	struct lance *priv = dev_get_priv(dev);
 	u16 csr0;
+	len = max(60, len);
 
-	debug("%s\n", __func__);
+	debug("%s:%d - len %d\n", __func__, __LINE__, len);
 	lance_dump_tmds(priv);
 
 	/* Clear the tint and transmitter errors */
@@ -383,6 +383,7 @@ static int lance_send(struct udevice *dev, void *packet, int len)
 
 	/* Setup the TMD */
 	lance_set_tmd(&priv->tmds[0], packet, len);
+	lance_dump_tmds(priv);
 	/* Kick LANCE */
 	lance_reg_write(priv, 0, CSR0_TDMD);
 
@@ -394,7 +395,7 @@ static int lance_send(struct udevice *dev, void *packet, int len)
 	lance_dump_csrs(priv);
 	lance_dump_tmds(priv);
 
-	return 0;
+	return len;
 }
 
 static int lance_remove(struct udevice *dev)
@@ -405,10 +406,10 @@ static int lance_remove(struct udevice *dev)
 }
 
 static const struct eth_ops lance_ops = {
-	.start = lance_start,
-	.stop = lance_stop,
-	.send = lance_send,
-	.recv = lance_recv,
+	.start    = lance_start,
+	.stop     = lance_stop,
+	.send     = lance_send,
+	.recv     = lance_recv,
 	.free_pkt = lance_free_pkt,
 };
 
