@@ -34,10 +34,10 @@ REGGETTER(caar, movec);
 REGSETTER(caar, movec);
 
 /* MMU */
-REGGETTER(mmusr, pmove);
-REGGETTER(tc, pmove);
-REGGETTER(tt0, pmove);
-REGGETTER(tt1, pmove);
+REGGETTER(mmusr, pmovefd);
+REGGETTER(tc, pmovefd);
+REGGETTER(tt0, pmovefd);
+REGGETTER(tt1, pmovefd);
 
 void icache_enable_mc68030(void)
 {
