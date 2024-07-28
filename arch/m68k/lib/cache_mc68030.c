@@ -7,20 +7,20 @@
 #define MC68030_CACR_EI	BIT(0)
 #define MC68030_CACR_ED	BIT(8)
 
-#define REGGETTER(_which, _inst)							\
-static inline u32 mc68030_get_##_which(void)				\
-{															\
-	u32 val;												\
-															\
-	asm volatile (#_inst " %%" #_which ",%0" : "=d" (val));	\
-															\
-	return val;												\
+#define REGGETTER(_which, _inst)								\
+static inline u32 mc68030_get_##_which(void)					\
+{																\
+	u32 val;													\
+																\
+	asm volatile (#_inst " %%" #_which ",%0\n\t" : "=d" (val));	\
+																\
+	return val;													\
 }
 
-#define REGSETTER(_which, _inst)								\
-static inline void mc68030_set_##_which(u32 val)				\
-{																\
-	asm volatile (#_inst " %0,%%" #_which "" : : "d" (val));	\
+#define REGSETTER(_which, _inst)									\
+static inline void mc68030_set_##_which(u32 val)					\
+{																	\
+	asm volatile (#_inst " %0,%%" #_which "\n\t" : : "d" (val));	\
 }
 
 
@@ -34,10 +34,10 @@ REGGETTER(caar, movec);
 REGSETTER(caar, movec);
 
 /* MMU */
-REGGETTER(mmusr, pmovefd);
-REGGETTER(tc, pmovefd);
-REGGETTER(tt0, pmovefd);
-REGGETTER(tt1, pmovefd);
+REGGETTER(mmusr, movec);
+REGGETTER(tc, pmove);
+REGGETTER(tt0, pmove);
+REGGETTER(tt1, pmove);
 
 void icache_enable_mc68030(void)
 {
@@ -70,21 +70,26 @@ static void mc68030_dump_specialregs(void)
 	u32 cacr = mc68030_get_cacr();
 	//u32 caar = mc68030_get_caar();
 	u32 caar = 0;
-	//u32 tc = mc68030_get_tc();
-	u32 mmusr = mc68030_get_mmusr();
-	u32 tc = mc68030_get_tc();
-	u32 tt0 = mc68030_get_tt0();
-	u32 tt1 = mc68030_get_tt1();
 
 	printf("vbr:  0x%08x\n"
 		   "CACR: 0x%08x\n"
-		   "CAAR: 0x%08x\n"
-		   "-- MMU --\n"
-		   "TC:  0x%08x\n"
-		   "TT0: 0x%08x\n"
-		   "TT1: 0x%08x\n",
-		   vbr, cacr, caar,
-		   tc, tt0, tt1);
+		   "CAAR: 0x%08x\n",
+		   vbr, cacr, caar);
+
+#if 0
+	{
+		//u32 tc = mc68030_get_tc();
+		u32 mmusr = mc68030_get_mmusr();
+		u32 tc = mc68030_get_tc();
+		u32 tt0 = mc68030_get_tt0();
+		u32 tt1 = mc68030_get_tt1();
+		printf("-- MMU --\n"
+			   "TC:  0x%08x\n"
+			   "TT0: 0x%08x\n"
+			   "TT1: 0x%08x\n",
+			   tc, tt0, tt1);
+	}
+#endif
 }
 
 int dcache_status_mc68030(void)

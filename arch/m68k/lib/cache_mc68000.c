@@ -29,15 +29,9 @@ void dcache_disable(void)
 {
 }
 
-
 int dcache_status(void)
 {
 	return 0;
-}
-#endif
-
-void flush_cache(ulong start_addr, ulong size)
-{
 }
 
 void icache_invalid(void)
@@ -47,6 +41,7 @@ void icache_invalid(void)
 void dcache_invalid(void)
 {
 }
+#endif
 
 __weak void invalidate_dcache_range(unsigned long start, unsigned long stop)
 {
@@ -55,4 +50,8 @@ __weak void invalidate_dcache_range(unsigned long start, unsigned long stop)
 __weak void flush_dcache_range(unsigned long start, unsigned long stop)
 {
 	/* An empty stub, real implementation should be in platform code */
+}
+
+void flush_cache(ulong start_addr, ulong size)
+{
 }
