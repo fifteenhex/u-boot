@@ -372,6 +372,7 @@ static int lance_send(struct udevice *dev, void *packet, int len)
 {
 	struct lance *priv = dev_get_priv(dev);
 	u16 csr0;
+	/* packets smaller than 60 bytes don't transmit correctly? */
 	len = max(60, len);
 
 	debug("%s:%d - len %d\n", __func__, __LINE__, len);
