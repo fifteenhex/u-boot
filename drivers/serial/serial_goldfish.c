@@ -46,7 +46,7 @@ static int serial_goldfish_getc(struct udevice *dev)
 	return priv->tmp[0];
 }
 
-static int serial_goldfish_putc(struct udevice *dev, const char ch)
+static int serial_goldfish_putc(struct udevice *dev, const unsigned char ch)
 {
 	struct serial_goldfish_priv *priv = dev_get_priv(dev);
 
