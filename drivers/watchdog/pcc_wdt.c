@@ -56,8 +56,6 @@ static int pcc_wdt_probe(struct udevice *dev)
 {
 	struct pcc_wdt_priv *priv = dev_get_priv(dev);
 
-	printf("%s\n", __func__);
-
 	priv->pcc8 = syscon_regmap_lookup_by_phandle(dev, "pcc8");
 	if (IS_ERR(priv->pcc8))
 		return -ENODEV;
@@ -77,10 +75,10 @@ static const struct udevice_id pcc_wdt_ids[] = {
 };
 
 U_BOOT_DRIVER(wdt_gpio) = {
-	.name = "wdt_pcc",
-	.id = UCLASS_WDT,
-	.of_match = pcc_wdt_ids,
-	.ops = &pcc_wdt_ops,
-	.probe	= pcc_wdt_probe,
+	.name      = "wdt_pcc",
+	.id        = UCLASS_WDT,
+	.of_match  = pcc_wdt_ids,
+	.ops       = &pcc_wdt_ops,
+	.probe     = pcc_wdt_probe,
 	.priv_auto = sizeof(struct pcc_wdt_priv),
 };
