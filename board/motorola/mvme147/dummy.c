@@ -12,7 +12,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 u32 spl_boot_device(void)
 {
-	return BOOT_DEVICE_UART;
+	return BOOT_DEVICE_SATA;
 }
 
 int print_cpuinfo(void)
