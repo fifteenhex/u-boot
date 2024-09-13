@@ -703,8 +703,8 @@ unsigned long elf_hash(const unsigned char *name);
 int valid_elf_image(unsigned long addr);
 unsigned long load_elf64_image_phdr(unsigned long addr);
 unsigned long load_elf64_image_shdr(unsigned long addr);
-unsigned long load_elf_image_phdr(unsigned long addr);
-unsigned long load_elf_image_shdr(unsigned long addr);
+unsigned long load_elf_image_phdr(unsigned long addr, unsigned long *end);
+unsigned long load_elf_image_shdr(unsigned long addr, unsigned long *end);
 #endif
 
 #endif /* _ELF_H */

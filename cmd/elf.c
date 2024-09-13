@@ -24,6 +24,8 @@
 #include <linux/linkage.h>
 #endif
 
+#include <asm/bootinfo.h>
+
 DECLARE_GLOBAL_DATA_PTR;
 
 /* Allow ports to override the default behavior */
@@ -73,6 +75,7 @@ int do_bootelf(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	unsigned long addr; /* Address of the ELF image */
 	unsigned long rc; /* Return value from user code */
+	unsigned long end;
 	char *sload = NULL;
 	int rcode = 0;
 
@@ -100,9 +103,55 @@ int do_bootelf(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		return 1;
 
 	if (sload && sload[1] == 'p')
-		addr = load_elf_image_phdr(addr);
+		addr = load_elf_image_phdr(addr, &end);
 	else
-		addr = load_elf_image_shdr(addr);
+		addr = load_elf_image_shdr(addr, &end);
+
+	printf("End of ELF for bootinfo is 0x%lx\n", end);
+	{
+		struct bi_record *r = (struct bi_record *) end;
+		/* Set the machine */
+		r->tag = BI_MACHTYPE;
+		r->size = sizeof(*r) + 4;
+		r->data[0] = MACH_MVME147;
+
+		/* Set the CPU */
+		r = ((void *) r) + r->size;
+		r->tag = BI_CPUTYPE;
+		r->size = sizeof(*r) + 4;
+		r->data[0] = CPU_68030;
+
+		/* Set the MMU */
+		r = ((void *) r) + r->size;
+		r->tag = BI_MMUTYPE;
+		r->size = sizeof(*r) + 4;
+		r->data[0] = MMU_68030;
+
+		/* Set the FPU */
+		r = ((void *) r) + r->size;
+		r->tag = BI_FPUTYPE;
+		r->size = sizeof(*r) + 4;
+		r->data[0] = FPU_68882;
+
+		/* Memory info */
+		r = ((void *) r) + r->size;
+		r->tag = BI_MEMCHUNK;
+		r->size = sizeof(*r) + 8;
+		r->data[0] = 0x0;
+		r->data[1] = 0x1000000;
+
+		/* initramfs */
+		r = ((void *) r) + r->size;
+		r->tag = 		BI_RAMDISK;
+		r->size = sizeof(*r) + 8;
+		r->data[0] = 0xb00000;
+		r->data[1] = 0x300000;
+
+		/* Terminator */
+		r = ((void *) r) + r->size;
+		r->tag = BI_LAST;
+		r->size = sizeof(*r);
+	}
 
 	if (!env_get_autostart())
 		return rcode;
