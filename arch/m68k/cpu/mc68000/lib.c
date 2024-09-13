@@ -61,15 +61,18 @@ void relocate_code(ulong start_addr_sp, gd_t *new_gd, ulong relocaddr)
 		case R_68K_JMP_SLOT:
 			// I don't think this should be in our final binary but
 			// for some reason with 030 turned on it happens
+			*newsym32 = *newsym32 + new_gd->reloc_off;
 			break;
 		default:
-			panic("Relocation failed, don't know what to do with rela at %p, r_info: 0x%x\n",
+			panic("Relocation failed, don't know what to do with rela at 0x%p, r_info: 0x%x\n",
 					rel, rel->r_info);
 			break;
 		}
+
+		debug("newsym value is 0x%08x\n", (unsigned int) *newsym32);
 	}
 
-	printf("Relocation point of no return, new SP %p, jump to %p\n",
+	printf("Relocation point of no return, new SP 0x%p, jump to 0x%p\n",
 			(void*) new_gd->start_addr_sp, reloc_board_init_r);
 
 	/* Fix the GOT pointer */
