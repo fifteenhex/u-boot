@@ -525,6 +525,11 @@ config DEBUG_SCC_SERIAL
 	help
 	  SCC
 
+config DEBUG_CD2401_SERIAL
+	bool "cd2401"
+	help
+	  CD2401
+
 endchoice
 
 config DEBUG_UART_BASE
@@ -538,6 +543,7 @@ config DEBUG_UART_BASE
 	default 0xf1920000 if DEBUG_UART_PL011 && (ARCH_VERSAL_NET || ARCH_VERSAL2)
 	default 0xfffff900 if DEBUG_DRAGONBALL_SERIAL
 	default 0xfffe3002 if TARGET_MVME147
+	default 0xfec64000 if TARGET_E17
 	help
 	  This is the base address of your UART for memory-mapped UARTs.
 
@@ -758,6 +764,12 @@ config SCC_SERIAL
 	depends on DM_SERIAL
 	help
 	  SCC
+
+config CD2401_SERIAL
+	bool "CD2401 serial support"
+	depends on DM_SERIAL
+	help
+	  CD2401
 
 config FSL_LPUART
 	bool "Freescale LPUART support"
