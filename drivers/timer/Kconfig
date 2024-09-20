@@ -359,4 +359,10 @@ config PCC_TIMER
 	help
 	  MVME147 PCC timer
 
+config Z8536_TIMER
+	bool "Zilog Z8536 timer support"
+	depends on TIMER
+	help
+	  Zilog Z8536 timer support
+
 endmenu

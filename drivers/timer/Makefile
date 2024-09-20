@@ -39,3 +39,4 @@ obj-$(CONFIG_STARFIVE_TIMER)	+= starfive-timer.o
 obj-$(CONFIG_GOLDFISH_TIMER)	+= goldfish_timer.o
 obj-$(CONFIG_DRAGONBALL_TIMER) += dragonball_timer.o
 obj-$(CONFIG_PCC_TIMER) += pcc_timer.o
+obj-$(CONFIG_Z8536_TIMER) += z8536_timer.o
