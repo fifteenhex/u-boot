@@ -34,7 +34,7 @@ void arch_lmb_reserve(struct lmb *lmb)
 {
 	arch_lmb_reserve_generic(lmb, get_sp(), gd->ram_top, 1024);
 
-#ifdef CONFIG_MC68000
+#ifndef CONFIG_M68K_HAVE_VBAR
 	/* Don't let the vectors get overwritten */
 	lmb_reserve(lmb, 0, 0x400 - 1 /* fix me, this is just to make the LMB stuff happy for now*/);
 #endif
