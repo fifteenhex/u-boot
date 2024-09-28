@@ -109,6 +109,7 @@ static int xyzModem_getchars(struct xyz *xyz, char *c, unsigned int n) {
 	ulong now;
 	int i, charsread = 0;
 	const int blksz = 16;
+	unsigned int loops;
 
 	schedule();
 
@@ -116,11 +117,14 @@ static int xyzModem_getchars(struct xyz *xyz, char *c, unsigned int n) {
 	 * Constantly checking the timeout is a waste of
 	 * cycles, spam getchar() for a small block of chars
 	 * and check the timeout between those blocks.
+	 *
+	 * To avoid getting deadlocked here use a loop counter
+	 * to bound.
 	 */
 	while (charsread != n) {
 		now = get_timer(0);
 
-		for (i = 0; (i < blksz) && (charsread < n); i++) {
+		for (i = 0, loops = 0xff; (i < blksz) && (charsread < n) && (loops > 0); i++, loops--) {
 			int ret = getchar();
 			if (ret >= 0) {
 				xyz->total_RX++;
