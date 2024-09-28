@@ -9,6 +9,7 @@
 #include <linux/types.h>
 #include <asm/unaligned.h>
 #include <u-boot/lz4.h>
+#include <cyclic.h>
 
 /* lz4.c is unaltered (except removing unrelated code) from github.com/Cyan4973/lz4. */
 #include "lz4.c"	/* #include for inlining, do not link! */
@@ -23,6 +24,8 @@ int ulz4fn(const void *src, size_t srcn, void *dst, size_t *dstn)
 	int has_block_checksum;
 	int ret;
 	*dstn = 0;
+
+	printf("%s %d\n", __func__, __LINE__);
 
 	{ /* With in-place decompression the header may become invalid later. */
 		u32 magic;
@@ -64,6 +67,8 @@ int ulz4fn(const void *src, size_t srcn, void *dst, size_t *dstn)
 	while (1) {
 		u32 block_header, block_size;
 
+		schedule();
+
 		block_header = get_unaligned_le32(in);
 		in += sizeof(u32);
 		block_size = block_header & ~LZ4F_BLOCKUNCOMPRESSED_FLAG;
@@ -87,6 +92,7 @@ int ulz4fn(const void *src, size_t srcn, void *dst, size_t *dstn)
 				break;
 			}
 		} else {
+			printf("%s %d %p %p %d\n", __func__, __LINE__, in, out, block_size);
 			/* constant folding essential, do not touch params! */
 			ret = LZ4_decompress_generic(in, out, block_size,
 					end - out, endOnInputSize,
