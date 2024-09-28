@@ -7,6 +7,16 @@
 #define R_68K_JMP_SLOT	21
 #define R_68K_RELATIVE	22
 
+
+static __inline__ unsigned short get_sr(void)
+{
+	unsigned short sr;
+
+	asm volatile ("move.w %%sr,%0":"=r" (sr):);
+
+	return sr;
+}
+
 void relocate_code(ulong start_addr_sp, gd_t *new_gd, ulong relocaddr);
 void relocate_code(ulong start_addr_sp, gd_t *new_gd, ulong relocaddr)
 {
@@ -15,6 +25,12 @@ void relocate_code(ulong start_addr_sp, gd_t *new_gd, ulong relocaddr)
 	void *_bss_end = (void *)__bss_end;
 	Elf32_Rela *rel_start = (void *)__rel_dyn_start;
 	Elf32_Rela *rel_end = (void *)__rel_dyn_end;
+
+	unsigned short sr;
+	sr = get_sr();
+
+
+	printf("SR is 0x%04x\n", (unsigned short) sr);
 
 	/* Copy ourself to the new address */
 	if (new_gd->reloc_off) {
