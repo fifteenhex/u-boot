@@ -177,6 +177,14 @@ config WDT_GPIO
 	  doc/device-tree-bindings/watchdog/gpio-wdt.txt for
 	  information on how to describe the watchdog in device tree.
 
+config WDT_MMIO
+	bool "Generic MMIO watchdog support"
+	depends on WDT
+
+	help
+	  Support for simple WDT that just require a register to be
+	  written periodically.
+
 config WDT_MAX6370
 	bool "MAX6370 watchdog timer support"
 	depends on WDT
