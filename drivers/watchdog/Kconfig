@@ -213,6 +213,14 @@ config SPL_WDT_GPIO
 	help
 	  Support for external watchdog fed by toggling a gpio in SPL.
 
+config WDT_MMIO
+	bool "Generic MMIO watchdog support"
+	depends on WDT
+
+	help
+	  Support for simple WDT that just require a register to be
+	  written periodically.
+
 config WDT_MAX6370
 	bool "MAX6370 watchdog timer support"
 	depends on WDT
