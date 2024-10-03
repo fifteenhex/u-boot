@@ -485,4 +485,11 @@ config WDT_FTWDT010
 	help
 	  Faraday Technology ftwdt010 watchdog is an architecture independent
 	  watchdog. It is usually used in SoC chip design.
+
+config WDT_PCC
+	bool "MVME147 PCC WDT"
+	depends on WDT
+	help
+	  Support for watchdog in PCC on MVME147
+
 endmenu
