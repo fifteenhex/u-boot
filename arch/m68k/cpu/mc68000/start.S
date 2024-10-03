@@ -35,7 +35,7 @@
 #endif
 .endm
 
-#ifndef CONFIG_SPL_BUILD
+#if !defined(CONFIG_SPL_BUILD) && !defined(CONFIG_TARGET_MVME147)
 .text
 _vectors:
 _initial_sp:
