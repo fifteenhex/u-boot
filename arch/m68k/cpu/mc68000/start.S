@@ -92,6 +92,8 @@ intc_vect_7:
 .text
 .globl _start
 _start:
+	/* Make sure interrupts are disabled */
+	move	#0x2700,%sr
 
 /*
  * Very early setup we do while running from flash
