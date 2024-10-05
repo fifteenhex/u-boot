@@ -1,0 +1,68 @@
+// SPDX-License-Identifier: GPL-2.0+
+
+/dts-v1/;
+#include "mc68040.dtsi"
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	compatible = "eltec,e17";
+
+	aliases {
+		serial0 = &uart0;
+		ethernet0 = &lance;
+	};
+
+	chosen {
+		stdout-path = "/serial@fec64000:9600";
+		tick-timer = &cio0;
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0x0 0x2000000>;
+	};
+
+		uart0: serial@fec64000 {
+			compatible = "cirrus,cd2401";
+			u-boot,dm-pre-reloc;
+			reg = <0xfec64000 0x100>;
+			status = "okay";
+		};
+
+	soc {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		cio0: timer@fec10000 {
+			compatible = "zilog,z8536";
+			u-boot,dm-pre-reloc;
+			reg = <0xfec10000 0x4>;
+			status = "okay";
+		};
+
+		cio1: timer@fec30000 {
+			compatible = "zilog,z8536";
+			u-boot,dm-pre-reloc;
+			reg = <0xfec30000 0x4>;
+			status = "okay";
+		};
+
+		wdt: wdt@fec50000 {
+			compatible = "linux,wdt-mmio";
+			u-boot,dm-pre-reloc;
+			reg = <0xfec50000 0x1>;
+		};
+
+		lance: ethernet@fec68000 {
+			compatible = "amd,am79900";
+			reg = <0xfec68000 0x8>;
+			rdp-offset = <0x2>;
+			rap-offset = <0x6>;
+		};
+		
+		ioc: ioc@fec70000 {
+		};
+	};
+};

@@ -270,6 +270,24 @@ config TARGET_MVME147
 	select LANCE
 	select LANCE_LANCE
 
+config TARGET_E17
+	bool "Support ELTEC E17"
+	select MC68000
+	select MC68040
+	select SUPPORT_SPL
+	select CD2401_SERIAL
+	select Z8536_TIMER
+	select LANCE
+	select LANCE_ILACC
+	select WDT
+	select WDT_MMIO
+
+	# For populating the DT with the bootinfo data
+	select OF_BOARD_FIXUP
+	select SPL
+	select SPL_FRAMEWORK_BOARD_INIT_F
+	select SPL_SERIAL
+
 endchoice
 
 source "board/BuS/eb_cpu5282/Kconfig"
@@ -289,6 +307,7 @@ source "board/sysam/stmark2/Kconfig"
 source "board/qemu/virt-m68k/Kconfig"
 source "board/kanpapa/mc68ez328sbc/Kconfig"
 source "board/motorola/mvme147/Kconfig"
+source "board/eltec/e17/Kconfig"
 
 config M68K_QEMU
 	bool "Build with workarounds for incomplete QEMU emulation"
