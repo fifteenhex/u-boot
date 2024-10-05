@@ -147,8 +147,9 @@ ___xxx__:
 	__putch '1'
 	__putch '4'
 	__putch '7'
+#elif defined(CONFIG_TARGET_E17)
 #else
-#error
+#error "Make sure your target is handled properly in start.S"
 #endif
 
 #if defined(CONFIG_MC68EZ328) && !defined(CONFIG_SPL_BUILD) && 1
