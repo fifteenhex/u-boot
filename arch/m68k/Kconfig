@@ -137,6 +137,9 @@ config M54418
 	bool
 	select MCF5441x
 
+config MC68030
+	bool
+
 # peripherals
 config CF_DSPI
 	bool
