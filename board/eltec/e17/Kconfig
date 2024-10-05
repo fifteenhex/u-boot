@@ -1,0 +1,15 @@
+if TARGET_E17
+
+config SYS_CPU
+	default "mc68000"
+
+config SYS_BOARD
+	default "e17"
+
+config SYS_VENDOR
+	default "eltec"
+
+config SYS_CONFIG_NAME
+	default "e17"
+
+endif
