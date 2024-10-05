@@ -3,8 +3,9 @@
 #include <config.h>
 #include <asm/dragonball/mc68ez328.h>
 #include <asm/mvme147/mvme147.h>
+#include <asm/e17/e17.h>
 
-//#define DEBUG
+#define DEBUG
 
 .macro __putch val
 #ifdef DEBUG
@@ -21,6 +22,12 @@
 	move.b (MVME147_SERIAL0_REG), %d7
 	and.b   #0x4,%d7
 	beq	1b
+#elif defined(CONFIG_TARGET_E17)
+10:
+	//btst.b #1, (E17_SERIAL_TISR)
+	//beq 10b
+	//move.b #\val, (E17_SERIAL_TDR)
+	//move.b #0, (E17_SERIAL_TEOIR)
 #endif
 #endif
 .endm
@@ -34,6 +41,13 @@
 	move.l (%sp)+, %d7
 #endif
 .endm
+
+#if defined(CONFIG_TARGET_E17)
+_module_sp:
+	.long (0x400000 + 0x100000)
+_module_pc:
+	.long _start
+#endif
 
 #if !defined(CONFIG_SPL_BUILD) && !defined(CONFIG_TARGET_MVME147)
 .text
@@ -150,6 +164,22 @@ ___xxx__:
 	__putch '4'
 	__putch '7'
 #elif defined(CONFIG_TARGET_E17)
+	//move.b #0, (E17_SERIAL_CAR)
+	//move.b (E17_SERIAL_CMR), (0x400008)
+
+	# Enable the transmitter
+//1:
+	//tst.b (E17_SERIAL_CCR)
+	//bne 1b
+	//move.b #CD2401_CCR_ENBXMTR, (E17_SERIAL_CCR)
+
+	# The transmit interrupt must be enabled to transmit
+	//move.b #CD2401_IER_TXEMPTY, (E17_SERIAL_IER)
+	__putch 'e'
+	__putch '1'
+	__putch '7'
+	__putch '\r'
+	__putch '\n'
 #else
 #error "Make sure your target is handled properly in start.S"
 #endif
