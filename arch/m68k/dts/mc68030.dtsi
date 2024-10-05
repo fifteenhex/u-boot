@@ -6,5 +6,5 @@
 #include "mc68000.dtsi"
 
 &cpu0 {
-	compatible = "motorola,mc68000";
+	compatible = "motorola,mc68030";
 };
