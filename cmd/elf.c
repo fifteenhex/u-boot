@@ -68,6 +68,8 @@ static unsigned long do_bootelf_exec(ulong (*entry)(int, char * const[]),
 	return ret;
 }
 
+extern void m68k_create_bootinfo(void *dst);
+
 /* Interpreter command to boot an arbitrary ELF image from memory */
 int do_bootelf(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
@@ -77,6 +79,7 @@ int do_bootelf(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 #endif
 	unsigned long addr; /* Address of the ELF image */
 	unsigned long rc; /* Return value from user code */
+	unsigned long end;
 	char *sload = NULL;
 	int rcode = 0;
 
@@ -116,9 +119,12 @@ int do_bootelf(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		return 1;
 
 	if (sload && sload[1] == 'p')
-		addr = load_elf_image_phdr(addr);
+		addr = load_elf_image_phdr(addr, &end);
 	else
-		addr = load_elf_image_shdr(addr);
+		addr = load_elf_image_shdr(addr, &end);
+
+	printf("End of ELF for bootinfo is 0x%lx\n", end);
+	m68k_create_bootinfo(end);
 
 #if CONFIG_IS_ENABLED(CMD_ELF_FDT_SETUP)
 	if (fdt_addr) {
