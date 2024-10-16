@@ -7,6 +7,7 @@
 #include <cpu_func.h>
 #include <dm/uclass.h>
 #include <serial.h>
+#include <asm/bootinfo.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -65,3 +66,8 @@ int cpu_init_r(void)
 	icache_enable();
 	return 0;
 }
+
+u32 m68k_get_mach(void)
+{
+	return MACH_GENERIC;
+};
