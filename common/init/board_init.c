@@ -86,7 +86,7 @@ ulong board_init_f_alloc_reserve(ulong top)
 #endif
 #endif
 
-#ifdef CONFIG_M68K
+#ifdef CONFIG_M68K_HAVE_BOOTINFO
 	/* Reserve space to copy the bootinfo records into before jumping */
 	top = rounddown(top - sizeof_bootinfo(), 16);
 #endif
@@ -163,7 +163,7 @@ void board_init_f_init_reserve(ulong base)
 	/* next alloc will be higher by one GD plus 16-byte alignment */
 	base += roundup(sizeof(struct global_data), 16);
 
-#if CONFIG_M68K
+#if CONFIG_M68K_HAVE_BOOTINFO
 	gd->bootinfo = base;
 	if (sizeof_bootinfo() != 0)
 		base += roundup(save_bootinfo(base), 16);

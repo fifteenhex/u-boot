@@ -46,8 +46,6 @@ extern void bootinfo_fix_fdt(void *fdt);
 
 int board_fix_fdt(void *fdt)
 {
-	bootinfo_fix_fdt(fdt);
-
 	return 0;
 }
 

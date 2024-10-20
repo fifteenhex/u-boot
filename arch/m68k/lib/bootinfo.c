@@ -372,6 +372,7 @@ static struct bi_record* m68k_bootinfo_040(struct bi_record *r)
 
 	return r;
 }
+
 void m68k_create_bootinfo(void *dst)
 {
 	struct bi_record *r = (struct bi_record *) dst;

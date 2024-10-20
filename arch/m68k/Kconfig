@@ -10,6 +10,9 @@ config STATIC_RELA
 config M68K_HAVE_VBAR
 	bool
 
+config M68K_HAVE_BOOTINFO
+	bool
+
 # processor family
 #config MC680x0
 config MC68000
@@ -154,17 +157,20 @@ config MC68030
 #	select MC680x0
 	select MC68000
 	select M68K_HAVE_VBAR
+	select M68K_HAVE_BOOTINFO
 
 config MC68040
 	bool
 #	select MC680x0
 	select MC68000
 	select M68K_HAVE_VBAR
+	select M68K_HAVE_BOOTINFO
 
 config MC68060
 	bool
 #	select MC680x0
 	select M68K_HAVE_VBAR
+	select M68K_HAVE_BOOTINFO
 
 # peripherals
 config CF_DSPI

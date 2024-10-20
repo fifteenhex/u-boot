@@ -26,5 +26,5 @@ obj-y	+= time.o
 obj-y   += fec.o
 endif
 obj-y	+= traps.o
-obj-y	+= bootinfo.o
+obj-$(CONFIG_M68K_HAVE_BOOTINFO) += bootinfo.o
 obj-y	+= elf.o

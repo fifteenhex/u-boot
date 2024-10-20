@@ -109,8 +109,10 @@ int do_bootelf(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	if (!env_get_autostart())
 		return rcode;
 
+#ifdef CONFIG_M68K_HAVE_BOOTINFO
 	printf("End of ELF for bootinfo is 0x%lx\n", end);
 	m68k_create_bootinfo(end);
+#endif
 
 	printf("## Starting application at 0x%08lx ...\n", addr);
 	flush();
