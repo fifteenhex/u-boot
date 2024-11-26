@@ -7,19 +7,19 @@
 #define MC68030_CACR_EI	BIT(0)
 #define MC68030_CACR_ED	BIT(8)
 
-#define REGGETTER(_which, _inst)								\
-static inline u32 mc68030_get_##_which(void)					\
-{																\
-	u32 val;													\
-																\
+#define REGGETTER(_which, _inst)					\
+static inline u32 mc68030_get_##_which(void)				\
+{									\
+	u32 val;							\
+									\
 	asm volatile (#_inst " %%" #_which ",%0\n\t" : "=d" (val));	\
-																\
-	return val;													\
+									\
+	return val;							\
 }
 
-#define REGSETTER(_which, _inst)									\
-static inline void mc68030_set_##_which(u32 val)					\
-{																	\
+#define REGSETTER(_which, _inst)					\
+static inline void mc68030_set_##_which(u32 val)			\
+{									\
 	asm volatile (#_inst " %0,%%" #_which "\n\t" : : "d" (val));	\
 }
 

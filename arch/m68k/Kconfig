@@ -258,6 +258,9 @@ config TARGET_QEMU
 	select VIRTIO_MMIO
 	select VIRTIO_BLK
 
+	# Cpu type doesn't select it
+	select M68K_HAVE_BOOTINFO
+
 config TARGET_MC68EZ328SBC
 	bool "Support kanpapa MC68EZ328 SBC"
 	select MC68EZ328

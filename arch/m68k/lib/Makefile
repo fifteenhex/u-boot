@@ -17,6 +17,7 @@ obj-$(CONFIG_MC68030)$(CONFIG_TARGET_QEMU) += cache_mc68030.o
 obj-y	+= interrupts_mc68000.o
 lib-$(CONFIG_USE_PRIVATE_LIBGCC) += lb1sf68.o
 
+CFLAGS_cache_mc68040.o := -mcpu=68040 -fno-lto
 obj-$(CONFIG_MC68040)$(CONFIG_TARGET_QEMU) += cache_mc68040.o
 
 else

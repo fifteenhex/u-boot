@@ -326,6 +326,7 @@ size_t save_bootinfo(void *dst)
 	return size;
 };
 
+#ifndef CONFIG_TARGET_QEMU
 extern struct bi_record* m68k_get_mach(struct bi_record *r);
 static struct bi_record* m68k_bootinfo_030(struct bi_record *r)
 {
@@ -412,8 +413,13 @@ void m68k_create_bootinfo(void *dst)
 	r->tag = BI_LAST;
 	r->size = sizeof(*r);
 }
+#else
+void m68k_create_bootinfo(void *dst)
+{
+}
+#endif
 
 void bootinfo_fix_fdt(void *fdt)
 {
 	m68k_parse_bootinfo(gd->bootinfo, fdt);
-};
+}
