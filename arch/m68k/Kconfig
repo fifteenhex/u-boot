@@ -276,8 +276,11 @@ config TARGET_MVME147
 	select OF_BOARD_FIXUP
 	select SPL
 	select SPL_FRAMEWORK_BOARD_INIT_F
+
+	# Essential drivers
 	select WDT_PCC
 	select PCC_TIMER
+	select SCC_SERIAL
 
 	# For booting from SCSI
 	select SPL_SATA
