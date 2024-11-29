@@ -111,8 +111,8 @@ extern void dragonball_timer_arm_timer_wakeup(struct udevice *timerdev, struct u
 extern void dragonball_timer_disarm_timer_wakeup(struct udevice *timerdev, struct udevice *intcdev);
 
 int dragonball_pll_beastmode(struct udevice *plldev,
-							 struct udevice *timerdev,
-							 struct udevice *intcdev)
+			     struct udevice *timerdev,
+			     struct udevice *intcdev)
 {
 	struct dragonball_pll_priv *priv = dev_get_priv(plldev);
 	u16 pllcr = readw(priv->base + REG_PLLCR);
@@ -139,16 +139,16 @@ int dragonball_pll_beastmode(struct udevice *plldev,
 
 #if 1
 	asm volatile ("1: btst.b #7, (%[pllfsr])\n"
-				  "beq.s 1b\n"
-				  "2: btst.b #7, (%[pllfsr])\n"
-				  "bne.s 2b\n"
-				  "move.w %[value], (%[pllfsr])\n"
-				  "stop  #0x2000\n"
-				  :
-				  : [pllcr] "a" (priv->base + REG_PLLCR),
-					[pllfsr] "a" (priv->base + REG_PLLFSR),
-					[value] "d" (pllfsr)
-				  :);
+		      "beq.s 1b\n"
+		      "2: btst.b #7, (%[pllfsr])\n"
+		      "bne.s 2b\n"
+		      "move.w %[value], (%[pllfsr])\n"
+		      "stop  #0x2000\n"
+			:
+			: [pllcr] "a" (priv->base + REG_PLLCR),
+			  [pllfsr] "a" (priv->base + REG_PLLFSR),
+			  [value] "d" (pllfsr)
+			:);
 #endif
 
 	dragonball_timer_disarm_timer_wakeup(timerdev, intcdev);
