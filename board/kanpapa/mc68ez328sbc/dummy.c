@@ -50,8 +50,8 @@ int board_fix_fdt(void *fdt)
 }
 
 int dragonball_pll_beastmode(struct udevice *plldev,
-							 struct udevice *timerdev,
-							 struct udevice *intcdev);
+			     struct udevice *timerdev,
+			     struct udevice *intcdev);
 
 int board_early_init_r(void)
 {
