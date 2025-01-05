@@ -35,6 +35,7 @@
 		compatible = "simple-bus";
 		#address-cells = <1>;
 		#size-cells = <1>;
+		ranges = <0xff000000 0xff000000 0x1000000>;
 
 		rom0: rom@ff800000 {
 			reg = <0xff800000 0x200000>;
@@ -96,6 +97,11 @@
 			/* clk == 10MHz *///
 			pcc32 = <&pcc32>;
 			pcc8 = <&pcc8>;
+		};
+
+		rtc: rtc@fffe0000 {
+			compatible = "st,m48t02";
+			reg = <0xfffe0000 0x800>;
 		};
 	};
 
