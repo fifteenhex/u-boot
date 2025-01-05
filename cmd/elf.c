@@ -32,6 +32,9 @@ unsigned long do_bootelf_exec(ulong (*entry)(int, char * const[]),
 {
 	unsigned long ret;
 
+	dcache_disable();
+	icache_disable();
+
 	/*
 	 * pass address parameter as argv[0] (aka command name),
 	 * and all remaining args
