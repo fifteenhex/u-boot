@@ -82,6 +82,7 @@
 		lance: ethernet@fffe1800 {
 			compatible = "amd,am7990";
 			reg = <0xfffe1800 0x4>;
+			interrupts-extended = <&intc_user 4>;
 			rdp-offset = <0x0>;
 			rap-offset = <0x2>;
 		};
@@ -97,6 +98,8 @@
 			/* clk == 10MHz *///
 			pcc32 = <&pcc32>;
 			pcc8 = <&pcc8>;
+			interrupts-extended = <&intc_user 5>,
+					      <&intc_user 6>;
 		};
 
 		rtc: rtc@fffe0000 {
