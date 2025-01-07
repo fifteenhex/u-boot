@@ -5,7 +5,10 @@
 #include "cache_mc68030.h"
 
 #define MC68030_CACR_EI	BIT(0)
+#define MC68030_CACR_CI	BIT(3)
 #define MC68030_CACR_ED	BIT(8)
+#define MC68030_CACR_CD	BIT(11)
+
 
 #define REGGETTER(_which, _inst)					\
 static inline u32 mc68030_get_##_which(void)				\
@@ -45,6 +48,7 @@ void icache_enable_mc68030(void)
 
 void icache_disable_mc68030(void)
 {
+	mc68030_set_cacr(mc68030_get_cacr() & MC68030_CACR_CI);
 	mc68030_set_cacr(mc68030_get_cacr() & ~MC68030_CACR_EI);
 }
 
@@ -60,6 +64,7 @@ void dcache_enable_mc68030(void)
 
 void dcache_disable_mc68030(void)
 {
+	mc68030_set_cacr(mc68030_get_cacr() & MC68030_CACR_CD);
 	mc68030_set_cacr(mc68030_get_cacr() & ~MC68030_CACR_ED);
 }
 
