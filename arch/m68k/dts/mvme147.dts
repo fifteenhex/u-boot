@@ -27,6 +27,7 @@
 			compatible = "zilog,scc";
 			u-boot,dm-pre-reloc;
 			reg = <0xfffe3002 0x2>;
+			scc,vector=<(0x40 + 32)>;
 			interrupts-extended = <&intc_user 40>,
 					      <&intc_user 42>,
 					      <&intc_user 44>,
@@ -101,6 +102,7 @@
 		uart1: serial@fffe3000 {
 			compatible = "zilog,scc";
 			reg = <0xfffe3000 0x2>;
+			scc,vector=<(0x40 + 32 + 16)>;
 			status = "disabled";
 		};
 
