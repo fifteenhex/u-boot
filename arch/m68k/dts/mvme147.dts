@@ -27,9 +27,16 @@
 			compatible = "zilog,scc";
 			u-boot,dm-pre-reloc;
 			reg = <0xfffe3002 0x2>;
+			interrupts-extended = <&intc_user 40>,
+					      <&intc_user 42>,
+					      <&intc_user 44>,
+					      <&intc_user 46>,
+					      <&intc_user 32>,
+					      <&intc_user 34>,
+					      <&intc_user 36>,
+					      <&intc_user 38>;
 			status = "okay";
 		};
-
 
 	soc {
 		compatible = "simple-bus";
@@ -91,6 +98,12 @@
 			reg = <0xfffe2000 0x20>;
 		};
 
+		uart1: serial@fffe3000 {
+			compatible = "zilog,scc";
+			reg = <0xfffe3000 0x2>;
+			status = "disabled";
+		};
+
 		scsi: scsi@fffe4000 {
 			compatible = "wdc,wd33c93b";
 			u-boot,dm-pre-reloc;
@@ -111,6 +124,7 @@
 	timer0: timer@0 {
 		compatible = "motorola,mvme147-pcc-timer";
 		u-boot,dm-pre-reloc;
+		interrupts-extended = <&intc_user 8>;
 		clock-frequency = <160000>;
 		pcc16 = <&pcc16>;
 		pcc8 = <&pcc8>;
@@ -120,6 +134,7 @@
 	timer1: timer@1 {
 		compatible = "motorola,mvme147-pcc-timer";
 		u-boot,dm-pre-reloc;
+		interrupts-extended = <&intc_user 9>;
 		clock-frequency = <160000>;
 		pcc16 = <&pcc16>;
 		pcc8 = <&pcc8>;
