@@ -4,10 +4,11 @@
 
 #include "cache_mc68030.h"
 
-#define MC68030_CACR_EI	BIT(0)
-#define MC68030_CACR_CI	BIT(3)
-#define MC68030_CACR_ED	BIT(8)
-#define MC68030_CACR_CD	BIT(11)
+#define MC68030_CACR_EI		BIT(0)
+#define MC68030_CACR_CI		BIT(3)
+#define MC68030_CACR_IBE	BIT(4)
+#define MC68030_CACR_ED		BIT(8)
+#define MC68030_CACR_CD		BIT(11)
 
 
 #define REGGETTER(_which, _inst)					\
@@ -43,7 +44,7 @@ REGGETTER(tt1, pmove);
 
 void icache_enable_mc68030(void)
 {
-	mc68030_set_cacr(mc68030_get_cacr() | MC68030_CACR_EI);
+	mc68030_set_cacr(mc68030_get_cacr() | MC68030_CACR_EI | MC68030_CACR_IBE);
 }
 
 void icache_disable_mc68030(void)
