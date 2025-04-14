@@ -127,7 +127,7 @@ static FORCE_INLINE void dragonball_spi_setbits(struct dragonball_spi_priv *priv
 }
 
 static FORCE_INLINE u16 dragonball_spi_setdata(struct dragonball_spi_priv *priv,
-										  unsigned int bits, const void* dout, unsigned offset)
+					       unsigned int bits, const void* dout, unsigned offset)
 {
 	const u8* b = dout + offset;
 	/*
@@ -149,8 +149,8 @@ static FORCE_INLINE u16 dragonball_spi_setdata(struct dragonball_spi_priv *priv,
 }
 
 static FORCE_INLINE void dragonball_spi_getdata(struct dragonball_spi_priv *priv,
-										  unsigned int bits, void* din, unsigned offset,
-										  u16 w)
+						unsigned int bits, void* din, unsigned offset,
+						u16 w)
 {
 	u8* b = din + offset;
 
@@ -189,8 +189,8 @@ static FORCE_INLINE void dragonball_spi_startxfer(struct dragonball_spi_priv *pr
 }
 
 static FORCE_INLINE void dragonball_spi_one(struct dragonball_spi_priv *priv,
-							   const void *dout, void *din,
-							   const unsigned int bits, const unsigned int offset)
+					    const void *dout, void *din,
+					    const unsigned int bits, const unsigned int offset)
 {
 	u16 w;
 
