@@ -51,6 +51,8 @@ _initial_sp:
 _initial_pc:
 #ifdef CONFIG_MC68EZ328
 	.long (CFG_SYS_FLASH_BASE + _start)	/* Start of program Code */
+#elif defined(CONFIG_TARGET_QEMU)
+	.long _start				/* Start of program Code */
 #endif
 	.balign 0x400
 #endif
