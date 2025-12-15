@@ -93,6 +93,9 @@ SECTIONS
 	. = ALIGN(8);
 	_end = .;
 
+	/* Leave some space at the end before BSS for bootinfo */
+	. = ALIGN(4096);
+
 	__bss_start = .;
 	.bss (NOLOAD)       :
 	{
