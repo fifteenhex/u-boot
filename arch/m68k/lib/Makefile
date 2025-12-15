@@ -11,6 +11,8 @@ obj-y	+= bdinfo.o
 obj-$(CONFIG_CMD_BOOTM) += bootm.o
 ifeq ($(CONFIG_MC68000),y)
 obj-y	+= cache_mc68000.o
+CFLAGS_cache_mc68030.o := -mcpu=68030 -fno-lto
+obj-$(CONFIG_MC68030)$(CONFIG_TARGET_QEMU) += cache_mc68030.o
 obj-y	+= interrupts_mc68000.o
 obj-y	+= lmb.o
 lib-$(CONFIG_USE_PRIVATE_LIBGCC) += lb1sf68.o
