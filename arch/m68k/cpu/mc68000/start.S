@@ -8,11 +8,13 @@
 
 .macro __putch val
 #ifdef DEBUG
+#ifdef CONFIG_MC68EZ328
 	move.b	#\val,(MC68EZ328_UART + MC68EZ328_UART_TXDATA)
 1:
 	move.w	(MC68EZ328_UART + MC68EZ328_UART_TXFLAGS),%d7
 	and.w	#0x2000,%d7
 	beq		1b
+#endif
 #endif
 .endm
 
@@ -47,7 +49,9 @@ _initial_sp:
 	.balign 0x4
 
 _initial_pc:
+#ifdef CONFIG_MC68EZ328
 	.long (CFG_SYS_FLASH_BASE + _start)	/* Start of program Code */
+#endif
 	.balign 0x400
 #endif
 
@@ -84,7 +88,7 @@ _start:
 	/* Map flash */
 	move.l #MC68EZ328_GROUPBASEADDR, %a0
 	move.w #(CFG_SYS_FLASH_BASE >> 13), %a0@(MC68EZ328_CHIPSELECT_A)
-	move.w #0x01ed, %d0
+	move.w #(MC68EZ328_CHIPSELECT_FLASH + MC68EZ328_CHIPSELECT_WS_1 + MC68EZ328_CHIPSELECT_SZ_8M + MC68EZ328_CHIPSELECT_BSW + MC68EZ328_CHIPSELECT_EN), %d0
 	move.l #MC68EZ328_CHIPSELECT, %a1
 	move.w %d0, %a1@(MC68EZ328_CHIPSELECT_A)
 
@@ -95,13 +99,14 @@ _start:
 	/* Set base address of SDRAM to 0 */
 	clr.w %a0@(MC68EZ328_GROUPBASEADDR_C)
 	/* Configure chipselect D */
-	move.w #0x069f, %a1@(MC68EZ328_CHIPSELECT_D)
+	move.w #(0x060e + MC68EZ328_CHIPSELECT_BSW + MC68EZ328_CHIPSELECT_WS_1 + MC68EZ328_CHIPSELECT_EN), %a1@(MC68EZ328_CHIPSELECT_D)
 	__putch '_'
+#elif defined(CONFIG_TARGET_QEMU)
 #else
 #error
 #endif
 
-#if !defined(CONFIG_SPL_BUILD) && 1
+#if defined(CONFIG_MC68EZ328) && !defined(CONFIG_SPL_BUILD) && 1
 	/* Copy ourself from flash to SDRAM */
 	move.l #0, %a0
 	move.l #CFG_SYS_FLASH_BASE, %a1
