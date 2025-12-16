@@ -288,7 +288,7 @@ int do_bootvx(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	 * binary image.
 	 */
 	if (valid_elf_image(addr))
-		addr = load_elf_image_phdr(addr);
+		addr = load_elf_image_phdr(addr, NULL);
 	else
 		puts("## Not an ELF image, assuming binary\n");
 

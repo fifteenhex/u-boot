@@ -24,7 +24,7 @@
  * May by used to allow ports to override the default behavior.
  */
 unsigned long bootelf_exec(ulong (*entry)(int, char * const[]),
-			   int argc, char *const argv[])
+			   ulong end, int argc, char *const argv[])
 {
 	return entry(argc, argv);
 }
@@ -47,6 +47,7 @@ unsigned long bootelf(unsigned long addr, Bootelf_flags flags,
 {
 	unsigned long entry_addr;
 	char *args[] = {"", NULL};
+	unsigned long end;
 
 	errno = 0;
 
@@ -55,8 +56,8 @@ unsigned long bootelf(unsigned long addr, Bootelf_flags flags,
 		return 1;
 	}
 
-	entry_addr = flags.phdr ? load_elf_image_phdr(addr)
-					    : load_elf_image_shdr(addr);
+	entry_addr = flags.phdr ? load_elf_image_phdr(addr, &end)
+					    : load_elf_image_shdr(addr, &end);
 
 	if (!flags.autostart)
 		return 0;
@@ -66,7 +67,7 @@ unsigned long bootelf(unsigned long addr, Bootelf_flags flags,
 		argv = args;
 	}
 
-	return bootelf_exec((void *)entry_addr, argc, argv);
+	return bootelf_exec((void *)entry_addr, end, argc, argv);
 }
 
 /*
@@ -191,7 +192,7 @@ unsigned long load_elf64_image_shdr(unsigned long addr)
  * The loader firstly reads the EFI class to see if it's a 64-bit image.
  * If yes, call the ELF64 loader. Otherwise continue with the ELF32 loader.
  */
-unsigned long load_elf_image_phdr(unsigned long addr)
+unsigned long load_elf_image_phdr(unsigned long addr, unsigned long *end)
 {
 	Elf32_Ehdr *ehdr; /* Elf header structure pointer */
 	Elf32_Phdr *phdr; /* Program header structure pointer */
@@ -207,6 +208,8 @@ unsigned long load_elf_image_phdr(unsigned long addr)
 	for (i = 0; i < ehdr->e_phnum; ++i, ++phdr) {
 		void *dst = (void *)(uintptr_t)phdr->p_paddr;
 		void *src = (void *)addr + phdr->p_offset;
+		if (end)
+			*end = (unsigned long) (dst + phdr->p_memsz);
 
 		/* Only load PT_LOAD program header */
 		if (phdr->p_type != PT_LOAD)
@@ -226,13 +229,14 @@ unsigned long load_elf_image_phdr(unsigned long addr)
 	return ehdr->e_entry;
 }
 
-unsigned long load_elf_image_shdr(unsigned long addr)
+unsigned long load_elf_image_shdr(unsigned long addr, unsigned long *end)
 {
 	Elf32_Ehdr *ehdr; /* Elf header structure pointer */
 	Elf32_Shdr *shdr; /* Section header structure pointer */
 	unsigned char *strtab = 0; /* String table pointer */
 	unsigned char *image; /* Binary image pointer */
 	int i; /* Loop counter */
+	void *dst;
 
 	ehdr = (Elf32_Ehdr *)addr;
 	if (ehdr->e_ident[EI_CLASS] == ELFCLASS64)
@@ -263,13 +267,16 @@ unsigned long load_elf_image_shdr(unsigned long addr)
 			       (long)shdr->sh_size);
 		}
 
+		dst = (void *)(uintptr_t)shdr->sh_addr;
+
+		if (end)
+			*end = (unsigned long) (dst + shdr->sh_size);
+
 		if (shdr->sh_type == SHT_NOBITS) {
-			memset((void *)(uintptr_t)shdr->sh_addr, 0,
-			       shdr->sh_size);
+			memset(dst, 0, shdr->sh_size);
 		} else {
 			image = (unsigned char *)addr + shdr->sh_offset;
-			memcpy((void *)(uintptr_t)shdr->sh_addr,
-			       (const void *)image, shdr->sh_size);
+			memcpy(dst, (const void *)image, shdr->sh_size);
 		}
 		flush_cache(rounddown(shdr->sh_addr, ARCH_DMA_MINALIGN),
 			    roundup((shdr->sh_addr + shdr->sh_size),
