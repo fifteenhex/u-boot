@@ -31,6 +31,7 @@
 #include <watchdog.h>
 #include <env.h>
 #include <vsprintf.h>
+#include <linux/errno.h>
 
 #define CORNAK(__xyz) putc((__xyz->crc_mode ? 'C' : NAK));
 
