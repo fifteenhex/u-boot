@@ -72,6 +72,8 @@ struct mem_info {
  */
 #define BI_RNG_SEED		0x0008
 
+/* Pointer to FDT if there is one */
+#define BI_FDT                  0x0009
 
     /*
      *  Linux/m68k Architectures (BI_MACHTYPE)
@@ -91,6 +93,7 @@ struct mem_info {
 #define MACH_M54XX		12
 #define MACH_M5441X		13
 #define MACH_VIRT		14
+#define MACH_GENERIC	15
 
 
     /*
@@ -109,12 +112,16 @@ struct mem_info {
 #define CPUB_68040		2
 #define CPUB_68060		3
 #define CPUB_COLDFIRE		4
+#define CPUB_68000		5
+#define CPUB_68010		6
 
 #define CPU_68020		(1 << CPUB_68020)
 #define CPU_68030		(1 << CPUB_68030)
 #define CPU_68040		(1 << CPUB_68040)
 #define CPU_68060		(1 << CPUB_68060)
 #define CPU_COLDFIRE		(1 << CPUB_COLDFIRE)
+#define CPU_68000		(1 << CPUB_68000)
+#define CPU_68010		(1 << CPUB_68010)
 
 #define FPUB_68881		0
 #define FPUB_68882		1
