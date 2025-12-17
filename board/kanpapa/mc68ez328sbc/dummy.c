@@ -74,7 +74,7 @@ int board_early_init_r(void)
 	if (ret)
 		return ret;
 
-	dragonball_pll_beastmode(plldev, timerdev, intcdev);
+	//dragonball_pll_beastmode(plldev, timerdev, intcdev);
 	/* Redo baud rate calculation since sysclk has changed */
 	serial_setbrg();
 
