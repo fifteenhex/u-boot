@@ -25,6 +25,8 @@
  * May by used to allow ports to override the default behavior.
  */
 unsigned long bootelf_exec(ulong (*entry)(int, char * const[]),
+			   int argc, char *const argv[]) __attribute__((weak));
+unsigned long bootelf_exec(ulong (*entry)(int, char * const[]),
 			   int argc, char *const argv[])
 {
 	return entry(argc, argv);
