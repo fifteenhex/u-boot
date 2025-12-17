@@ -17,6 +17,7 @@
 
 	chosen {
 		tick-timer = &timer;
+		stdout-path = "/serial@ff008000:115200";
 	};
 
 	memory {
@@ -55,7 +56,6 @@
 		timer: timer@ff006000 {
 			compatible = "google,goldfish-timer";
 			reg = <0xff006000 0x18>;
-			u-boot,dm-pre-reloc;
 			interrupts-extended = <&pic5 0>;
 			status = "okay";
 		};
@@ -71,7 +71,7 @@
 			compatible = "google,goldfish-tty";
 			reg = <0xff008000 0x4>;
 			interrupts-extended = <&pic0 31>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 			status = "okay";
 		};
 
