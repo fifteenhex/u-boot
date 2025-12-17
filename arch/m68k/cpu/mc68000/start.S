@@ -238,17 +238,18 @@ bss_done:
 	/* initialize reserved area */
 	move.l	%d0, -(%sp)
 	move.l	#board_init_f_init_reserve, %a1
-	jsr		(%a1)
+	jsr (%a1)
 	__printch 'b'
 
 	/* run low-level CPU init code (from flash) */
-	bsr		cpu_init_f
+	move.l #cpu_init_f, %a1
+	jsr	(%a1)
 	clr.l	%sp@-
 	__printch 'c'
 
 	/* run low-level board init code (from flash) */
 	move.l	#board_init_f, %a1
-	jsr		(%a1)
+	jsr	(%a1)
 	__printch 'd'
 
 	/* board_init_f() does not return unless we didn't relocate*/
@@ -289,7 +290,8 @@ _int_sled_\num:
 	movel	#\group,%sp@-
 	/* push vector number on stack */
 	movel	#\num,%sp@-
-	jbsr	\func
+	movel	#\func, %a1
+	jsr	(%a1)
 	/* pop stack */
 	addl	#12,%sp
 	RESTORE_ALL
