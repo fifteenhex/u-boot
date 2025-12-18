@@ -12,6 +12,7 @@ obj-$(CONFIG_CMD_BOOTM) += bootm.o
 ifeq ($(CONFIG_MC68000),y)
 obj-y	+= cache_mc68000.o
 obj-y	+= interrupts_mc68000.o
+obj-y	+= lmb.o
 else
 obj-y	+= cache.o
 obj-y	+= interrupts.o
