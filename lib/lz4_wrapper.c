@@ -9,6 +9,7 @@
 #include <linux/types.h>
 #include <asm/unaligned.h>
 #include <u-boot/lz4.h>
+#include <cyclic.h>
 
 /* lz4.c is unaltered (except removing unrelated code) from github.com/Cyan4973/lz4. */
 #include "lz4.c"	/* #include for inlining, do not link! */
@@ -63,6 +64,8 @@ __rcode int ulz4fn(const void *src, size_t srcn, void *dst, size_t *dstn)
 
 	while (1) {
 		u32 block_header, block_size;
+
+		schedule();
 
 		block_header = get_unaligned_le32(in);
 		in += sizeof(u32);
