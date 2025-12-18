@@ -7,6 +7,9 @@ config SYS_ARCH
 config STATIC_RELA
 	default y
 
+config M68K_HAVE_VBAR
+	bool
+
 # processor family
 config MCF520x
 	select OF_CONTROL
