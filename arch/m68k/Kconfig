@@ -10,6 +10,9 @@ config STATIC_RELA
 config M68K_HAVE_VBAR
 	bool
 
+config M68K_HAVE_BOOTINFO
+	bool
+
 # processor family
 config MCF520x
 	select OF_CONTROL
