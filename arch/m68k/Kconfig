@@ -159,6 +159,13 @@ config MC68030
 	select M68K_HAVE_VBAR
 	select M68K_HAVE_BOOTINFO
 
+config MC68040
+	bool
+#	select MC680x0
+	select MC68000
+	select M68K_HAVE_VBAR
+	select M68K_HAVE_BOOTINFO
+
 # peripherals
 config CF_DSPI
 	bool
