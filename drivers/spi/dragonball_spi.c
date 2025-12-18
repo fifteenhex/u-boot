@@ -224,7 +224,7 @@ static int dragonball_spi_xfer(struct udevice *slave, unsigned int bitlen,
 	if (flags & SPI_XFER_BEGIN) {
 		/* make sure mosi is high before cs */
 		writew(0xffff, priv->base + REG_DATA);
-		ret = dragonball_spi_set_cs(bus, slave_plat->cs, true);
+		ret = dragonball_spi_set_cs(bus, slave_plat->cs[0], true);
 		udelay(10);
 		if (ret)
 			return ret;
@@ -288,7 +288,7 @@ static int dragonball_spi_xfer(struct udevice *slave, unsigned int bitlen,
 	if (flags & SPI_XFER_END) {
 		/* make sure mosi is high before cs */
 		writew(0xffff, priv->base + REG_DATA);
-		ret = dragonball_spi_set_cs(bus, slave_plat->cs, false);
+		ret = dragonball_spi_set_cs(bus, slave_plat->cs[0], false);
 		if (ret)
 			return ret;
 		udelay(10);
