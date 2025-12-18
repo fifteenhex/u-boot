@@ -148,6 +148,10 @@ config M54418
 #	bool
 #	select MC680x0
 
+config MC68020
+	bool
+#	select MC680x0
+
 config MC68030
 	bool
 #	select MC680x0
