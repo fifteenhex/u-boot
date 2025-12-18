@@ -7,6 +7,9 @@ config SYS_ARCH
 config STATIC_RELA
 	default y
 
+config M68K_HAVE_BOOTINFO
+	bool
+
 # processor family
 config MCF520x
 	select OF_CONTROL
@@ -199,6 +202,7 @@ config TARGET_QEMU_M68K
 	select M68040
 	select BOARD_EARLY_INIT_R
 	select VIRTIO_MMIO
+	select HAVE_BOOTINFO
 	imply CMD_DM
 	help
 	  This target supports the QEMU m68k virtual machine (-M virt).
