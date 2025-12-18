@@ -14,6 +14,7 @@ config M68K_HAVE_BOOTINFO
 	bool
 
 # processor family
+#config MC680x0
 config MC68000
 	bool
 	select OF_CONTROL
@@ -142,6 +143,10 @@ config M5373
 config M54418
 	bool
 	select MCF5441x
+
+#config MC68000
+#	bool
+#	select MC680x0
 
 config MC68030
 	bool
