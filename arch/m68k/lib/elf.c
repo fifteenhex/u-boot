@@ -8,7 +8,7 @@ DECLARE_GLOBAL_DATA_PTR;
 extern void m68k_create_bootinfo(void *dst);
 
 unsigned long bootelf_exec(ulong (*entry)(int, char * const[]),
-			   int argc, char *const argv[])
+			   unsigned long end, int argc, char *const argv[])
 {
 	unsigned long ret;
 
