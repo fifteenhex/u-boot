@@ -25,9 +25,9 @@
  * May by used to allow ports to override the default behavior.
  */
 unsigned long bootelf_exec(ulong (*entry)(int, char * const[]),
-			   int argc, char *const argv[]) __attribute__((weak));
+			   unsigned long end, int argc, char *const argv[]) __attribute__((weak));
 unsigned long bootelf_exec(ulong (*entry)(int, char * const[]),
-			   int argc, char *const argv[])
+			   unsigned long end, int argc, char *const argv[])
 {
 	return entry(argc, argv);
 }
@@ -70,7 +70,7 @@ unsigned long bootelf(unsigned long addr, Bootelf_flags flags,
 		argv = args;
 	}
 
-	return bootelf_exec((void *)entry_addr, argc, argv);
+	return bootelf_exec((void *)entry_addr, end, argc, argv);
 }
 
 static int elf_check_lmb(void *dst, size_t len)
