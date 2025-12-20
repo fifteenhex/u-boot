@@ -43,6 +43,17 @@ void dcache_invalid(void)
 }
 #endif
 
+__weak void flush_dcache_all(void)
+{
+        flush_dcache_range(0, ~0);
+}
+
+__weak void invalidate_icache_all(void)
+{
+	//
+}
+
+
 __weak void invalidate_dcache_range(unsigned long start, unsigned long stop)
 {
 	/* An empty stub, real implementation should be in platform code */
