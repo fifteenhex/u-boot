@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <net.h>
 #include <vxworks.h>
+#include <lmb.h>
 #ifdef CONFIG_X86
 #include <vesa.h>
 #include <asm/e820.h>
@@ -69,6 +70,25 @@ unsigned long bootelf(unsigned long addr, Bootelf_flags flags,
 	return bootelf_exec((void *)entry_addr, argc, argv);
 }
 
+static int elf_check_lmb(void *dst, size_t len)
+{
+#ifdef CONFIG_LMB
+	int ret = lmb_alloc_mem(LMB_MEM_ALLOC_ADDR, 0, (phys_addr_t *) dst, len, LMB_NONE);
+
+	if (ret) {
+		printf("ELF overwrites reserved memory: 0x%p -> 0x%p: %d\n",
+			dst, dst + len, ret);
+
+		//return -ENOMEM;
+		return 0;
+	}
+
+	lmb_free((phys_addr_t) dst, len, LMB_NONE);
+#endif
+
+	return 0;
+}
+
 /*
  * A very simple ELF64 loader, assumes the image is valid, returns the
  * entry point address.
@@ -96,6 +116,10 @@ unsigned long load_elf64_image_phdr(unsigned long addr)
 
 		debug("Loading phdr %i to 0x%p (%lu bytes)\n",
 		      i, dst, (ulong)phdr->p_filesz);
+
+		if (elf_check_lmb(dst, phdr->p_memsz))
+			return 0;
+
 		if (phdr->p_filesz)
 			memcpy(dst, src, phdr->p_filesz);
 		if (phdr->p_filesz != phdr->p_memsz)
@@ -139,6 +163,8 @@ unsigned long load_elf64_image_shdr(unsigned long addr)
 
 	/* Load each appropriate section */
 	for (i = 0; i < ehdr->e_shnum; ++i) {
+		void *dst;
+
 		shdr = (Elf64_Shdr *)(addr + (ulong)ehdr->e_shoff +
 				     (i * sizeof(Elf64_Shdr)));
 
@@ -155,13 +181,15 @@ unsigned long load_elf64_image_shdr(unsigned long addr)
 			       (long)shdr->sh_size);
 		}
 
+		dst = (void *)(uintptr_t)shdr->sh_addr;
+		if (elf_check_lmb(dst, shdr->sh_size))
+			return 0;
+
 		if (shdr->sh_type == SHT_NOBITS) {
-			memset((void *)(uintptr_t)shdr->sh_addr, 0,
-			       shdr->sh_size);
+			memset(dst, 0, shdr->sh_size);
 		} else {
 			image = (unsigned char *)addr + (ulong)shdr->sh_offset;
-			memcpy((void *)(uintptr_t)shdr->sh_addr,
-			       (const void *)image, shdr->sh_size);
+			memcpy(dst, (const void *)image, shdr->sh_size);
 		}
 		flush_cache(rounddown(shdr->sh_addr, ARCH_DMA_MINALIGN),
 			    roundup((shdr->sh_addr + shdr->sh_size),
@@ -214,6 +242,10 @@ unsigned long load_elf_image_phdr(unsigned long addr)
 
 		debug("Loading phdr %i to 0x%p (%i bytes)\n",
 		      i, dst, phdr->p_filesz);
+
+		if (elf_check_lmb(dst, phdr->p_memsz))
+			return 0;
+
 		if (phdr->p_filesz)
 			memcpy(dst, src, phdr->p_filesz);
 		if (phdr->p_filesz != phdr->p_memsz)
@@ -247,6 +279,8 @@ unsigned long load_elf_image_shdr(unsigned long addr)
 
 	/* Load each appropriate section */
 	for (i = 0; i < ehdr->e_shnum; ++i) {
+		void *dst;
+
 		shdr = (Elf32_Shdr *)(addr + ehdr->e_shoff +
 				     (i * sizeof(Elf32_Shdr)));
 
@@ -263,13 +297,15 @@ unsigned long load_elf_image_shdr(unsigned long addr)
 			       (long)shdr->sh_size);
 		}
 
+		dst = (void *)(uintptr_t)shdr->sh_addr;
+		if (elf_check_lmb(dst, shdr->sh_size))
+			return 0;
+
 		if (shdr->sh_type == SHT_NOBITS) {
-			memset((void *)(uintptr_t)shdr->sh_addr, 0,
-			       shdr->sh_size);
+			memset(dst, 0, shdr->sh_size);
 		} else {
 			image = (unsigned char *)addr + shdr->sh_offset;
-			memcpy((void *)(uintptr_t)shdr->sh_addr,
-			       (const void *)image, shdr->sh_size);
+			memcpy(dst, (const void *)image, shdr->sh_size);
 		}
 		flush_cache(rounddown(shdr->sh_addr, ARCH_DMA_MINALIGN),
 			    roundup((shdr->sh_addr + shdr->sh_size),
