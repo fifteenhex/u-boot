@@ -119,6 +119,9 @@ unsigned long load_elf64_image_phdr(unsigned long addr)
 	Elf64_Ehdr *ehdr; /* Elf header structure pointer */
 	Elf64_Phdr *phdr; /* Program header structure pointer */
 	int i;
+#ifdef CONFIG_LMB
+	//lmb_init_and_reserve(&lmb, gd->bd, (void *)gd->fdt_blob);
+#endif
 	elf_reserve_self((void *) addr, 0x3F5C1C);
 
 	ehdr = (Elf64_Ehdr *)addr;
@@ -172,6 +175,9 @@ unsigned long load_elf64_image_shdr(unsigned long addr)
 	unsigned char *strtab = 0; /* String table pointer */
 	unsigned char *image; /* Binary image pointer */
 	int i; /* Loop counter */
+#ifdef CONFIG_LMB
+	//lmb_init_and_reserve(&lmb, gd->bd, (void *)gd->fdt_blob);
+#endif
 	elf_reserve_self((void *) addr, 0x3F5C1C);
 
 	ehdr = (Elf64_Ehdr *)addr;
@@ -248,6 +254,9 @@ unsigned long load_elf_image_phdr(unsigned long addr)
 	Elf32_Ehdr *ehdr; /* Elf header structure pointer */
 	Elf32_Phdr *phdr; /* Program header structure pointer */
 	int i;
+#ifdef CONFIG_LMB
+	//lmb_init_and_reserve(&lmb, gd->bd, (void *)gd->fdt_blob);
+#endif
 	elf_reserve_self((void *) addr, 0x3F5C1C);
 
 	ehdr = (Elf32_Ehdr *)addr;
@@ -292,6 +301,9 @@ unsigned long load_elf_image_shdr(unsigned long addr)
 	unsigned char *strtab = 0; /* String table pointer */
 	unsigned char *image; /* Binary image pointer */
 	int i; /* Loop counter */
+#ifdef CONFIG_LMB
+	//lmb_init_and_reserve(&lmb, gd->bd, (void *)gd->fdt_blob);
+#endif
 	elf_reserve_self((void *) addr, 0x3F5C1C);
 
 	ehdr = (Elf32_Ehdr *)addr;
