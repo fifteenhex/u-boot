@@ -53,10 +53,14 @@ int dragonball_pll_beastmode(struct udevice *plldev,
 			     struct udevice *timerdev,
 			     struct udevice *intcdev);
 
+extern void m68k_lmb_protect_vectors(void);
+
 int board_early_init_r(void)
 {
 	struct udevice *intcdev, *timerdev, *plldev;
 	int node, ret;
+
+	m68k_lmb_protect_vectors();
 
 	/* Lets get things cooking, bump up the cpu clock... */
 	node = fdt_node_offset_by_compatible(gd->fdt_blob, -1, "motorola,mc68ez328-intc");
