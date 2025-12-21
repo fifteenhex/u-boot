@@ -14,7 +14,7 @@ _initial_sp:
 	 */
 	jmp		0x400			/* Initial stack pointer */
 _initial_pc:
-	.long	0x400			/* Start of program Code */
+	.long (CFG_SYS_FLASH_BASE + _start)	/* Start of program Code */
 	.balign 0x400
 
 .text
