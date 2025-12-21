@@ -89,6 +89,24 @@ static int elf_check_lmb(void *dst, size_t len)
 	return 0;
 }
 
+static bool elf_reserve_self(void *addr, size_t len)
+{
+#ifdef CONFIG_LMB
+	int ret = lmb_alloc_mem(LMB_MEM_ALLOC_ADDR, 0, addr, len, LMB_NONE);
+	if (ret)
+		return true;
+#endif
+
+	return false;
+}
+
+static void elf_free_self(void *addr, size_t len)
+{
+#ifdef CONFIG_LMB
+	lmb_free((phys_addr_t) addr, len, LMB_NONE);
+#endif
+}
+
 /*
  * A very simple ELF64 loader, assumes the image is valid, returns the
  * entry point address.
@@ -101,6 +119,7 @@ unsigned long load_elf64_image_phdr(unsigned long addr)
 	Elf64_Ehdr *ehdr; /* Elf header structure pointer */
 	Elf64_Phdr *phdr; /* Program header structure pointer */
 	int i;
+	elf_reserve_self((void *) addr, 0x3F5C1C);
 
 	ehdr = (Elf64_Ehdr *)addr;
 	phdr = (Elf64_Phdr *)(addr + (ulong)ehdr->e_phoff);
@@ -129,6 +148,8 @@ unsigned long load_elf64_image_phdr(unsigned long addr)
 			    roundup(phdr->p_memsz, ARCH_DMA_MINALIGN));
 	}
 
+	elf_free_self((void *) addr, 0x3F5C1C);
+
 	if (ehdr->e_machine == EM_PPC64 && (ehdr->e_flags &
 					    EF_PPC64_ELFV1_ABI)) {
 		/*
@@ -151,6 +172,7 @@ unsigned long load_elf64_image_shdr(unsigned long addr)
 	unsigned char *strtab = 0; /* String table pointer */
 	unsigned char *image; /* Binary image pointer */
 	int i; /* Loop counter */
+	elf_reserve_self((void *) addr, 0x3F5C1C);
 
 	ehdr = (Elf64_Ehdr *)addr;
 
@@ -197,6 +219,8 @@ unsigned long load_elf64_image_shdr(unsigned long addr)
 				rounddown(shdr->sh_addr, ARCH_DMA_MINALIGN));
 	}
 
+	elf_free_self((void *) addr, 0x3F5C1C);
+
 	if (ehdr->e_machine == EM_PPC64 && (ehdr->e_flags &
 					    EF_PPC64_ELFV1_ABI)) {
 		/*
@@ -224,6 +248,7 @@ unsigned long load_elf_image_phdr(unsigned long addr)
 	Elf32_Ehdr *ehdr; /* Elf header structure pointer */
 	Elf32_Phdr *phdr; /* Program header structure pointer */
 	int i;
+	elf_reserve_self((void *) addr, 0x3F5C1C);
 
 	ehdr = (Elf32_Ehdr *)addr;
 	if (ehdr->e_ident[EI_CLASS] == ELFCLASS64)
@@ -255,6 +280,8 @@ unsigned long load_elf_image_phdr(unsigned long addr)
 			    roundup(phdr->p_memsz, ARCH_DMA_MINALIGN));
 	}
 
+	elf_free_self((void *) addr, 0x3F5C1C);
+
 	return ehdr->e_entry;
 }
 
@@ -265,6 +292,7 @@ unsigned long load_elf_image_shdr(unsigned long addr)
 	unsigned char *strtab = 0; /* String table pointer */
 	unsigned char *image; /* Binary image pointer */
 	int i; /* Loop counter */
+	elf_reserve_self((void *) addr, 0x3F5C1C);
 
 	ehdr = (Elf32_Ehdr *)addr;
 	if (ehdr->e_ident[EI_CLASS] == ELFCLASS64)
@@ -312,6 +340,8 @@ unsigned long load_elf_image_shdr(unsigned long addr)
 				    ARCH_DMA_MINALIGN) -
 			    rounddown(shdr->sh_addr, ARCH_DMA_MINALIGN));
 	}
+
+	elf_free_self((void *) addr, 0x3F5C1C);
 
 	return ehdr->e_entry;
 }
