@@ -78,3 +78,13 @@ int dcache_status(void)
 	else
 		return 0;
 }
+
+void flush_cache(unsigned long addr, unsigned long size)
+{
+
+}
+
+void flush_dcache_range(unsigned long start, unsigned long stop)
+{
+
+}
