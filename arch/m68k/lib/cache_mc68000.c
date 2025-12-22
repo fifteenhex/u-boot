@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #if defined(CONFIG_MC68030) || defined(CONFIG_MC68040) || defined(CONFIG_TARGET_QEMU)
+/* Propery functions will be provided elsewhere */
 #else
 void icache_enable(void)
 {
@@ -41,24 +42,23 @@ void icache_invalid(void)
 void dcache_invalid(void)
 {
 }
-#endif
 
-__weak void flush_dcache_all(void)
+void flush_dcache_all(void)
 {
         flush_dcache_range(0, ~0);
 }
 
-__weak void invalidate_icache_all(void)
+void invalidate_icache_all(void)
 {
 	//
 }
 
-
-__weak void invalidate_dcache_range(unsigned long start, unsigned long stop)
+void invalidate_dcache_range(unsigned long start, unsigned long stop)
 {
 	/* An empty stub, real implementation should be in platform code */
 }
-__weak void flush_dcache_range(unsigned long start, unsigned long stop)
+
+void flush_dcache_range(unsigned long start, unsigned long stop)
 {
 	/* An empty stub, real implementation should be in platform code */
 }
@@ -66,3 +66,4 @@ __weak void flush_dcache_range(unsigned long start, unsigned long stop)
 void flush_cache(ulong start_addr, ulong size)
 {
 }
+#endif
