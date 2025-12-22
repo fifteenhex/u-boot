@@ -49,7 +49,7 @@ void icache_enable_mc68030(void)
 
 void icache_disable_mc68030(void)
 {
-	mc68030_set_cacr(mc68030_get_cacr() & MC68030_CACR_CI);
+	mc68030_set_cacr(mc68030_get_cacr() | MC68030_CACR_CI);
 	mc68030_set_cacr(mc68030_get_cacr() & ~MC68030_CACR_EI);
 }
 
@@ -65,7 +65,7 @@ void dcache_enable_mc68030(void)
 
 void dcache_disable_mc68030(void)
 {
-	mc68030_set_cacr(mc68030_get_cacr() & MC68030_CACR_CD);
+	mc68030_set_cacr(mc68030_get_cacr() | MC68030_CACR_CD);
 	mc68030_set_cacr(mc68030_get_cacr() & ~MC68030_CACR_ED);
 }
 
@@ -104,6 +104,19 @@ int dcache_status_mc68030(void)
 	return (mc68030_get_cacr() & MC68030_CACR_ED) ? 1 : 0;
 }
 
+void invalidate_dcache_all_mc68030(void)
+{
+	mc68030_set_cacr(mc68030_get_cacr() | MC68030_CACR_CD);
+}
+
+void flush_dcache_all_mc68030(void)
+{
+}
+
+void invalidate_icache_all_mc68030(void)
+{
+	mc68030_set_cacr(mc68030_get_cacr() | MC68030_CACR_CI);
+}
 #if !defined(CONFIG_TARGET_QEMU)
 void icache_enable(void)
 {
@@ -133,5 +146,35 @@ void dcache_disable(void)
 int dcache_status(void)
 {
 	return dcache_status_mc68030();
+}
+
+void invalidate_dcache_all(void)
+{
+	invalidate_dcache_all_mc68030();
+}
+
+void invalidate_dcache_range(unsigned long start, unsigned long stop)
+{
+	invalidate_dcache_all();
+}
+
+void flush_dcache_all(void)
+{
+	flush_dcache_all_mc68030();
+}
+
+void flush_dcache_range(unsigned long start, unsigned long stop)
+{
+	flush_dcache_all();
+}
+
+void invalidate_icache_all(void)
+{
+	invalidate_icache_all_mc68030();
+}
+
+void flush_cache(unsigned long addr, unsigned long size)
+{
+	flush_dcache_all();
 }
 #endif
