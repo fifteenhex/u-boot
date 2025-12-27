@@ -118,7 +118,7 @@ int dragonball_pll_beastmode(struct udevice *plldev,
 	u16 pllcr = readw(priv->base + REG_PLLCR);
 	u16 pllfsr = readw(priv->base + REG_PLLFSR);
 
-	//return 0;
+	return 0;
 
 	/* Disable the by 2 divider on the VCO output */
 	pllcr &= ~(SYSCLK_PRESC_MASK << SYSCLK_PRESC_SHIFT);
