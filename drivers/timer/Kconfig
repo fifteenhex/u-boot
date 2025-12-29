@@ -348,4 +348,10 @@ config GOLDFISH_TIMER
 	  It uses the Goldfish RTC hardware to provide a nanosecond-resolution
 	  timer, commonly found in QEMU virt machines.
 
+config DRAGONBALL_TIMER
+	bool "DragonBall timer support"
+	depends on TIMER
+	help
+	  DragonBall timer
+
 endmenu
