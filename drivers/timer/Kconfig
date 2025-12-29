@@ -347,4 +347,10 @@ config STARFIVE_TIMER
 	  Select this to enable support for the timer found on
 	  Starfive SoC.
 
+config DRAGONBALL_TIMER
+	bool "DragonBall timer support"
+	depends on TIMER
+	help
+	  DragonBall timer
+
 endmenu
