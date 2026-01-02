@@ -62,6 +62,11 @@ static int goldfish_timer_probe(struct udevice *dev)
 	return 0;
 }
 
+static const struct udevice_id goldfish_timer_ids[] = {
+	{ .compatible = "google,goldfish-timer" },
+	{ }
+};
+
 static const struct timer_ops goldfish_timer_ops = {
 	.get_count = goldfish_timer_get_count,
 };
@@ -69,6 +74,7 @@ static const struct timer_ops goldfish_timer_ops = {
 U_BOOT_DRIVER(goldfish_timer) = {
 	.name	= "goldfish_timer",
 	.id	= UCLASS_TIMER,
+	.of_match = goldfish_timer_ids,
 	.ops	= &goldfish_timer_ops,
 	.probe	= goldfish_timer_probe,
 	.plat_auto = sizeof(struct goldfish_timer_plat),
