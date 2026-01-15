@@ -267,6 +267,10 @@ config TARGET_MC68EZ328SBC
 	select MC68EZ328
 	select SPL
 
+config TARGET_MEGADRIVE
+	bool "Support Sega Megadrive"
+	select MC68000
+
 config TARGET_MVME147
 	bool "Support Motorola MVME147"
 	select MC68000
@@ -324,6 +328,7 @@ source "board/freescale/m5282evb/Kconfig"
 source "board/freescale/m53017evb/Kconfig"
 source "board/freescale/m5329evb/Kconfig"
 source "board/freescale/m5373evb/Kconfig"
+source "board/sega/megadrive/Kconfig"
 source "board/sysam/amcore/Kconfig"
 source "board/sysam/stmark2/Kconfig"
 source "board/qemu/virt-m68k/Kconfig"

@@ -1,0 +1,15 @@
+if TARGET_MEGADRIVE
+
+config SYS_CPU
+	default "mc68000"
+
+config SYS_BOARD
+	default "megadrive"
+
+config SYS_VENDOR
+	default "sega"
+
+config SYS_CONFIG_NAME
+	default "megadrive"
+
+endif

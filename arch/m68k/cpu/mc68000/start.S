@@ -100,6 +100,21 @@ intc_vect_7:
 	.long	dummy_intc_handler
 #endif
 
+
+
+#ifdef CONFIG_TARGET_MEGADRIVE
+. = 0x100
+.ascii "SEGA SSF        "
+.ascii "(C)SEGA 2026.JAN"
+.ascii "u-boot                                          "
+.ascii "u-boot                                          "
+.ascii "GM MK-0000 -00"
+.word 0x0000
+.ascii "J             "
+.long 0x00000000, 0x003FFFFF
+.long 0x00FF0000, 0x00FFFFFF
+#endif
+
 .balign 0x400
 #endif
 
@@ -180,6 +195,7 @@ ___xxx__:
 	__putch '7'
 	__putch '\r'
 	__putch '\n'
+#elif defined(CONFIG_TARGET_MEGADRIVE)
 #else
 #error "Make sure your target is handled properly in start.S"
 #endif
