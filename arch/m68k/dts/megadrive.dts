@@ -1,0 +1,43 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ */
+
+/dts-v1/;
+#include "mc68000.dtsi"
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	compatible = "sega,megadrive";
+
+	memory {
+		device_type = "memory";
+		reg = <0x0 0x400000>;
+	};
+
+
+	aliases {
+		serial0 = &uart0;
+	};
+
+	chosen {
+		stdout-path = "/serial@fffff900:115200";
+		tick-timer = &timer0;
+	};
+
+	uart0: serial@fffff900 {
+		compatible = "krikzz,everdrive-serial";
+		reg = <0xfffff900 0xc>;
+		u-boot,dm-pre-reloc;
+		status = "okay";
+	};
+
+	//soc {
+			timer0: timer@a130d6 {
+			compatible = "krikzz,everdrive-timer";
+			reg = <0xa130d6 0x2>;
+			u-boot,dm-pre-reloc;
+			status = "okay";
+		};
+	//};
+};
