@@ -530,6 +530,11 @@ config DEBUG_CD2401_SERIAL
 	help
 	  CD2401
 
+config DEBUG_EVERDRIVE_SERIAL
+	bool "everdrive"
+	help
+	  Everdrive
+
 endchoice
 
 config DEBUG_UART_BASE

@@ -67,3 +67,5 @@ obj-$(CONFIG_SCC_SERIAL) += serial_scc.o
 obj-$(CONFIG_CD2401_SERIAL) += serial_cd2401.o
 
 obj-$(CONFIG_UART4_SERIAL) += serial_adi_uart4.o
+
+obj-$(CONFIG_TARGET_MEGADRIVE) += serial_everdrive.o
