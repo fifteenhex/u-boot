@@ -6,9 +6,12 @@
 #include <fdtdec.h>
 #include <cpu_func.h>
 #include <dm/uclass.h>
+#include <dm/lists.h>
+#include <dm/device-internal.h>
 #include <serial.h>
+#include <video_console.h>
 
-#include "vdp.h"
+#include <asm/vdp.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -53,7 +56,20 @@ int board_fix_fdt(void *fdt)
 
 int board_early_init_r(void)
 {
+	struct udevice *con;
+	int ret;
+
 	vdp_init();
+
+
+	ret = device_bind_driver(NULL, "vdpconsole", "vdpcon0", &con);
+	if (ret)
+		printf("failed to create vdp console %d\n", ret);
+	ret = device_probe(con);
+	if (ret)
+		printf("failed to probe console: %d\n", ret);
+
+	vidconsole_put_string(con, "VDP console on!\n");
 
 	return 0;
 }

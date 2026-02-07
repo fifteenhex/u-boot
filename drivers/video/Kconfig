@@ -239,6 +239,9 @@ config CONSOLE_TRUETYPE_MAX_METRICS
 	  font metrics which are expensive to regenerate each time the font
 	  size changes.
 
+config CONSOLE_VDP
+	bool "Sega Megadrive VDP console"
+
 config SYS_WHITE_ON_BLACK
 	bool "Display console as white on a black background"
 	default y if ARCH_AT91 || ARCH_EXYNOS || ARCH_ROCKCHIP || ARCH_TEGRA || X86 || ARCH_SUNXI

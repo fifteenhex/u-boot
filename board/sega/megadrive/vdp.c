@@ -3,6 +3,7 @@
  */
 
 #include <asm/io.h>
+#include <asm/vdp.h>
 #include <command.h>
 #include <linux/bitops.h>
 #include <string.h>
@@ -18,6 +19,7 @@
 #define VDP_CTRL_CD5	BIT(7))
 
 #define VDP_REG_MODE1			0x00
+#define VDP_MODE1_M4			BIT(2)
 #define VDP_REG_MODE2			0x01
 #define VDP_MODE2_M5			BIT(2)
 #define VDP_MODE2_DE			BIT(6)
@@ -41,11 +43,7 @@
 #define VDP_REG_DMA_SRC_M		0x16
 #define VDP_REG_DMA_SRC_H		0x17
 
-#define VRAM_WINDOW			0xB000
-#define VRAM_PLANE_A			0xC000
-#define VRAM_PLANE_B			0xE000
-#define VRAM_SPRITE_TABLE		0xF000
-#define VRAM_HSCROLL			0xF800
+#define WORDS_PER_TILE			16
 
 static inline void vdp_register_set(u8 reg, u8 value)
 {
@@ -62,7 +60,23 @@ static inline void vdp_cram_set_addr(u16 addr) {
 	writel(v, VDP_CTRL);
 }
 
-static inline void vdp_data_write(uint16_t value)
+static inline void vdp_vram_set_addr(u16 addr)
+{
+	u32 _addr = addr;
+	u32 v;
+
+	v = (_addr & 0x3fff) << 16;
+	v |= (_addr & 0xc000) >> 14;
+
+	/* write */
+	v |=  VDP_CTRL_CD0;
+
+	writel(v, VDP_CTRL);
+}
+
+#define VDP_VRAM_WRITE(addr)    ((0x4000 | (((addr) & 0x3FFF) << 0)) | (((addr) & 0xC000) >> 14))
+
+static inline void vdp_data_write(u16 value)
 {
 	writew(value, VDP_DATA);
 }
@@ -82,16 +96,72 @@ static inline u16 vdp_status(void)
 	return readw(VDP_CTRL);
 }
 
-
 static const u16 palette[16] = {
-	0xffff, 0xffff, 0xffff, 0xffff,
+	0x0000, 0xffff, 0xffff, 0xffff,
 	0xffff, 0xffff, 0xffff, 0xffff,
 	0xffff, 0xffff, 0xffff, 0xffff,
 	0xffff, 0xffff, 0xffff, 0xffff,
 };
+
+void vdp_set_tile(u16 plane_addr, u8 plane_index, u8 tile_index)
+{
+	uint16_t tmp;
+
+	tmp = tile_index;
+
+	vdp_vram_set_addr(plane_addr + (plane_index * 2));
+	vdp_data_write(tmp);
+}
+
+static inline void vdp_upload_tile(unsigned int index, const u16 *src)
+{
+	int i;
+
+	vdp_vram_set_addr(32 * index);
+	for (i = 0; i < WORDS_PER_TILE; i++)
+		vdp_data_write(*src++);
+}
+
+static inline void vdp_fontch_to_tile(const u8 *src, u16 *dst)
+{
+	int i, j;
+
+	for (i = 0; i < 8; i++)
+	{
+		uint32_t row = 0;
+		/* The font is 1bpp so check each bit */
+		for (j = 0; j < 8; j++) {
+			if ((src[i] >> j) & 1) {
+				/* The tile is 4bpp so shift left by 4 */
+				row |= (0xf << (j * 4));
+			}
+		}
+		//printf("0x%08x\n", (unsigned) row);
+
+		/* split the words and jam um in dst */
+		dst[i * 2] = (row >> 16) & 0xffff;
+		dst[(i * 2) + 1] = row & 0xffff;
+	}
+
+}
+
+extern const u8 vdp_font[];
+
+static void vdp_puts(const char *str)
+{
+	int i;
+
+	for (i = 0; *str; i++) {
+		char ch = *str++;
+		vdp_set_tile(VRAM_PLANE_B, i, ch);
+	}
+}
+
 void vdp_init(void)
 {
-	printf("%s:%d\n", __func__, __LINE__);
+	uint16_t tmp_tile[WORDS_PER_TILE];
+	int i;
+
 	vdp_register_set(VDP_REG_INC, 2);
 
 	vdp_palette_upload(0, palette);
@@ -99,28 +169,36 @@ void vdp_init(void)
 	vdp_palette_upload(2, palette);
 	vdp_palette_upload(3, palette);
 
-	vdp_register_set(VDP_REG_MODE1, 0);
+	/* Setup the addresses for the planes etc */
 	vdp_register_set(VDP_REG_PLANE_A_ADDR, VRAM_PLANE_A >> 10);
 	vdp_register_set(VDP_REG_PLANE_B_ADDR, VRAM_PLANE_B >> 13);
 	vdp_register_set(VDP_REG_WINDOW_ADDR, VRAM_WINDOW >> 10);
 	vdp_register_set(VDP_REG_SPRITE_ADDR, VRAM_SPRITE_TABLE >> 9);
 	vdp_register_set(VDP_REG_HSCROLL_ADDR, VRAM_HSCROLL >> 10);
 
+
+	vdp_register_set(VDP_REG_MODE1, VDP_MODE1_M4);
+	vdp_register_set(VDP_REG_MODE2, VDP_MODE2_M5 | VDP_MODE2_DE);
 	vdp_register_set(VDP_REG_BG_COLOR, 0x00);
 
-	vdp_register_set(VDP_REG_MODE2, VDP_MODE2_M5 | VDP_MODE2_DE);
-
-	printf("%s:%d\n", __func__, __LINE__);
+	for (i = 0; i < 255; i++) {
+		vdp_fontch_to_tile(vdp_font + (i * 8), tmp_tile);
+		vdp_upload_tile(i, tmp_tile);
+	}
 }
 
 enum vdp_cmd_target {
+	VDP_VRAM,
 	VDP_CRAM,
 	VDP_UNKNOWN,
 };
 
 static enum vdp_cmd_target vdp_string_to_target(const char* str)
 {
-	if (strcmp(str, "cram") == 0) {
+	if (strcmp(str, "vram") == 0) {
+		return VDP_VRAM;
+	}
+	else if (strcmp(str, "cram") == 0) {
 		return VDP_CRAM;
 	}
 
@@ -147,13 +225,22 @@ static int do_vdp(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	if(strcmp(action, "set") == 0) {
 		printf("set\n");
-		if (vdp_string_to_target(argv[2]) == VDP_CRAM) {
-			addr = simple_strtoul(addrstr, NULL, 0) & 0xffff;
-			value = simple_strtoul(valstr, NULL, 0) & 0xffff;
+		addr = simple_strtoul(addrstr, NULL, 0) & 0xffff;
+		value = simple_strtoul(valstr, NULL, 0) & 0xffff;
+		switch(vdp_string_to_target(argv[2])) {
+		case VDP_VRAM:
+			printf("vram 0x%04x, 0x%04x\n", (unsigned int) addr, (unsigned int) value);
+			vdp_vram_set_addr(addr);
+			vdp_data_write(value);
+			break;
+		case VDP_CRAM:
 			printf("cram 0x%04x, 0x%04x\n", (unsigned int) addr, (unsigned int) value);
-
 			vdp_cram_set_addr(addr);
 			vdp_data_write(value);
+			break;
+		case VDP_UNKNOWN:
+			printf("dunno about that buddy\n");
+			break;
 		}
 	}
 
