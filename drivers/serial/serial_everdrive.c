@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0+
-/*
- * See: https://android.googlesource.com/platform/external/qemu/+/master/docs/GOLDFISH-VIRTUAL-HARDWARE.TXT
- */
 
 #include <debug_uart.h>
 #include <dm.h>
@@ -15,42 +12,85 @@
 #include <serial.h>
 #include <linux/io.h>
 
+#include <linux/delay.h>
+
+struct __attribute__((packed)) everdrive_cmd {
+	uint8_t preamble;
+	uint8_t _preable;
+	uint8_t cmd;
+	uint8_t _cmd;
+};
+
+#define CMD_PREAMBLE	'+'
+#define CMD_STATUS	0x10
+#define CMD_USB_WRITE	0x22
+#define CMD_FIFO_WRITE	0x23
+#define DEFINECMD(_cmd) { CMD_PREAMBLE, ~CMD_PREAMBLE, _cmd, ~_cmd };
+static const struct everdrive_cmd cmd_status = DEFINECMD(CMD_STATUS);
+static const struct everdrive_cmd cmd_usbwr = DEFINECMD(CMD_USB_WRITE);
+
+#define FIFO_CPU_RXF BIT(15)
+#define FIFO_RXF_MSK 0x7FF
+
+static inline void fifo_write(void *fifo, const u8 *src, unsigned int len)
+{
+	int i;
+
+	for (i = 0; i < len; i++)
+		writew(src[i], fifo);
+}
+
+static inline void fifo_read(void *fifo, u8 *dst, unsigned int len)
+{
+	int i;
+
+	for (i = 0; i < len; i++) {
+		while (!(readw(fifo + 2) & FIFO_RXF_MSK)) {
+			/* spin until there is something to read */
+		}
+		dst[i] = readw(fifo);
+	}
+}
+
+static inline void read_status(void *fifo)
+{
+	uint16_t status;
+
+	fifo_write(fifo, (u8*) &cmd_status, sizeof(cmd_status));
+	fifo_read(fifo, (u8*) &status, sizeof(status));
+
+	printf("status; 0x%04x\n", (unsigned) status);
+}
+
 struct serial_everdrive_priv {
-	unsigned int ver;
-	void *base;
-	u8 tmp[1];
+	void __iomem *base;
 };
 
 static int serial_everdrive_getc(struct udevice *dev)
 {
 	struct serial_everdrive_priv *priv = dev_get_priv(dev);
+	uint8_t ch;
+	uint16_t status;
 
-//	iowrite32(GOLDFISH_TTY_CMD_READ_BUFFER,
-//		  priv->base + GOLDFISH_TTY_REG_CMD);
+	fifo_read(priv->base, &ch, 1);
 
-//	return priv->tmp[0];
-	return 0;
+	return ch;
+}
+
+static void _serial_everdrive_putc(void *fifo, const unsigned char ch)
+{
+	uint16_t len = 1;
+
+	fifo_write(fifo, (u8*) &cmd_usbwr, sizeof(cmd_usbwr));
+	fifo_write(fifo, (u8*) &len, sizeof(len));
+	fifo_write(fifo, (u8*) &ch, sizeof(ch));
 }
 
 static int serial_everdrive_putc(struct udevice *dev, const unsigned char ch)
 {
 	struct serial_everdrive_priv *priv = dev_get_priv(dev);
 
-//	iowrite32(ch, priv->base);
-
-	void *out = (void*) CONFIG_DEBUG_UART_BASE;
-
-	iowrite16(0x2b, out);
-	iowrite16(0xd4, out);
-	iowrite16(0x22, out);
-	iowrite16(0xdd, out);
-
-	/* len */
-	iowrite16(0x00, out);
-	iowrite16(0x01, out);
-
-	/* Data */
-	iowrite16(ch, out);
+	_serial_everdrive_putc(priv->base, ch);
 
 	return 0;
 }
@@ -58,9 +98,10 @@ static int serial_everdrive_putc(struct udevice *dev, const unsigned char ch)
 static int serial_everdrive_pending(struct udevice *dev, bool input)
 {
 	struct serial_everdrive_priv *priv = dev_get_priv(dev);
-//	u32 ready = ioread32(priv->base + GOLDFISH_TTY_REG_BYTES_READY);
 
-//	return ready;
+	if(readw(priv->base + 2) & FIFO_RXF_MSK)
+		return 1;
+
 	return 0;
 }
 
@@ -73,29 +114,27 @@ static inline void _debug_uart_init(void)
 
 static inline void _debug_uart_putc(int ch)
 {
-	void *out = (void*) CONFIG_DEBUG_UART_BASE;
+	void *fifo = (void*) CONFIG_DEBUG_UART_BASE;
 
-	iowrite16(0x2b, out);
-	iowrite16(0xd4, out);
-	iowrite16(0x22, out);
-	iowrite16(0xdd, out);
-
-	/* len */
-	iowrite16(0x00, out);
-	iowrite16(0x01, out);
-
-	/* Data */
-	iowrite16(ch, out);
+	_serial_everdrive_putc(fifo, ch);
 }
 
 DEBUG_UART_FUNCS
 #endif
 
+static void fifo_gobble(void *fifo)
+{
+	while (readw(fifo + 2) & FIFO_RXF_MSK)
+		readw(fifo);
+}
+
 static int serial_everdrive_probe(struct udevice *dev)
 {
 	struct serial_everdrive_priv *priv = dev_get_priv(dev);
 
-	priv->base = (unsigned char*) dev_read_addr_ptr(dev);
+	priv->base = dev_read_addr_ptr(dev);
+
+	fifo_gobble(priv->base);
 
 	return 0;
 }

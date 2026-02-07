@@ -4,4 +4,4 @@
 		"kernel_addr_r=0x400000\0" \
 		"bootcmd=virtio scan; fatload virtio 1:1 ${kernel_addr_r} vmlinux.virt; bootelf ${kernel_addr_r}\0" \
 		"autostart=yes\0" \
-		"bootargs=console=ttyGF0 root=/dev/vda rootfstype=squashfs\0"
+		"bootargs=console=ttyGF0 root=/dev/vda rootfstype=squashfs init=/root/init\0"

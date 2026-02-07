@@ -30,6 +30,11 @@ void relocate_code(ulong start_addr_sp, gd_t *new_gd, ulong relocaddr)
 	sr = get_sr();
 
 
+	for (int i = 1; i < 8; i++) {
+		volatile u16 *mapper_ctrl = (u16*) 0xa130f0;
+		mapper_ctrl[i] = i;
+	}
+
 	printf("SR is 0x%04x\n", (unsigned short) sr);
 
 	/* Copy ourself to the new address */
@@ -37,6 +42,10 @@ void relocate_code(ulong start_addr_sp, gd_t *new_gd, ulong relocaddr)
 		void *dst = (void *)new_gd->relocaddr;
 		void *src = (void *)(new_gd->relocaddr - new_gd->reloc_off);
 		size_t len = new_gd->mon_len;
+
+		printf("copy from %p to %p, 0x%x bytes (reloc_off 0x%08x)\n",
+		       src, dst, len, (unsigned int) new_gd->reloc_off);
+
 		memcpy(dst, src, len);
 
 		printf("copied from %p to %p, 0x%x bytes (reloc_off 0x%08x)\n",

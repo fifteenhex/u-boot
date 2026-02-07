@@ -1,13 +1,5 @@
-//#define CFG_SYS_FLASH_BASE 0x800000
-#ifdef CONFIG_SPL_BUILD
-#define CFG_SYS_INIT_RAM_ADDR 0x400000
-#define CFG_SYS_INIT_RAM_SIZE 0x300000
-#else
 #define CFG_SYS_INIT_RAM_ADDR 0
-#define CFG_SYS_INIT_RAM_SIZE 0x100000
-#endif
-
-#define CFG_SYS_FLASH_BASE 0x10000000
+#define CFG_SYS_INIT_RAM_SIZE 0x400000
 
 #define CFG_EXTRA_ENV_SETTINGS \
 		"bootcmd=mmc rescan; fatload mmc 0:1 0x400 vmlinux.mc68ez328.lz4;" \

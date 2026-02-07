@@ -4,6 +4,7 @@
 #include <asm/dragonball/mc68ez328.h>
 #include <asm/mvme147/mvme147.h>
 #include <asm/e17/e17.h>
+#include <asm/megadrive.h>
 
 #define DEBUG
 
@@ -28,6 +29,21 @@
 	//beq 10b
 	//move.b #\val, (E17_SERIAL_TDR)
 	//move.b #0, (E17_SERIAL_TEOIR)
+#elif defined(CONFIG_TARGET_MEGADRIVE)
+#if 1
+	/* hdr */
+	move.w #0x2b, MEGADRIVE_EVERDRIVE_MAILBOX
+	move.w #0xd4, MEGADRIVE_EVERDRIVE_MAILBOX
+	move.w #0x22, MEGADRIVE_EVERDRIVE_MAILBOX
+	move.w #0xdd, MEGADRIVE_EVERDRIVE_MAILBOX
+
+	/* len */
+	move.w #0x00, MEGADRIVE_EVERDRIVE_MAILBOX
+	move.w #0x01, MEGADRIVE_EVERDRIVE_MAILBOX
+
+	/* Data */
+	move.w #\val, MEGADRIVE_EVERDRIVE_MAILBOX
+#endif
 #endif
 #endif
 .endm
@@ -66,13 +82,18 @@ _initial_sp:
 	 * than trying to execute whatever random garbage is in memory.
 	 */
 	// trap #1					/* Initial stack pointer */
-	 jmp	0x400
-	.balign 0x4
+	// jmp	0x400
+	//.balign 0x4
+
+	/* Initially use the top of the RAM */
+	.long 0x1000000
 
 _initial_pc:
 #ifdef CONFIG_MC68EZ328
 	.long (CFG_SYS_FLASH_BASE + _start)	/* Start of program Code */
 #elif defined(CONFIG_TARGET_QEMU)
+	.long _start				/* Start of program Code */
+#elif defined(CONFIG_TARGET_MEGADRIVE)
 	.long _start				/* Start of program Code */
 #endif
 
@@ -108,9 +129,9 @@ intc_vect_7:
 .ascii "(C)SEGA 2026.JAN"
 .ascii "u-boot                                          "
 .ascii "u-boot                                          "
-.ascii "GM MK-0000 -00"
+.ascii "GM 00000000-00"
 .word 0x0000
-.ascii "J             "
+.ascii "JD              "
 .long 0x00000000, 0x003FFFFF
 .long 0x00FF0000, 0x00FFFFFF
 #endif
@@ -196,6 +217,13 @@ ___xxx__:
 	__putch '\r'
 	__putch '\n'
 #elif defined(CONFIG_TARGET_MEGADRIVE)
+	/* Make the PSRAM mapped to the cart writable */
+	move.w #0xa000, MEGADRIVE_EVERDRIVE_MAPPER_CTRL
+
+	__putch 'm'
+	__putch 'd'
+	__putch '\r'
+	__putch '\n'
 #else
 #error "Make sure your target is handled properly in start.S"
 #endif
@@ -268,7 +296,7 @@ bss_done:
 	jsr	(%a1)
 	__printch 'd'
 
-	/* board_init_f() does not return unless we didn't relocate*/
+	/* board_init_r() does not return unless we didn't relocate*/
 	clr.l	%sp@-
 	clr.l	%sp@-
 	move.l	#board_init_r, %a1

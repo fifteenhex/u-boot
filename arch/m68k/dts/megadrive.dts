@@ -27,7 +27,7 @@
 
 	uart0: serial@fffff900 {
 		compatible = "krikzz,everdrive-serial";
-		reg = <0xfffff900 0xc>;
+		reg = <0xa130d0 0x4>;
 		u-boot,dm-pre-reloc;
 		status = "okay";
 	};

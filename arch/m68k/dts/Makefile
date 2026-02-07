@@ -18,6 +18,7 @@ dtb-$(CONFIG_TARGET_AMCORE) += amcore.dtb
 dtb-$(CONFIG_TARGET_STMARK2) += stmark2.dtb
 dtb-$(CONFIG_TARGET_QEMU) += virt-m68k.dtb
 dtb-$(CONFIG_TARGET_MC68EZ328SBC) += kanpapa-mc68ez328sbc.dtb
+dtb-$(CONFIG_TARGET_MEGADRIVE) += megadrive.dtb
 
 include $(srctree)/scripts/Makefile.dts
 

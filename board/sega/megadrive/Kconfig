@@ -12,4 +12,7 @@ config SYS_VENDOR
 config SYS_CONFIG_NAME
 	default "megadrive"
 
+config DEBUG_UART_BASE
+	default 0xa130d0
+
 endif

@@ -1,1 +1,1 @@
-obj-y=dummy.o
+obj-y=dummy.o vdp.o
