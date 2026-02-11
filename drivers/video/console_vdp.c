@@ -55,7 +55,7 @@ struct vidconsole_ops console_ops = {
 };
 
 U_BOOT_DRIVER(vidconsole_vdp) = {
-	.name		= "vdpconsole",
+	.name		= "vdp_console",
 	.id		= UCLASS_VIDEO_CONSOLE,
 	.ops		= &console_ops,
 	.probe		= console_probe,

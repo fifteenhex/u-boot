@@ -24,6 +24,9 @@ static int console_set_font(struct udevice *dev, struct video_fontdata *fontdata
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
 
+	return 0;
+	printf("%s:%d\n", __func__, __LINE__);
+
 	debug("console_simple: setting %s font\n", fontdata->name);
 	debug("width: %d\n", fontdata->width);
 	debug("byte width: %d\n", fontdata->byte_width);

@@ -5,9 +5,11 @@
 #include <asm/io.h>
 #include <asm/vdp.h>
 #include <command.h>
+#include <dm.h>
 #include <linux/bitops.h>
 #include <string.h>
 #include <vsprintf.h>
+#include <video.h>
 
 #define VDP_DATA	0xc00000
 #define VDP_CTRL	0xc00004
@@ -246,6 +248,41 @@ static int do_vdp(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	return CMD_RET_SUCCESS;
 }
+
+static int vdp_video_probe(struct udevice *dev)
+{
+	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
+	struct video_priv *uc_priv = dev_get_uclass_priv(dev);
+	int ret;
+
+	uc_priv->xsize = 256;
+	uc_priv->ysize = 256;
+	uc_priv->bpix = VIDEO_BPP32;
+	uc_priv->format = VIDEO_X8B8G8R8;
+	uc_priv->vidconsole_drv_name = "vdp_console";
+
+	printf("%s:%d\n", __func__, __LINE__);
+
+	return 0;
+}
+
+static int vdp_video_bind(struct udevice *dev)
+{
+	struct video_uc_plat *uc_plat = dev_get_uclass_plat(dev);
+
+	/* Set the frame buffer size per configuration */
+	//uc_plat->size = xsize * ysize * 32 / 8;
+	//log_debug("%s: Frame buffer size %x\n", __func__, uc_plat->size);
+
+	return 0;
+}
+
+U_BOOT_DRIVER(vdp_video) = {
+	.name	= "vdp_video",
+	.id	= UCLASS_VIDEO,
+	.bind	= vdp_video_bind,
+	.probe	= vdp_video_probe,
+};
 
 U_BOOT_CMD(
 	vdp,

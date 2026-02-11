@@ -56,21 +56,27 @@ int board_fix_fdt(void *fdt)
 
 int board_early_init_r(void)
 {
+	struct udevice *vdp;
 	struct udevice *con;
 	int ret;
 
 	vdp_init();
 
+	ret = device_bind_driver(NULL, "vdp_video", "vdpvid0", &vdp);
+	if (ret) {
+		printf("failed to create vdp video %d\n", ret);
+		goto skip_video;
+	}
 
-	ret = device_bind_driver(NULL, "vdpconsole", "vdpcon0", &con);
-	if (ret)
-		printf("failed to create vdp console %d\n", ret);
-	ret = device_probe(con);
-	if (ret)
-		printf("failed to probe console: %d\n", ret);
+	ret = device_probe(vdp);
+	if (ret) {
+		printf("failed to probe vdp video: %d\n", ret);
+		goto skip_video;
+	}
 
-	vidconsole_put_string(con, "VDP console on!\n");
+	//vidconsole_put_string(con, "VDP console on!\n");
 
+skip_video:
 	return 0;
 }
 
