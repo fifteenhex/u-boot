@@ -6,6 +6,8 @@
  * Copyright (C) 1989-2015 Free Software Foundation, Inc.
  */
 
+#include <linux/compiler_attributes.h>
+
 #define BITS_PER_UNIT 8
 
 typedef		 int SItype	__attribute__ ((mode (SI)));
@@ -21,7 +23,7 @@ typedef union
   DItype ll;
 } DIunion;
 
-DItype __lshrdi3 (DItype u, word_type b)
+__used DItype __lshrdi3 (DItype u, word_type b)
 {
 	DIunion w;
 	word_type bm;

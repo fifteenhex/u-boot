@@ -6,6 +6,8 @@
  * Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
  */
 
+#include <linux/compiler_attributes.h>
+
 #define SI_TYPE_SIZE 32
 #define __BITS4 (SI_TYPE_SIZE / 4)
 #define __ll_B (1L << (SI_TYPE_SIZE / 2))
@@ -54,7 +56,7 @@ typedef union
 	DItype ll;
 } DIunion;
 
-DItype __muldi3 (DItype u, DItype v)
+__used DItype __muldi3 (DItype u, DItype v)
 {
 	DIunion w;
 	DIunion uu, vv;
