@@ -8,9 +8,16 @@ ifneq ($(CONFIG_M680x0),y)
 PLATFORM_CPPFLAGS += -fPIC
 endif
 KBUILD_LDFLAGS    += -n -pie
-PLATFORM_RELFLAGS += -ffunction-sections -fdata-sections
 PLATFORM_RELFLAGS += -ffixed-d7
 ifneq ($(CONFIG_M680x0),y)
 PLATFORM_RELFLAGS += -msep-data
 endif
-LDFLAGS_FINAL     += --gc-sections -pie
+LDFLAGS_FINAL     += -pie
+
+ifneq ($(LTO_ENABLE)$(CONFIG_USE_PRIVATE_LIBGCC),yy)
+LDFLAGS_FINAL     += --gc-sections
+endif
+
+ifneq ($(LTO_ENABLE),y)
+PLATFORM_RELFLAGS += -ffunction-sections -fdata-sections
+endif

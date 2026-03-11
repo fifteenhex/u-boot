@@ -24,7 +24,7 @@ void m68k_virt_init_reserve(ulong base)
 	for (i = 0; i < sizeof(*gd_ptr); i++)
 		p[i] = 0;
 
-	gd = gd_ptr;
+	arch_setup_gd(gd);
 
 	gd->malloc_base = base + sizeof(*gd_ptr);
 }
