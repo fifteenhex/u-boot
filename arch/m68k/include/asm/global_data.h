@@ -28,6 +28,10 @@ struct arch_global_data {
 #endif
 	/** @pci_clk: PCI clock rate in Hz */
 	unsigned long pci_clk;
+
+#ifdef CONFIG_TARGET_QEMU_M68K
+	u8 saved_bootinfo[4096];
+#endif
 };
 
 #include <asm-generic/global_data.h>
