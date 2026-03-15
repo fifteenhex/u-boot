@@ -70,17 +70,10 @@ static inline int create_virtio_mmios(void)
  */
 #define MAX_BOOTINFO_RECORDS  1024
 
-static void parse_bootinfo(void)
+static void parse_bootinfo(struct bi_record *bootinfo)
 {
-	struct bi_record *record;
-	ulong addr;
+	struct bi_record *record = bootinfo;
 	int loops = 0;
-
-	/* QEMU places bootinfo after _end, aligned to 2 bytes */
-	addr = (ulong)&_end;
-	addr = ALIGN(addr, 2);
-
-	record = (struct bi_record *)addr;
 
 	if (record->tag != BI_MACHTYPE)
 		return;
@@ -115,7 +108,19 @@ static void parse_bootinfo(void)
 
 int board_early_init_f(void)
 {
-	parse_bootinfo();
+	struct bi_record *bootinfo;
+	ulong addr;
+
+	/* QEMU places bootinfo after _end, aligned to 2 bytes */
+	addr = (ulong)&_end;
+	addr = ALIGN(addr, 2);
+	bootinfo = (struct bi_record *)addr;
+
+	/* Create a copy to give to Linux later */
+	memcpy(gd->arch.saved_bootinfo, bootinfo, sizeof(gd->arch.saved_bootinfo));
+
+	/* Parse bootinfo to configure u-boot */
+	parse_bootinfo(bootinfo);
 
 	return 0;
 }
