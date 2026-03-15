@@ -3,6 +3,8 @@
    Copyright (c) 2001 William L. Pitts
 */
 
+#define DEBUG
+
 #include <command.h>
 #include <cpu_func.h>
 #include <elf.h>
