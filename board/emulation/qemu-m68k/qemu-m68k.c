@@ -21,6 +21,7 @@
 #include <dm/root.h>
 #include <linux/errno.h>
 #include <linux/sizes.h>
+#include <virtio.h>
 #include <virtio_mmio.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -122,7 +123,17 @@ int board_early_init_f(void)
 
 int board_early_init_r(void)
 {
-	return create_virtio_mmios();
+	int ret;
+
+	ret = create_virtio_mmios();
+	if (ret)
+		return ret;
+
+	ret = virtio_init();
+	if (ret)
+		return ret;
+
+	return 0;
 }
 
 int checkboard(void)
