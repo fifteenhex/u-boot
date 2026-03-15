@@ -30,6 +30,13 @@ SECTIONS
 		KEEP(*(SORT(*u_boot_list*)));
 	}
 
+	. = ALIGN(8);
+	__rel_dyn_start = .;
+	.rela.dyn : {
+		*(.rela.dyn)
+	}
+	__rel_dyn_end = .;
+
 	. = ALIGN(4);
 	__image_copy_end = .;
 	__init_end = .;
