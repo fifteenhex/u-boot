@@ -7,6 +7,12 @@ config SYS_ARCH
 config STATIC_RELA
 	default y
 
+config HAVE_SYS_UBOOT_START
+	default y
+
+config SYS_UBOOT_START
+	default 0x400
+
 config M68K_HAVE_BOOTINFO
 	bool
 
