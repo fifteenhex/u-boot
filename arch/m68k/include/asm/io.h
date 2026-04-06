@@ -24,18 +24,11 @@
 #define __raw_writel(l,addr) ((*(volatile u32 *) (addr)) = (l))
 
 #define readb(addr)		in_8((volatile u8 *)(addr))
-#define writeb(b,addr)		out_8((volatile u8 *)(addr), (b))
-#if !defined(__BIG_ENDIAN)
-#define readw(addr)		(*(volatile u16 *) (addr))
-#define readl(addr)		(*(volatile u32 *) (addr))
-#define writew(b,addr)		((*(volatile u16 *) (addr)) = (b))
-#define writel(b,addr)		((*(volatile u32 *) (addr)) = (b))
-#else
-#define readw(addr)		in_be16((volatile u16 *)(addr))
-#define readl(addr)		in_be32((volatile u32 *)(addr))
-#define writew(b,addr)		out_be16((volatile u16 *)(addr),(b))
-#define writel(b,addr)		out_be32((volatile u32 *)(addr),(b))
-#endif
+#define writeb(b, addr)		out_8((volatile u8 *)(addr), (b))
+#define readw(addr)		in_le16((volatile u16 *)(addr))
+#define readl(addr)		in_le32((volatile u32 *)(addr))
+#define writew(b, addr)		out_le16((volatile u16 *)(addr), (b))
+#define writel(b, addr)		out_le32((volatile u32 *)(addr), (b))
 
 /*
  * The insw/outsw/insl/outsl macros don't do byte-swapping.
