@@ -5,6 +5,8 @@
 
 #include <linux/types.h>
 
+#define VIRTIO_MMIO_VENDOR_QEMU	0x554d4551
+
 struct virtio_mmio_plat {
 	phys_addr_t base;
 };
