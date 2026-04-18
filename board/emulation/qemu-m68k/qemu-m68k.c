@@ -128,7 +128,11 @@ int board_early_init_f(void)
 
 int board_early_init_r(void)
 {
+	struct bi_record *bootinfo = (struct bi_record *) gd->arch.saved_bootinfo;
 	int ret;
+
+	/* Parse bootinfo to configure u-boot */
+	parse_bootinfo(bootinfo);
 
 	ret = create_virtio_mmios();
 	if (ret)
