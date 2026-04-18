@@ -126,21 +126,24 @@ int board_early_init_f(void)
 	return 0;
 }
 
-int board_early_init_r(void)
+void board_reparse_bootinfo(void)
 {
 	struct bi_record *bootinfo = (struct bi_record *) gd->arch.saved_bootinfo;
-	int ret;
-
-	/* Parse bootinfo to configure u-boot */
 	parse_bootinfo(bootinfo);
+}
+
+int board_early_init_r(void)
+{
+	int ret;
 
 	ret = create_virtio_mmios();
 	if (ret)
 		return ret;
 
 	ret = virtio_init();
-	if (ret)
-		return ret;
+	printf("mmm %d\n", ret);
+//	if (ret)
+//		return ret;
 
 	return 0;
 }

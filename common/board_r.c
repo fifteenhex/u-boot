@@ -776,6 +776,8 @@ static void initcall_run_r(void)
 	INITCALL(run_main_loop);
 }
 
+extern void board_reparse_bootinfo(void);
+
 void board_init_r(gd_t *new_gd, ulong dest_addr)
 {
 	/*
@@ -802,6 +804,8 @@ void board_init_r(gd_t *new_gd, ulong dest_addr)
 	gd = new_gd;
 #endif
 	gd->flags &= ~GD_FLG_LOG_READY;
+
+	board_reparse_bootinfo();
 
 	initcall_run_r();
 
