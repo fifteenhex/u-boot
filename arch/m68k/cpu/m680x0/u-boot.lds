@@ -1,34 +1,81 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Linker Script for m68040
- *
- * Copyright (C) 2025, Kuan-Wei Chiu <visitorckw@gmail.com>
+ * (C) Copyright 2000
+ * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
+ * (C) Copyright 2015
+ * Angelo Dureghello, Sysam Firmware, angelo@sysam.it
  */
+
+#include <config.h>
 
 OUTPUT_ARCH(m68k)
 ENTRY(_start)
 
+#ifndef LDS_BOARD_TEXT
+#define LDS_BOARD_TEXT
+#endif
+
 SECTIONS
 {
-	. = 0x00000000;
-	__text_start = .;
-
 	.text :
 	{
-		arch/m68k/cpu/m680x0/start.o (.text*)
+		KEEP(CPUDIR/start.o (.text*))
+		LDS_BOARD_TEXT
+
 		*(.text*)
 	}
+	_etext = .;
+	PROVIDE (etext = .);
+	.rodata :
+	{
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
+	}
 
-	. = ALIGN(16);
-	.rodata : { *(.rodata*) }
+	/* Read-write section, merged into data segment: */
+	. = (. + 0x00FF) & 0xFFFFFF00;
+	_erotext = .;
+	PROVIDE (erotext = .);
 
-	. = ALIGN(16);
-	.data : { *(.data*) }
+	.reloc :
+	{
+		__got_start = .;
+		KEEP(*(.got.plt))
+		KEEP(*(.got))
+		__got_end = .;
+		_GOT2_TABLE_ = .;
+		KEEP(*(.got2))
+		_FIXUP_TABLE_ = .;
+		KEEP(*(.fixup))
+	}
+	__got2_entries = (_FIXUP_TABLE_ - _GOT2_TABLE_) >>2;
+	__fixup_entries = (. - _FIXUP_TABLE_)>>2;
+
+	.data :
+	{
+		*(.data*)
+		*(.sdata*)
+	}
+	_edata = .;
+	PROVIDE (edata = .);
+
+	. = .;
 
 	. = ALIGN(4);
-	.u_boot_list : {
-		KEEP(*(SORT(*u_boot_list*)));
+	__u_boot_list : {
+		KEEP(*(SORT(__u_boot_list*)));
 	}
+
+	. = .;
+	__start___ex_table = .;
+	__ex_table : { *(__ex_table) }
+	__stop___ex_table = .;
+
+	. = ALIGN(8);
+	__init_begin = .;
+	.text.init : { *(.text.init) }
+	.data.init : { *(.data.init) }
+	. = ALIGN(8);
+	__init_end = .;
 
 	. = ALIGN(8);
 	__rel_dyn_start = .;
@@ -37,18 +84,32 @@ SECTIONS
 	}
 	__rel_dyn_end = .;
 
-	. = ALIGN(4);
-	__image_copy_end = .;
-	__init_end = .;
-
-	. = ALIGN(16);
-	__bss_start = .;
-	.bss :
-	{
-		*(.bss*)
-		. = ALIGN(16);
+	. = ALIGN(8);
+	__dyn_sym_start = .;
+	.dynsym : {
+		*(.dynsym)
 	}
-	__bss_end = .;
+	__dyn_sym_end = .;
 
+	. = ALIGN(8);
 	_end = .;
+	PROVIDE (_img_end = .);
+
+	/* Leave some space at the end before BSS for bootinfo */
+	. += 4096;
+
+	__bss_start = .;
+	.bss (NOLOAD)       :
+	{
+		_sbss = .;
+		*(.bss*)
+		*(.sbss*)
+		*(COMMON)
+		. = ALIGN(8);
+		_ebss = .;
+	}
+	__bss_end = . ;
+	PROVIDE (end = .);
+
+	/*/DISCARD/ : { *(.plt*) }*/
 }
