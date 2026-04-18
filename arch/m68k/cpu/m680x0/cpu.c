@@ -68,7 +68,7 @@ void relocate_code(ulong start_addr_sp, gd_t *new_gd, ulong relocaddr)
 		size_t len = new_gd->mon_len;
 		memcpy(dst, src, len);
 
-		printf("copied from %p to %p, 0x%x bytes (reloc_off 0x%08x)\n",
+		debug("copied from %p to %p, 0x%x bytes (reloc_off 0x%08x)\n",
 		       src, dst, len, (unsigned int) new_gd->reloc_off);
 
 		reloc_board_init_r += new_gd->reloc_off;
@@ -78,12 +78,12 @@ void relocate_code(ulong start_addr_sp, gd_t *new_gd, ulong relocaddr)
 		rel_start = ((void*) rel_start) + new_gd->reloc_off;
 		rel_end = ((void*) rel_end) + new_gd->reloc_off;
 
-		printf("clearing new bss from %p to %p\n", _bss_start, _bss_end);
+		debug("clearing new bss from %p to %p\n", _bss_start, _bss_end);
 		memset(_bss_start, 0, _bss_end - _bss_start);
 	}
 
 	/* Do ELF relocation */
-	printf("Doing relocation \n");
+	debug("Doing relocation \n");
 	for (Elf32_Rela *rel = rel_start; rel != rel_end; rel++) {
 		u8 x = rel->r_info & 0xff;
 		void *offset = (void *) rel->r_offset;
@@ -117,7 +117,7 @@ void relocate_code(ulong start_addr_sp, gd_t *new_gd, ulong relocaddr)
 		debug("newsym value is 0x%08x\n", (unsigned int) *newsym32);
 	}
 
-	printf("Relocation point of no return, new SP 0x%p, jump to 0x%p\n",
+	debug("Relocation point of no return, new SP 0x%p, jump to 0x%p\n",
 			(void*) new_gd->start_addr_sp, reloc_board_init_r);
 
 	/* Fix the GOT pointer, set the new stack pointer, then jmp */
@@ -132,7 +132,7 @@ void relocate_code(ulong start_addr_sp, gd_t *new_gd, ulong relocaddr)
 			       "a" (new_gd),
 			       "a" (reloc_board_init_r));
 
-	/* Will no reach here */
+	/* Will not reach here */
 	while (1) {
 	}
 }
