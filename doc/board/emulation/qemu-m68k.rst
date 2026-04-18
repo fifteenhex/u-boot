@@ -31,6 +31,11 @@ The minimal QEMU command line to get U-Boot up and running is:
 Note that the `-nographic` option is used to redirect the console to stdio,
 which connects to the emulated Goldfish TTY device.
 
+To enable a network interface add:
+
+.. code-block:: bash
+    -netdev user,id=net0 -device virtio-net-device,netdev=net0
+
 Debugging U-Boot
 ----------------
 
