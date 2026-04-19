@@ -78,7 +78,7 @@ int erofs_map_blocks(struct erofs_inode *inode,
 		unit = EROFS_BLOCK_MAP_ENTRY_SIZE;	/* block map */
 
 	chunknr = map->m_la >> vi->u.chunkbits;
-	pos = roundup(iloc(vi->nid) + vi->inode_isize +
+	pos = round_up(iloc(vi->nid) + vi->inode_isize +
 		      vi->xattr_isize, unit) + unit * chunknr;
 
 	err = erofs_blk_read(buf, erofs_blknr(pos), 1);
