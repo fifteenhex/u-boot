@@ -28,14 +28,16 @@
 
 #define VIRTIO_VENDOR_QEMU	0x554d4551
 
-#define VIRTIO_ID_NET		1 /* virtio net */
-#define VIRTIO_ID_BLOCK		2 /* virtio block */
-#define VIRTIO_ID_RNG		4 /* virtio rng */
-#define VIRTIO_ID_MAX_NUM	5
+#define VIRTIO_ID_NET		1  /* virtio net */
+#define VIRTIO_ID_BLOCK		2  /* virtio block */
+#define VIRTIO_ID_RNG		4  /* virtio rng */
+#define VIRTIO_ID_GPU		16 /* virtio gpu */
+#define VIRTIO_ID_MAX_NUM	17
 
 #define VIRTIO_NET_DRV_NAME	"virtio-net"
 #define VIRTIO_BLK_DRV_NAME	"virtio-blk"
 #define VIRTIO_RNG_DRV_NAME	"virtio-rng"
+#define VIRTIO_GPU_DRV_NAME	"virtio-gpu"
 
 /* Status byte for guest to report progress, and synchronize features */
 
