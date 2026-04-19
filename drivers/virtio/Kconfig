@@ -77,4 +77,23 @@ config VIRTIO_RNG
 	help
 	  This is the virtual random number generator driver. It can be used
 	  with QEMU based targets.
+
+config VIRTIO_GPU
+	bool "virtio gpu driver"
+	depends on VIDEO
+	depends on VIRTIO
+	help
+	  This is the virtual GPU driver. It can be used
+	  with QEMU based targets.
+
+if VIRTIO_GPU
+config VIRTIO_DEFAULT_WIDTH
+	int "default width"
+	default 1024
+
+config VIRTIO_DEFAULT_HEIGHT
+	int "default height"
+	default 768
+endif
+
 endmenu
