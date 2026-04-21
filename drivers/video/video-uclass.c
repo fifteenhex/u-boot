@@ -351,9 +351,18 @@ u32 video_index_to_colour(struct video_priv *priv, enum colour_idx idx)
 				       (colours[idx].g << 12) |
 				       (colours[idx].b <<  2);
 			case VIDEO_RGBA8888:
+#if defined(CONFIG_SYS_BIG_ENDIAN)
 				return (colours[idx].r << 24) |
 				       (colours[idx].g << 16) |
-				       (colours[idx].b << 8) | 0xff;
+				       (colours[idx].b << 8)  |
+				       0xff;
+
+#else
+				return colours[idx].r         |
+				       (colours[idx].g << 8)  |
+				       (colours[idx].b << 16) |
+				       (0xff << 24);
+#endif
 			default:
 				return (colours[idx].r << 16) |
 				       (colours[idx].g <<  8) |
