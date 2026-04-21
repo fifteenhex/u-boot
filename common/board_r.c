@@ -805,8 +805,9 @@ void board_init_r(gd_t *new_gd, ulong dest_addr)
 #endif
 	gd->flags &= ~GD_FLG_LOG_READY;
 
+#ifdef CONFIG_M68K_HAVE_BOOTINFO
 	board_reparse_bootinfo();
-
+#endif
 	initcall_run_r();
 
 	/* NOTREACHED - run_main_loop() does not return */
