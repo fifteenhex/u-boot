@@ -12,6 +12,9 @@
 #if defined(CONFIG_VIDEO_FONT_4X6)
 #include <video_font_4x6.h>
 #endif
+//#if defined(CONFIG_VIDEO_FONT_8X8)
+#include <video_font_8x8.h>
+//#endif
 #if defined(CONFIG_VIDEO_FONT_8X16)
 #include <video_font_8x16.h>
 #endif
@@ -23,6 +26,7 @@
 #endif
 
 static struct video_fontdata __maybe_unused fonts[] = {
+	FONT_ENTRY(8, 8, 8x8),
 #if defined(CONFIG_VIDEO_FONT_8X16)
 	FONT_ENTRY(8, 16, 8x16),
 #endif

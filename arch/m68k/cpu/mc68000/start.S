@@ -218,7 +218,17 @@ ___xxx__:
 	__putch '\n'
 #elif defined(CONFIG_TARGET_MEGADRIVE)
 	/* Make the PSRAM mapped to the cart writable */
-	move.w #0xa000, MEGADRIVE_EVERDRIVE_MAPPER_CTRL
+	move.w #0xa000, MEGADRIVE_EVERDRIVE_MAPPER_CTRL0
+	/* Make sure the next 3MB of PSRAM are mapped
+	move.w #0x0001, MEGADRIVE_EVERDRIVE_MAPPER_CTRL1
+	move.w #0x0002, MEGADRIVE_EVERDRIVE_MAPPER_CTRL2
+	move.w #0x0003, MEGADRIVE_EVERDRIVE_MAPPER_CTRL3
+	move.w #0x0004, MEGADRIVE_EVERDRIVE_MAPPER_CTRL4
+	move.w #0x0005, MEGADRIVE_EVERDRIVE_MAPPER_CTRL5
+	move.w #0x0006, MEGADRIVE_EVERDRIVE_MAPPER_CTRL6
+	/* Map in the save SRAM to the last bank for the environment */
+	move.w #0x001f, MEGADRIVE_EVERDRIVE_MAPPER_CTRL7
+
 
 	__putch 'm'
 	__putch 'd'

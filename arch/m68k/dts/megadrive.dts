@@ -32,6 +32,13 @@
 		status = "okay";
 	};
 
+	vdp: vdp@c00000 {
+		compatible = "sega,megadrive-vdp";
+		reg = <0xc00000 0x8>;
+		u-boot,dm-pre-reloc;
+		status = "okay";
+	};
+
 	//soc {
 			timer0: timer@a130d6 {
 			compatible = "krikzz,everdrive-timer";

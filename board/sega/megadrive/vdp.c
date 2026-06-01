@@ -32,8 +32,8 @@
 #define VDP_REG_SPRITE_PAT		0x06
 #define VDP_REG_BG_COLOR		0x07
 #define VDP_REG_H_INT_COUNTER		0x0A
-#define VDP_REG_MODE_SET_3		0x0B
-#define VDP_REG_MODE_SET_4		0x0C
+#define VDP_REG_MODE3			0x0B
+#define VDP_REG_MODE4			0x0C
 #define VDP_REG_HSCROLL_ADDR		0x0D
 #define VDP_REG_INC			0x0F
 #define VDP_REG_PLANE_SIZE		0x10
@@ -105,7 +105,7 @@ static const u16 palette[16] = {
 	0xffff, 0xffff, 0xffff, 0xffff,
 };
 
-void vdp_set_tile(u16 plane_addr, u8 plane_index, u8 tile_index)
+void vdp_set_tile(u16 plane_addr, u16 plane_index, u8 tile_index)
 {
 	uint16_t tmp;
 
@@ -113,6 +113,23 @@ void vdp_set_tile(u16 plane_addr, u8 plane_index, u8 tile_index)
 
 	vdp_vram_set_addr(plane_addr + (plane_index * 2));
 	vdp_data_write(tmp);
+}
+
+/*
+ * Set the same value to a number of tiles in one go, i.e. for clearing
+ * a line.
+ */
+void vdp_set_tiles(u16 plane_addr, u16 plane_index, u8 tile_index, u16 num)
+{
+	uint16_t tmp;
+	int i;
+
+	tmp = tile_index;
+
+	vdp_vram_set_addr(plane_addr + (plane_index * 2));
+
+	for (i = 0; i < num; i++)
+		vdp_data_write(tmp);
 }
 
 static inline void vdp_upload_tile(unsigned int index, const u16 *src)
@@ -159,7 +176,7 @@ static void vdp_puts(const char *str)
 	}
 }
 
-void vdp_init(void)
+static void vdp_init(void)
 {
 	uint16_t tmp_tile[WORDS_PER_TILE];
 	int i;
@@ -178,9 +195,14 @@ void vdp_init(void)
 	vdp_register_set(VDP_REG_SPRITE_ADDR, VRAM_SPRITE_TABLE >> 9);
 	vdp_register_set(VDP_REG_HSCROLL_ADDR, VRAM_HSCROLL >> 10);
 
+	/* Setup the plane size for Plane A and B as 32 x 32 */
+	vdp_register_set(VDP_REG_PLANE_SIZE, 0);
 
+	/* Configure the video mode */
 	vdp_register_set(VDP_REG_MODE1, VDP_MODE1_M4);
 	vdp_register_set(VDP_REG_MODE2, VDP_MODE2_M5 | VDP_MODE2_DE);
+	/* 32 wide */
+	vdp_register_set(VDP_REG_MODE4, 0);
 	vdp_register_set(VDP_REG_BG_COLOR, 0x00);
 
 	for (i = 0; i < 255; i++) {
@@ -251,24 +273,23 @@ static int do_vdp(struct cmd_tbl *cmdtp, int flag, int argc,
 
 static int vdp_video_probe(struct udevice *dev)
 {
-	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
+	//struct video_uc_plat *plat = dev_get_uclass_plat(dev);
 	struct video_priv *uc_priv = dev_get_uclass_priv(dev);
-	int ret;
 
-	uc_priv->xsize = 256;
-	uc_priv->ysize = 256;
-	uc_priv->bpix = VIDEO_BPP32;
-	uc_priv->format = VIDEO_X8B8G8R8;
+	vdp_init();
+
+	uc_priv->xsize = VDP_PLANE_AB_WIDTH * 8;
+	uc_priv->ysize = 28 * 8;
+	uc_priv->bpix = VIDEO_BPP4;
+	uc_priv->format = VIDEO_UNKNOWN;
 	uc_priv->vidconsole_drv_name = "vdp_console";
-
-	printf("%s:%d\n", __func__, __LINE__);
 
 	return 0;
 }
 
 static int vdp_video_bind(struct udevice *dev)
 {
-	struct video_uc_plat *uc_plat = dev_get_uclass_plat(dev);
+	//struct video_uc_plat *uc_plat = dev_get_uclass_plat(dev);
 
 	/* Set the frame buffer size per configuration */
 	//uc_plat->size = xsize * ysize * 32 / 8;
@@ -277,11 +298,17 @@ static int vdp_video_bind(struct udevice *dev)
 	return 0;
 }
 
+static const struct udevice_id vdp_ids[] = {
+	{ .compatible = "sega,megadrive-vdp" },
+	{ }
+};
+
 U_BOOT_DRIVER(vdp_video) = {
-	.name	= "vdp_video",
-	.id	= UCLASS_VIDEO,
-	.bind	= vdp_video_bind,
-	.probe	= vdp_video_probe,
+	.name		= "vdp_video",
+	.id		= UCLASS_VIDEO,
+	.bind		= vdp_video_bind,
+	.probe		= vdp_video_probe,
+	.of_match	= vdp_ids,
 };
 
 U_BOOT_CMD(

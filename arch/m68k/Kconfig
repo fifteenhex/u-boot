@@ -270,6 +270,7 @@ config TARGET_MC68EZ328SBC
 config TARGET_MEGADRIVE
 	bool "Support Sega Megadrive"
 	select MC68000
+	select ENV_IS_IN_NVRAM
 
 config TARGET_MVME147
 	bool "Support Motorola MVME147"
