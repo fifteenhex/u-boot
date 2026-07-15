@@ -36,6 +36,11 @@ U_BOOT_DRVINFO(oldmac_scc) = {
 	.plat = &oldmac_scc_plat,
 };
 
+/* AMD 53C9x ESP SCSI controller (base filled in by the driver for q800) */
+U_BOOT_DRVINFO(oldmac_esp) = {
+	.name = "esp_scsi",
+};
+
 /* Machine description discovered from the Mac bootinfo (built by the ROM boot
  * chain, or by QEMU's q800 -kernel path). */
 static struct {
