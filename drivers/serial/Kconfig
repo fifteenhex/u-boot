@@ -518,6 +518,14 @@ config DEBUG_UART_GOLDFISH
 	  start up driver model. The driver will be available until the real
 	  driver model serial is running.
 
+config DEBUG_UART_SCC
+	bool "Zilog 8530 SCC"
+	depends on SCC_SERIAL
+	help
+	  Select this to enable the debug UART using the Zilog 8530 SCC driver,
+	  as found on classic 68k Macintosh machines.  DEBUG_UART_BASE must be
+	  the channel control register address (data is at control + 4).
+
 endchoice
 
 config DEBUG_UART_BASE
@@ -1202,5 +1210,12 @@ config SERIAL_GOLDFISH
 	  Select this to enable support for the Goldfish TTY serial port.
 	  This virtual device is commonly used by QEMU virtual machines
 	  (e.g. m68k virt) for console output.
+
+config SCC_SERIAL
+	bool "Zilog 8530 SCC serial support"
+	depends on DM_SERIAL
+	help
+	  Select this to enable support for the Zilog 8530 (SCC/ESCC) serial
+	  port as found on classic 68k Macintosh machines such as the Quadra 800.
 
 endif
