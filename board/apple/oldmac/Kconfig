@@ -9,4 +9,11 @@ config SYS_VENDOR
 config SYS_CONFIG_NAME
 	default "oldmac"
 
+config CMD_NUBUS
+	bool "nubus command"
+	default y
+	help
+	  Enable the "nubus" command, which probes the NuBus slots and lists
+	  the cards found by reading their declaration ROMs.
+
 endif
