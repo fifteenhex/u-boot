@@ -15,4 +15,10 @@
  */
 #define CFG_SYS_INIT_SP_ADDR	(CFG_SYS_SDRAM_BASE + 0x400000)
 
+/* Send console output to both the serial port and the Mac framebuffer. */
+#define CFG_EXTRA_ENV_SETTINGS		\
+	"stdin=serial\0"		\
+	"stdout=serial,vidconsole\0"	\
+	"stderr=serial,vidconsole\0"
+
 #endif /* __OLDMAC_H */

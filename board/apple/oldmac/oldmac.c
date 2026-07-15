@@ -10,10 +10,13 @@
 #include <config.h>
 #include <command.h>
 #include <cpu_func.h>
+#include <dm.h>
+#include <linux/errno.h>
 #include <init.h>
 #include <serial.h>
 #include <serial_scc.h>
 #include <time.h>
+#include <video.h>
 #include <asm/bootinfo.h>
 #include <asm/global_data.h>
 #include <asm-generic/sections.h>
@@ -139,6 +142,63 @@ int dram_init(void)
 
 	return 0;
 }
+
+#if CONFIG_IS_ENABLED(VIDEO)
+/*
+ * Video driver for the Mac framebuffer discovered from the ROM/bootinfo.  The
+ * framebuffer already lives in NuBus card address space (e.g. 0xf90xxxxx on the
+ * Quadra 800), so we point U-Boot's video uclass straight at it rather than
+ * reserving RAM.  At 8bpp the console relies on the CLUT the ROM/QEMU loaded,
+ * whose index 0 and 255 map to opposite ends of the greyscale ramp, so text
+ * renders legibly without us reprogramming the (model-specific) DAC.
+ */
+static int oldmac_video_probe(struct udevice *dev)
+{
+	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
+	struct video_priv *uc_priv = dev_get_uclass_priv(dev);
+
+	if (!oldmac.video_addr || !oldmac.video_width || !oldmac.video_height)
+		return -ENODEV;
+
+	plat->base = oldmac.video_addr;
+	plat->size = 0;		/* external framebuffer; nothing to reserve */
+
+	uc_priv->xsize = oldmac.video_width;
+	uc_priv->ysize = oldmac.video_height;
+	if (oldmac.video_rowbytes)
+		uc_priv->line_length = oldmac.video_rowbytes;
+
+	switch (oldmac.video_depth) {
+	case 8:
+		uc_priv->bpix = VIDEO_BPP8;
+		break;
+	case 16:
+		uc_priv->bpix = VIDEO_BPP16;
+		break;
+	case 32:
+		uc_priv->bpix = VIDEO_BPP32;
+		break;
+	default:
+		printf("oldmac video: unsupported depth %lu\n",
+		       oldmac.video_depth);
+		return -EINVAL;
+	}
+
+	video_set_flush_dcache(dev, true);
+
+	return 0;
+}
+
+U_BOOT_DRIVER(oldmac_video) = {
+	.name	= "oldmac_video",
+	.id	= UCLASS_VIDEO,
+	.probe	= oldmac_video_probe,
+};
+
+U_BOOT_DRVINFO(oldmac_video) = {
+	.name = "oldmac_video",
+};
+#endif /* VIDEO */
 
 int checkboard(void)
 {
