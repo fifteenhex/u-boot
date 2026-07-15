@@ -9,6 +9,7 @@ ifdef CONFIG_SCSI
 obj-$(CONFIG_$(PHASE_)BOOTSTD) += scsi_bootdev.o
 obj-$(CONFIG_SANDBOX) += sandbox_scsi.o
 obj-$(CONFIG_SANDBOX) += scsi_emul.o
+obj-$(CONFIG_SCSI_ESP) += esp_scsi.o
 endif
 endif
 

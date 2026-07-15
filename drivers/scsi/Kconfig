@@ -8,3 +8,12 @@ config SCSI
 	  interfaces as well as protocols for controlling devices and
 	  tranferring data. For every device configuration (IDs/LUNs) a block
 	  device is created with RAW read/write and filesystem support.
+
+config SCSI_ESP
+	bool "AMD/NCR 53C9x ESP SCSI support"
+	depends on SCSI
+	select LIBATA
+	help
+	  This enables support for the AMD/NCR 53C9x "ESP" parallel SCSI
+	  controller using pseudo-DMA, as found on classic 68k Macintosh
+	  machines such as the Quadra 800 (and QEMU's q800 machine).
