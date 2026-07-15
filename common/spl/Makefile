@@ -32,6 +32,7 @@ obj-$(CONFIG_$(PHASE_)FS_EXT4) += spl_ext.o
 obj-$(CONFIG_$(PHASE_)FS_SQUASHFS) += spl_squashfs.o
 obj-$(CONFIG_$(PHASE_)LOAD_IMX_CONTAINER) += spl_imx_container.o
 obj-$(CONFIG_$(PHASE_)SATA) += spl_sata.o
+obj-$(CONFIG_$(PHASE_)SCSI) += spl_scsi.o
 obj-$(CONFIG_$(PHASE_)NVME) += spl_nvme.o
 obj-$(CONFIG_$(PHASE_)SEMIHOSTING) += spl_semihosting.o
 obj-$(CONFIG_$(PHASE_)DFU) += spl_dfu.o

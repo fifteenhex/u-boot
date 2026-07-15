@@ -1457,6 +1457,21 @@ config SPL_RTC
 	  needed. This enables the drivers in drivers/rtc as part of an SPL
 	  build.
 
+config SPL_SCSI
+	bool "Support loading from SCSI"
+	select SPL_BLK_FS if SPL_FS_FAT
+	help
+	  Enable support for loading U-Boot proper from a SCSI block device in
+	  SPL (e.g. the ESP controller on classic 68k Macintosh).
+
+config SPL_SCSI_RAW_U_BOOT_SECTOR
+	hex "Disk sector holding the raw U-Boot image"
+	depends on SPL_SCSI
+	default 0x0
+	help
+	  Sector (in the device block size) at which the raw U-Boot image is
+	  stored on the SCSI device.
+
 config SPL_SATA
 	bool "Support loading from SATA"
 	help

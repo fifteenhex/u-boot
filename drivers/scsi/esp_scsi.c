@@ -142,6 +142,8 @@ static int esp_exec(struct udevice *dev, struct scsi_cmd *cmd)
 	if (cmd->lun || cmd->target > 6)
 		return -EINVAL;
 
+	if (cmd->cmd[0] == 0x28)
+
 	/* load IDENTIFY + CDB into the FIFO and select the target with ATN */
 	esp_wr(p, ESP_CMD, CMD_FLUSH);
 	esp_wr(p, ESP_BUSID, cmd->target);
@@ -214,7 +216,7 @@ static int esp_scsi_probe(struct udevice *dev)
 	p->pdma = (void *)(plat->base + 0x100);	/* PDMA window */
 	plat->max_id = 7;
 	plat->max_lun = 1;
-	plat->max_bytes_per_req = 0x10000;
+	plat->max_bytes_per_req = 0x8000;
 
 	esp_reset(p);
 
@@ -232,4 +234,5 @@ U_BOOT_DRIVER(esp_scsi) = {
 	.ops		= &esp_scsi_ops,
 	.probe		= esp_scsi_probe,
 	.priv_auto	= sizeof(struct esp_priv),
+	.flags		= DM_FLAG_PRE_RELOC,	/* bind in SPL */
 };
