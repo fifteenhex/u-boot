@@ -115,6 +115,22 @@ int board_early_init_f(void)
 	return 0;
 }
 
+#ifdef CONFIG_SPL_BUILD
+#include <spl.h>
+
+/* Minimal SPL board_init_f: gd is already reserved by start.S; the SPL
+ * board_init_r() (which start.S calls next) loads U-Boot proper. */
+void board_init_f(ulong bootflag)
+{
+	gd->ram_size = SZ_128M;
+}
+
+u32 spl_boot_device(void)
+{
+	return BOOT_DEVICE_SCSI;
+}
+#endif
+
 int dram_init(void)
 {
 	/* Set by parse_bootinfo() from the Mac bootinfo; fall back to 16 MiB. */

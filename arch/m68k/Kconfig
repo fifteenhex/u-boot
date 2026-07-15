@@ -128,6 +128,8 @@ config M54418
 config M68040
 	bool
 	select M680x0
+	select SUPPORT_SPL
+	select HAVE_SYS_UBOOT_START
 
 # peripherals
 config CF_DSPI

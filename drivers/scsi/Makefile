@@ -20,4 +20,8 @@ endif
 ifdef CONFIG_SPL_UFS_SUPPORT
 obj-$(CONFIG_SCSI) += scsi.o scsi-uclass.o
 endif
+ifdef CONFIG_SPL_SCSI
+obj-$(CONFIG_SCSI) += scsi.o scsi-uclass.o
+obj-$(CONFIG_SCSI_ESP) += esp_scsi.o
+endif
 endif

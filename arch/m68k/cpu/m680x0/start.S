@@ -69,6 +69,17 @@ ENTRY(_start)
 	bsr.l	board_init_f
 	addq.l	#4, %sp
 
+#ifdef CONFIG_SPL_BUILD
+	/*
+	 * In SPL board_init_f() returns; hand off to the SPL board_init_r()
+	 * which loads and starts the next stage (U-Boot proper).
+	 */
+	clr.l	-(%sp)
+	clr.l	-(%sp)
+	bsr.l	board_init_r
+	addq.l	#8, %sp
+#endif
+
 	/* Should not return */
 hang:
 	bra.s	hang
