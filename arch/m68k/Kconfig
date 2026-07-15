@@ -205,6 +205,14 @@ config TARGET_QEMU_M68K
 	  This target supports the QEMU m68k virtual machine (-M virt).
 	  It simulates a Motorola 68040 CPU with Goldfish peripherals.
 
+config TARGET_OLDMAC
+	bool "Support classic 68k Apple Macintosh"
+	select M68040
+	help
+	  This target supports classic 68k Apple Macintosh machines, the first
+	  being the Quadra 800 (Motorola 68040).  QEMU's `q800` machine is used
+	  as the development/test vehicle; real hardware is the target.
+
 endchoice
 
 config SYS_CPU
@@ -219,6 +227,7 @@ config SYS_CPU
 config ARCH_COLDFIRE
 	bool
 
+source "board/apple/oldmac/Kconfig"
 source "board/BuS/eb_cpu5282/Kconfig"
 source "board/cobra5272/Kconfig"
 source "board/nxp/m5208evbe/Kconfig"
