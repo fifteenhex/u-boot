@@ -14,7 +14,9 @@
 #include <serial.h>
 #include <serial_scc.h>
 #include <time.h>
+#include <asm/bootinfo.h>
 #include <asm/global_data.h>
+#include <asm-generic/sections.h>
 #include <dm/platdata.h>
 #include <linux/sizes.h>
 
@@ -34,17 +36,95 @@ U_BOOT_DRVINFO(oldmac_scc) = {
 	.plat = &oldmac_scc_plat,
 };
 
+/* Machine description discovered from the Mac bootinfo (built by the ROM boot
+ * chain, or by QEMU's q800 -kernel path). */
+static struct {
+	ulong model;		/* Gestalt model id */
+	ulong rombase;
+	ulong video_addr;
+	ulong video_depth;
+	ulong video_width;
+	ulong video_height;
+	ulong video_rowbytes;
+} oldmac;
+
+static const char *oldmac_model_name(ulong model)
+{
+	switch (model) {
+	case MAC_MODEL_Q800:
+		return "Quadra 800";
+	default:
+		return "unknown";
+	}
+}
+
+/*
+ * The Mac bootinfo is a list of {tag, size, data[]} records placed right after
+ * the loaded image (_end), terminated by BI_LAST, exactly as the virt board and
+ * QEMU's q800 -kernel path produce it.
+ */
+static void parse_bootinfo(void)
+{
+	struct bi_record *rec = (struct bi_record *)ALIGN((ulong)&_end, 2);
+	int loops = 0;
+
+	if (rec->tag != BI_MACHTYPE)
+		return;
+
+	while (rec->tag != BI_LAST) {
+		if (++loops > 1024)
+			return;
+
+		switch (rec->tag) {
+		case BI_MEMCHUNK:
+			gd->ram_size = rec->data[1];	/* data[0]=base, [1]=size */
+			break;
+		case BI_MAC_MODEL:
+			oldmac.model = rec->data[0];
+			break;
+		case BI_MAC_ROMBASE:
+			oldmac.rombase = rec->data[0];
+			break;
+		case BI_MAC_VADDR:
+			oldmac.video_addr = rec->data[0];
+			break;
+		case BI_MAC_VDEPTH:
+			oldmac.video_depth = rec->data[0];
+			break;
+		case BI_MAC_VDIM:
+			oldmac.video_width = rec->data[0] & 0xffff;
+			oldmac.video_height = rec->data[0] >> 16;
+			break;
+		case BI_MAC_VROW:
+			oldmac.video_rowbytes = rec->data[0];
+			break;
+		}
+		rec = (struct bi_record *)((ulong)rec + rec->size);
+	}
+}
+
+int board_early_init_f(void)
+{
+	parse_bootinfo();
+
+	return 0;
+}
+
 int dram_init(void)
 {
-	/* Conservative default; refined per-model / from Mac bootinfo later. */
-	gd->ram_size = SZ_16M;
+	/* Set by parse_bootinfo() from the Mac bootinfo; fall back to 16 MiB. */
+	if (!gd->ram_size)
+		gd->ram_size = SZ_16M;
 
 	return 0;
 }
 
 int checkboard(void)
 {
-	puts("Board: Apple Macintosh (Quadra 800)\n");
+	printf("Board: Apple Macintosh (%s)\n", oldmac_model_name(oldmac.model));
+	if (oldmac.video_addr)
+		printf("Video: %lux%lux%lu at %08lx\n", oldmac.video_width,
+		       oldmac.video_height, oldmac.video_depth, oldmac.video_addr);
 
 	return 0;
 }
