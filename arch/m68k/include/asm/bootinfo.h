@@ -36,4 +36,24 @@ struct bi_record {
 #define BI_VIRT_VIRTIO_BASE     0x8004
 #define BI_VIRT_CTRL_BASE       0x8005
 
+/*
+ * Macintosh specific tags.  These share the machine-specific 0x8000+ range with
+ * the virt tags above; only one machine type is active in a given boot.
+ */
+#define BI_MAC_MODEL            0x8000  /* Mac Gestalt model id */
+#define BI_MAC_VADDR            0x8001  /* Mac video base address */
+#define BI_MAC_VDEPTH           0x8002  /* Mac video depth */
+#define BI_MAC_VROW             0x8003  /* Mac video rowbytes */
+#define BI_MAC_VDIM             0x8004  /* Mac video dimensions (h << 16 | w) */
+#define BI_MAC_VLOGICAL         0x8005  /* Mac video logical base */
+#define BI_MAC_SCCBASE          0x8006  /* Mac SCC base address */
+#define BI_MAC_BTIME            0x8007  /* Mac boot time */
+#define BI_MAC_GMTBIAS          0x8008  /* Mac GMT timezone offset */
+#define BI_MAC_MEMSIZE          0x8009  /* Mac RAM size (MiB, sanity check) */
+#define BI_MAC_CPUID            0x800a  /* Mac CPU type (sanity check) */
+#define BI_MAC_ROMBASE          0x800b  /* Mac system ROM base address */
+
+/* Macintosh Gestalt model numbers (BI_MAC_MODEL) */
+#define MAC_MODEL_Q800          35
+
 #endif /* _ASM_M68K_BOOTINFO_H */
