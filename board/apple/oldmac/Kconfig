@@ -16,4 +16,12 @@ config CMD_NUBUS
 	  Enable the "nubus" command, which probes the NuBus slots and lists
 	  the cards found by reading their declaration ROMs.
 
+config CMD_ADB
+	bool "adb command"
+	depends on DM_KEYBOARD
+	default y
+	help
+	  Enable the "adb" command, which enumerates the Apple Desktop Bus and
+	  shows live keyboard and mouse events.
+
 endif
