@@ -75,6 +75,7 @@
 struct esp_priv {
 	void *regs;
 	void *pdma;
+	void *pdma_reg;		/* QUADRA2 pseudo-DMA DRQ register, NULL = use VIA2 */
 };
 
 static inline u8 esp_rd(struct esp_priv *p, unsigned int reg)
@@ -118,19 +119,32 @@ static int esp_reset(struct esp_priv *p)
 }
 
 /*
- * VIA2 interrupt flag register (VIA1 + 0x2000, 6522 register 13 at 16*0x200);
- * bit 0 (CA2) reflects the live SCSI DRQ line on the Quadra.  Poll it before
- * each pseudo-DMA window access so we never stall the bus waiting for a byte
- * that is not yet in the ESP FIFO.
+ * The SCSI DRQ has to be polled before each pseudo-DMA window access, or the
+ * access stalls the bus waiting for a byte that is not yet in the ESP FIFO.
+ * Where DRQ lives depends on the machine's SCSI variant:
+ *
+ *  - MAC_SCSI_QUADRA  (Quadra 800, LC 475, ...): bit 0 (CA2) of the VIA2
+ *    interrupt flag register (VIA1 + 0x2000, 6522 reg 13 at 16*0x200).
+ *  - MAC_SCSI_QUADRA2 (Quadra 700): bit 9 of a pseudo-DMA control register up
+ *    in NuBus/video space, supplied by the board via board_esp_pdma_reg().
  */
 #define VIA2_IFR	((void *)0x50f03a00)
 #define VIA2_SCSI_DRQ	0x01
+#define QUADRA2_DRQ	0x200
+
+static int esp_drq_pending(struct esp_priv *p)
+{
+	if (p->pdma_reg)
+		return __raw_readl(p->pdma_reg) & QUADRA2_DRQ;
+
+	return readb(VIA2_IFR) & VIA2_SCSI_DRQ;
+}
 
 static int esp_wait_dreq(struct esp_priv *p)
 {
 	int timeout = 500000;
 
-	while (!(readb(VIA2_IFR) & VIA2_SCSI_DRQ)) {
+	while (!esp_drq_pending(p)) {
 		if (esp_rd(p, ESP_STAT) & STAT_INT)
 			return 1;	/* ESP ended the transfer (done/aborted) */
 		if (--timeout <= 0)
@@ -266,6 +280,13 @@ __weak phys_addr_t board_esp_base(void)
 	return 0;
 }
 
+/* QUADRA2-style boards (Quadra 700) supply the pseudo-DMA DRQ register here;
+ * 0 means the DRQ is read from the VIA2 (the common MAC_SCSI_QUADRA layout). */
+__weak phys_addr_t board_esp_pdma_reg(void)
+{
+	return 0;
+}
+
 static int esp_scsi_probe(struct udevice *dev)
 {
 	struct scsi_plat *plat = dev_get_uclass_plat(dev);
@@ -277,9 +298,26 @@ static int esp_scsi_probe(struct udevice *dev)
 		return -ENODEV;
 	p->regs = (void *)plat->base;
 	p->pdma = (void *)(plat->base + 0x100);	/* PDMA window */
+	p->pdma_reg = (void *)board_esp_pdma_reg();
 	plat->max_id = 7;
 	plat->max_lun = 1;
 	plat->max_bytes_per_req = 0x8000;
+
+	if (p->pdma_reg) {
+		/*
+		 * The QUADRA2 pseudo-DMA DRQ register sits in NuBus/video space
+		 * (0xF9xxxxxx), outside the 0x5xxxxxxx window DTT0 covers.  Map
+		 * that region cache-inhibited via DTT1 so the DRQ poll sees live
+		 * values, then enable the pseudo-DMA engine (magic from Linux
+		 * mac_esp).  DTT1 is otherwise unused after the boot block.
+		 */
+		__asm__ __volatile__(".chip 68040\n\t"
+				     "movec %0,%%dtt1\n\t"
+				     "nop\n\t"
+				     ".chip 68k"
+				     : : "d" (0xf00fe060) : "memory");
+		__raw_writel(0x1d1, p->pdma_reg);
+	}
 
 	esp_reset(p);
 
