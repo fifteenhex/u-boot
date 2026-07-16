@@ -1813,28 +1813,19 @@ u-boot-with-spl.bin: $(SPL_IMAGE) $(SPL_PAYLOAD) FORCE
 	$(call if_changed,pad_cat)
 
 ifeq ($(CONFIG_TARGET_OLDMAC),y)
-# Bootable classic-Mac CD image: our Mac boot block + SCSI boot driver wrapped
-# around U-Boot (or the SPL) by the mkoldmaccd host tool.  The boot block is
-# assembled here against the freshly built payload's layout (see mkcd.sh).
+# Bootable classic-Mac CD image built by the mkoldmaccd host tool: our Mac boot
+# block + SCSI boot driver, the SPL (which the boot block loads), and U-Boot
+# proper at a second LBA (which the SPL then loads over SCSI off this same CD).
+# The boot block is assembled here against the freshly built SPL (see mkcd.sh).
 MACBOOT := $(srctree)/board/apple/oldmac/macboot
 
 quiet_cmd_oldmac_iso = OLDMACCD $@
-      cmd_oldmac_iso = $(MACBOOT)/mkcd.sh "$(AS)" "$(OBJCOPY)" "$(NM)" \
-	$(objtree)/tools/mkoldmaccd 2048 u-boot u-boot.bin \
-	$(MACBOOT)/bootblock.S $(MACBOOT)/driver.S $@
-
-oldmac.iso: u-boot.bin u-boot tools FORCE
-	$(call if_changed,oldmac_iso)
-
-# The SPL CD carries the SPL (loaded by the boot block) *and* U-Boot proper at a
-# second LBA, which the SPL then loads over SCSI off this same CD.
-quiet_cmd_oldmac_spl_iso = OLDMACCD $@
-      cmd_oldmac_spl_iso = $(MACBOOT)/mkcd.sh "$(AS)" "$(OBJCOPY)" "$(NM)" \
-	$(objtree)/tools/mkoldmaccd 2048 spl/u-boot-spl spl/u-boot-spl.bin \
+      cmd_oldmac_iso = $(MACBOOT)/mkcd.sh "$(AS)" "$(OBJCOPY)" \
+	$(objtree)/tools/mkoldmaccd 2048 spl/u-boot-spl.bin \
 	$(MACBOOT)/bootblock_spl.S $(MACBOOT)/driver.S $@ u-boot.bin
 
-oldmac-spl.iso: spl/u-boot-spl.bin spl/u-boot-spl u-boot.bin tools FORCE
-	$(call if_changed,oldmac_spl_iso)
+oldmac.iso: spl/u-boot-spl.bin u-boot.bin tools FORCE
+	$(call if_changed,oldmac_iso)
 endif
 
 ifeq ($(CONFIG_ARCH_LPC32XX)$(CONFIG_SPL),yy)

@@ -23,7 +23,9 @@
 .include "macbootinfo.inc"
 
 .equ PAYLOAD_LBA,   128
-.equ PAYLOAD_BLOCKS,64
+.ifndef PAYLOAD_BLOCKS
+.equ PAYLOAD_BLOCKS,64			/* CD blocks of the SPL to read */
+.endif
 .equ READBUF,       0x00600000
 
 .ifndef SPL_SIZE
