@@ -63,6 +63,8 @@ HOSTCFLAGS_img2srec.o := -pedantic
 hostprogs-always-y += mkenvimage
 mkenvimage-objs := mkenvimage.o os_support.o generated/lib/crc32.o
 
+hostprogs-always-$(CONFIG_TARGET_OLDMAC) += mkoldmaccd
+
 hostprogs-always-y += dumpimage mkimage fit_info
 hostprogs-always-$(CONFIG_FIT_SIGNATURE) += fit_check_sign
 hostprogs-always-$(CONFIG_TOOLS_LIBCRYPTO) += fdt_add_pubkey
