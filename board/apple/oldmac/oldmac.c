@@ -80,6 +80,7 @@ static struct {
 struct oldmac_model_info {
 	ulong		model;		/* Gestalt machine type */
 	const char	*name;
+	ulong		via_base;	/* VIA1 6522 (timebase); 0x50F00000 on all */
 	ulong		scc_base;	/* Z8530 SCC; chA ctrl = base+2, data = base+6 */
 	ulong		scsi_base;	/* 53C9x ESP; 0 if not ESP-based (e.g. IIsi) */
 	ulong		sonic_base;	/* on-board DP8393x SONIC, 0 if none */
@@ -89,17 +90,17 @@ struct oldmac_model_info {
 /*
  * Real-hardware (0x50F0xxxx) base addresses; QEMU q800 aliases the whole IO
  * region so these also work under emulation.  Quadra-class machines share the
- * SCC/ESP/SONIC layout.
+ * SCC/ESP/SONIC layout; VIA1 sits at 0x50F00000 on every classic Mac.
  */
 static const struct oldmac_model_info oldmac_model_table[] = {
 	{ MAC_MODEL_Q700, "Quadra 700",
-	  0x50f0c020, 0x50f10000, 0x50f0a000, 0x50f08000 },
+	  0x50f00000, 0x50f0c020, 0x50f10000, 0x50f0a000, 0x50f08000 },
 	{ MAC_MODEL_Q800, "Quadra 800",
-	  0x50f0c020, 0x50f10000, 0x50f0a000, 0x50f08000 },
+	  0x50f00000, 0x50f0c020, 0x50f10000, 0x50f0a000, 0x50f08000 },
 	/* LC 475: Quadra-style ESP SCSI, but SCC-II serial (base comes from the
 	 * ROM) and no on-board Ethernet. */
 	{ MAC_MODEL_P475, "LC 475",
-	  0, 0x50f10000, 0, 0 },
+	  0x50f00000, 0, 0x50f10000, 0, 0 },
 };
 
 static const struct oldmac_model_info *oldmac_cur_model(void)
@@ -314,22 +315,16 @@ int checkboard(void)
 	return 0;
 }
 
-/*
- * TODO(oldmac): bring-up stubs.  Replace with a real VIA/RTC timer driver and a
- * proper machine reset.  These exist only so u-boot proper links and boots far
- * enough to validate the SCC console; the crude monotonic counter is not a real
- * timebase.
- */
-unsigned long notrace timer_read_counter(void)
-{
-	static unsigned long t;
+/* VIA1 6522 base for the detected model (the timebase driver's hardware); VIA1
+ * is at 0x50F00000 on every classic Mac, so fall back to that before the model
+ * is known. */
+#define VIA1_DEFAULT	0x50f00000
 
-	return t += 1000;
-}
-
-ulong get_tbclk(void)
+ulong oldmac_via_base(void)
 {
-	return CONFIG_SYS_HZ;
+	const struct oldmac_model_info *m = oldmac_cur_model();
+
+	return (m && m->via_base) ? m->via_base : VIA1_DEFAULT;
 }
 
 void reset_cpu(void)
