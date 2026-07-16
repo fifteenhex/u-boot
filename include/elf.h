@@ -707,7 +707,8 @@ unsigned long elf_hash(const unsigned char *name);
 
 #ifndef __ASSEMBLY__
 unsigned long bootelf_exec(ulong (*entry)(int, char * const[]),
-			   int argc, char *const argv[]);
+			   ulong end, int argc, char *const argv[]);
+unsigned long elf_image_end(unsigned long addr);
 unsigned long bootelf(unsigned long addr, Bootelf_flags flags,
 		      int argc, char *const argv[]);
 int valid_elf_image(unsigned long addr);

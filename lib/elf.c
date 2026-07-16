@@ -8,6 +8,7 @@
 #include <elf.h>
 #include <env.h>
 #include <errno.h>
+#include <irq_func.h>
 #include <net.h>
 #include <vxworks.h>
 #ifdef CONFIG_X86
@@ -17,14 +18,44 @@
 #endif
 
 /**
+ * elf_image_end() - find the end of a loaded ELF image in memory.
+ *
+ * @addr: address of the ELF file in memory.
+ *
+ * Returns the highest physical address written by any PT_LOAD segment, i.e.
+ * one past the end of the loaded image.  Ports can use this to append data
+ * (e.g. a bootinfo record list) right after the image.  Returns 0 for ELF64.
+ */
+unsigned long elf_image_end(unsigned long addr)
+{
+	Elf32_Ehdr *ehdr = (Elf32_Ehdr *)addr;
+	Elf32_Phdr *phdr;
+	unsigned long end = 0;
+	int i;
+
+	if (ehdr->e_ident[EI_CLASS] == ELFCLASS64)
+		return 0;
+
+	phdr = (Elf32_Phdr *)(addr + ehdr->e_phoff);
+	for (i = 0; i < ehdr->e_phnum; i++, phdr++) {
+		if (phdr->p_type == PT_LOAD &&
+		    phdr->p_paddr + phdr->p_memsz > end)
+			end = phdr->p_paddr + phdr->p_memsz;
+	}
+
+	return end;
+}
+
+/**
  * bootelf_exec() - start the ELF image execution.
  *
  * @entry: address of entry point of ELF.
+ * @end:   one past the end of the loaded image (see elf_image_end()).
  *
- * May by used to allow ports to override the default behavior.
+ * Weak so ports can override it, e.g. to append a bootinfo block at @end.
  */
-unsigned long bootelf_exec(ulong (*entry)(int, char * const[]),
-			   int argc, char *const argv[])
+__weak unsigned long bootelf_exec(ulong (*entry)(int, char * const[]),
+				  ulong end, int argc, char *const argv[])
 {
 	return entry(argc, argv);
 }
@@ -55,6 +86,15 @@ unsigned long bootelf(unsigned long addr, Bootelf_flags flags,
 		return 1;
 	}
 
+	/*
+	 * On m68k the CPU exception vectors live at address 0 and loading an OS
+	 * image (e.g. a Linux/m68k kernel, linked at physical 0) overwrites them.
+	 * Mask interrupts first so a stray IRQ can't vector through the clobbered
+	 * table while the image is being copied in.
+	 */
+	if (IS_ENABLED(CONFIG_M68K))
+		disable_interrupts();
+
 	entry_addr = flags.phdr ? load_elf_image_phdr(addr)
 					    : load_elf_image_shdr(addr);
 
@@ -66,7 +106,7 @@ unsigned long bootelf(unsigned long addr, Bootelf_flags flags,
 		argv = args;
 	}
 
-	return bootelf_exec((void *)entry_addr, argc, argv);
+	return bootelf_exec((void *)entry_addr, elf_image_end(addr), argc, argv);
 }
 
 /*
