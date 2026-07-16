@@ -24,13 +24,18 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-/* Quadra 800 Zilog 8530 SCC, channel A (modem port = QEMU -serial) */
-#define OLDMAC_SCC_CTRL_A	0x5000c022
-#define OLDMAC_SCC_DATA_A	0x5000c026
+/*
+ * Zilog 8530 SCC, channel A (modem port = QEMU -serial).  ctrl and data are
+ * filled in from the detected model (oldmac_apply_model()); the default is the
+ * Quadra-class base so the pre-DM debug console works before detection.  The
+ * canonical hardware address is 0x50F0C020; on QEMU q800 the whole IO region is
+ * aliased so 0x50F0xxxx and 0x5000xxxx reach the same registers.
+ */
+#define QUADRA_SCC_BASE		0x50f0c020
 
 static struct scc_serial_plat oldmac_scc_plat = {
-	.ctrl = OLDMAC_SCC_CTRL_A,
-	.data = OLDMAC_SCC_DATA_A,
+	.ctrl = QUADRA_SCC_BASE + 2,
+	.data = QUADRA_SCC_BASE + 6,
 };
 
 U_BOOT_DRVINFO(oldmac_scc) = {
@@ -38,7 +43,7 @@ U_BOOT_DRVINFO(oldmac_scc) = {
 	.plat = &oldmac_scc_plat,
 };
 
-/* AMD 53C9x ESP SCSI controller (base filled in by the driver for q800) */
+/* AMD 53C9x ESP SCSI controller (base from the model via board_esp_base()) */
 U_BOOT_DRVINFO(oldmac_esp) = {
 	.name = "esp_scsi",
 };
@@ -74,12 +79,20 @@ static struct {
 struct oldmac_model_info {
 	ulong		model;		/* Gestalt machine type */
 	const char	*name;
+	ulong		scc_base;	/* Z8530 SCC; chA ctrl = base+2, data = base+6 */
+	ulong		scsi_base;	/* 53C9x ESP; 0 if not ESP-based (e.g. IIsi) */
 	ulong		sonic_base;	/* on-board DP8393x SONIC, 0 if none */
 	ulong		sonic_prom;	/* SONIC MAC-address PROM, 0 if none */
 };
 
+/*
+ * Real-hardware (0x50F0xxxx) base addresses; QEMU q800 aliases the whole IO
+ * region so these also work under emulation.  Quadra-class machines share the
+ * SCC/ESP/SONIC layout.
+ */
 static const struct oldmac_model_info oldmac_model_table[] = {
-	{ MAC_MODEL_Q800, "Quadra 800", 0x5000a000, 0x50008000 },
+	{ MAC_MODEL_Q800, "Quadra 800",
+	  0x50f0c020, 0x50f10000, 0x50f0a000, 0x50f08000 },
 };
 
 static const struct oldmac_model_info *oldmac_cur_model(void)
@@ -113,6 +126,26 @@ ulong oldmac_sonic_prom(void)
 	const struct oldmac_model_info *m = oldmac_cur_model();
 
 	return m ? m->sonic_prom : 0;
+}
+
+/* 53C9x ESP SCSI base for the detected model; the ESP driver's weak
+ * board_esp_base() hook resolves to this. */
+phys_addr_t board_esp_base(void)
+{
+	const struct oldmac_model_info *m = oldmac_cur_model();
+
+	return m ? m->scsi_base : 0;
+}
+
+/* Point the SCC serial platdata at the detected model's registers. */
+static void oldmac_apply_model(void)
+{
+	const struct oldmac_model_info *m = oldmac_cur_model();
+
+	if (m && m->scc_base) {
+		oldmac_scc_plat.ctrl = m->scc_base + 2;
+		oldmac_scc_plat.data = m->scc_base + 6;
+	}
 }
 
 /*
@@ -164,6 +197,7 @@ static void parse_bootinfo(void)
 int board_early_init_f(void)
 {
 	parse_bootinfo();
+	oldmac_apply_model();
 
 	return 0;
 }
@@ -178,6 +212,7 @@ int board_early_init_f(void)
 void board_init_f(ulong bootflag)
 {
 	parse_bootinfo();
+	oldmac_apply_model();
 	if (!gd->ram_size)
 		gd->ram_size = SZ_16M;
 }

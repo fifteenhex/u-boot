@@ -205,13 +205,21 @@ static int esp_scsi_bus_reset(struct udevice *dev)
 	return 0;
 }
 
+/* Boards without a device tree supply the controller base here (0 = none). */
+__weak phys_addr_t board_esp_base(void)
+{
+	return 0;
+}
+
 static int esp_scsi_probe(struct udevice *dev)
 {
 	struct scsi_plat *plat = dev_get_uclass_plat(dev);
 	struct esp_priv *p = dev_get_priv(dev);
 
 	if (!plat->base)
-		plat->base = 0x50010000;	/* q800 ESP; TODO: platdata/DT */
+		plat->base = board_esp_base();
+	if (!plat->base)
+		return -ENODEV;
 	p->regs = (void *)plat->base;
 	p->pdma = (void *)(plat->base + 0x100);	/* PDMA window */
 	plat->max_id = 7;
