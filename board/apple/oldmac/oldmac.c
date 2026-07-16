@@ -44,6 +44,13 @@ U_BOOT_DRVINFO(oldmac_esp) = {
 	.name = "esp_scsi",
 };
 
+/* On-board DP8393x SONIC Ethernet.  The driver probe gates itself on the
+ * detected model via oldmac_sonic_base(), so this is inert on models without
+ * a SONIC. */
+U_BOOT_DRVINFO(oldmac_sonic) = {
+	.name = "sonic_eth",
+};
+
 /* Machine description discovered from the Mac bootinfo (built by the ROM boot
  * chain, or by QEMU's q800 -kernel path). */
 static struct {
@@ -56,14 +63,55 @@ static struct {
 	ulong video_rowbytes;
 } oldmac;
 
+/*
+ * Per-model capability table.  Peripherals that are not present on every
+ * classic Mac (e.g. the on-board SONIC Ethernet, whose base address is also
+ * model-specific) are described here and gated on the model detected from the
+ * ROM bootinfo, so drivers only come up on machines that actually have them.
+ * Add a row here to bring up another model later.
+ */
+struct oldmac_model_info {
+	ulong		model;		/* Gestalt machine type */
+	const char	*name;
+	ulong		sonic_base;	/* on-board DP8393x SONIC, 0 if none */
+	ulong		sonic_prom;	/* SONIC MAC-address PROM, 0 if none */
+};
+
+static const struct oldmac_model_info oldmac_model_table[] = {
+	{ MAC_MODEL_Q800, "Quadra 800", 0x5000a000, 0x50008000 },
+};
+
+static const struct oldmac_model_info *oldmac_cur_model(void)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(oldmac_model_table); i++)
+		if (oldmac_model_table[i].model == oldmac.model)
+			return &oldmac_model_table[i];
+
+	return NULL;
+}
+
 static const char *oldmac_model_name(ulong model)
 {
-	switch (model) {
-	case MAC_MODEL_Q800:
-		return "Quadra 800";
-	default:
-		return "unknown";
-	}
+	const struct oldmac_model_info *m = oldmac_cur_model();
+
+	return m ? m->name : "unknown";
+}
+
+/* SONIC Ethernet: base address for the detected model, or 0 if it has none. */
+ulong oldmac_sonic_base(void)
+{
+	const struct oldmac_model_info *m = oldmac_cur_model();
+
+	return m ? m->sonic_base : 0;
+}
+
+ulong oldmac_sonic_prom(void)
+{
+	const struct oldmac_model_info *m = oldmac_cur_model();
+
+	return m ? m->sonic_prom : 0;
 }
 
 /*
