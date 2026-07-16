@@ -19,9 +19,8 @@ static int console_set_row(struct udevice *dev, uint row, int clr)
 	struct console_simple_priv *priv = dev_get_priv(dev);
 	struct video_fontdata *fontdata = priv->fontdata;
 	void *line, *dst, *end;
-	int pixels = fontdata->height * vid_priv->xsize;
 	int ret;
-	int i;
+	int i, j;
 	int pbytes;
 
 	ret = check_bpix_support(vid_priv->bpix);
@@ -29,10 +28,19 @@ static int console_set_row(struct udevice *dev, uint row, int clr)
 		return ret;
 
 	line = vid_priv->fb + row * fontdata->height * vid_priv->line_length;
-	dst = line;
 	pbytes = VNBYTES(vid_priv->bpix);
-	for (i = 0; i < pixels; i++)
-		fill_pixel_and_goto_next(&dst, clr, pbytes, pbytes);
+	/*
+	 * Clear each scan line of the text row separately, stepping by
+	 * line_length, so a framebuffer whose stride is wider than the visible
+	 * width (line_length > xsize * pbytes) is cleared fully rather than in a
+	 * left-shifting staircase.
+	 */
+	for (i = 0; i < fontdata->height; i++) {
+		dst = line;
+		for (j = 0; j < vid_priv->xsize; j++)
+			fill_pixel_and_goto_next(&dst, clr, pbytes, pbytes);
+		line += vid_priv->line_length;
+	}
 	end = dst;
 
 	video_damage(dev->parent,
