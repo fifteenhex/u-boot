@@ -20,6 +20,8 @@
 .equ _SCSIRead,     5
 .equ READ_10,       0x28
 
+.include "macbootinfo.inc"
+
 .equ PAYLOAD_LBA,   128
 .equ PAYLOAD_BLOCKS,64
 .equ READBUF,       0x00600000
@@ -100,6 +102,10 @@ start:
 	pea	message(%pc)
 	move.l	#600, -(%sp)
 	SCSIDispatch _SCSIComplete
+
+	/* Build the Mac bootinfo at MAC_BOOTINFO while the ROM is still alive,
+	 * so the SPL and U-Boot proper get the real model/RAM/framebuffer. */
+	build_bootinfo
 
 	/* mask interrupts + tear down MMU/caches -> flat physical */
 	move.w	#0x2700, %sr
