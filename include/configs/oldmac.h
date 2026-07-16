@@ -17,7 +17,7 @@
 
 /* Send console output to both the serial port and the Mac framebuffer. */
 #define CFG_EXTRA_ENV_SETTINGS		\
-	"stdin=serial\0"		\
+	"stdin=serial,adb-kbd\0"	\
 	"stdout=serial,vidconsole\0"	\
 	"stderr=serial,vidconsole\0"
 
