@@ -33,11 +33,31 @@
 .endm
 
 driver_base:
-	/* transparent-translate the IO region (logical==physical, non-cachable) */
+	/* Detect the CPU (Gestalt processor type: 68030 = 4, 68040 = 5) so the
+	 * cache/translation below picks the right instructions.  The ROM passes
+	 * a0 = partition entry and d5 = target; Gestalt clobbers a0/d0, so save
+	 * and restore them.  d7 survives the SCSI Manager (preserves d3-d7) and
+	 * carries the CPU type to the cache flush before the jump. */
+	move.l	%a0, -(%sp)
+	move.w	%d5, -(%sp)
+	moveq	#5, %d7			/* default: 68040 */
+	move.l	#0x70726f63, %d0	/* 'proc' = gestaltProcessorType */
+	dc.w	0xA1AD			/* _Gestalt -> d0 = err, a0 = response */
+	tst.w	%d0
+	bne.s	1f
+	move.l	%a0, %d7
+1:	move.w	(%sp)+, %d5
+	movea.l	(%sp)+, %a0
+
+	/* Transparent-translate the IO region (identity, cache-inhibited).  Only
+	 * the 68040 needs it here: the 68030 path uses the ROM SCSI Manager (no
+	 * direct IO) and leaves the ROM MMU up, so IO stays mapped for it. */
+	cmp.w	#5, %d7
+	bne.s	2f
 	move.l	#0x500fe060, %d1
 	.long	0x4e7b1006		/* movec %d1,%dtt0 */
 	nop
-
+2:
 	/* d5 = SCSI target, a0 = HFS partition entry. Save the target. */
 	move.w	%d5, %d6		/* d6 = target id (SCSI mgr preserves d3-d7) */
 
@@ -69,6 +89,18 @@ driver_base:
 	move.l	#300, -(%sp)
 	SCSIDispatch _SCSIComplete
 
+	/* The ROM read the boot block into BOOTBUF through the cache, so the
+	 * freshly-loaded code can be stale in the I-cache.  Flush before we fetch
+	 * and execute it: the 68040 pushes+invalidates with cpusha; the 68030
+	 * clears its writethrough caches via CACR (CI | CD). */
+	cmp.w	#5, %d7
+	bne.s	5f
+	.short	0xf478			/* cpusha bc */
+	nop
+	bra.s	6f
+5:	move.l	#0x0808, %d0
+	movec	%d0, %cacr		/* 68030: clear the I+D caches */
+6:
 	/* jump into the loaded boot block at bbEntry (offset 2) */
 	movea.l	#BOOTBUF + 2, %a0
 	jmp	(%a0)
