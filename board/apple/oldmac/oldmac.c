@@ -91,6 +91,8 @@ struct oldmac_model_info {
  * SCC/ESP/SONIC layout.
  */
 static const struct oldmac_model_info oldmac_model_table[] = {
+	{ MAC_MODEL_Q700, "Quadra 700",
+	  0x50f0c020, 0x50f10000, 0x50f0a000, 0x50f08000 },
 	{ MAC_MODEL_Q800, "Quadra 800",
 	  0x50f0c020, 0x50f10000, 0x50f0a000, 0x50f08000 },
 };
