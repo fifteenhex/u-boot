@@ -53,6 +53,41 @@ int cpu_init_r(void)
 #define R_68K_RELATIVE	22
 
 /*
+ * Runtime CPU class.  Boards with a 68030 variant (e.g. the Mac IIsi) override
+ * this to return 0 so the cache/MMU paths use 68030 instructions instead of the
+ * 68040-only ones (cpusha, movec %dttN).  Default: 68040.
+ */
+__weak int m68k_is_68040(void)
+{
+	return 1;
+}
+
+/*
+ * Push + invalidate the CPU caches.  The 68040 has copyback caches, flushed
+ * with CPUSHA.  The 68030 has writethrough caches (nothing dirty to push), so
+ * clearing both via CACR (CI | CD, self-clearing) is enough to drop stale lines
+ * before executing freshly written code or reading DMA'd data.
+ */
+static inline void m68k_flush_caches(void)
+{
+	if (m68k_is_68040()) {
+		__asm__ __volatile__(".chip 68040\n\t"
+				     "nop\n\t"
+				     "cpusha %%bc\n\t"
+				     "nop\n\t"
+				     ".chip 68k"
+				     : : : "memory");
+	} else {
+		__asm__ __volatile__(".chip 68030\n\t"
+				     "movec %%cacr,%%d0\n\t"
+				     "or.l #0x0808,%%d0\n\t"	/* CI | CD */
+				     "movec %%d0,%%cacr\n\t"
+				     ".chip 68k"
+				     : : : "d0", "memory");
+	}
+}
+
+/*
  * Relocate U-Boot from its link address (CONFIG_TEXT_BASE, low RAM) up to
  * new_gd->relocaddr near the top of RAM, apply the ELF dynamic relocations the
  * -fPIC/-pie build emitted into .rela.dyn, fix up the GOT pointer (%a5) and the
@@ -110,6 +145,14 @@ void relocate_code(ulong start_addr_sp, gd_t *new_gd, ulong relocaddr)
 		}
 	}
 
+	/*
+	 * We copied the monitor and rewrote its relocations through the data
+	 * cache, so the relocated code may still be in the D-cache while the
+	 * I-cache would fetch stale bytes from memory.  Flush both before jumping
+	 * to the copy.
+	 */
+	m68k_flush_caches();
+
 	/* Fix the GOT pointer, set the new stack pointer, then jump */
 	__asm__ __volatile__("add.l %0, %%a5\n"
 			     "move.l %1, %%sp\n"
@@ -144,5 +187,14 @@ int icache_status(void) { return 0; }
 void dcache_enable(void) {}
 void dcache_disable(void) {}
 int dcache_status(void) { return 0; }
-void flush_cache(unsigned long start, unsigned long size) {}
-void flush_dcache_range(unsigned long start, unsigned long stop) {}
+
+/*
+ * Cache maintenance.  Neither the 68040's copyback caches nor the 68030's
+ * writethrough caches are coherent with device DMA, so anything written through
+ * the D-cache and then executed (relocated code) or read by hardware
+ * (framebuffer, DMA descriptors) must be flushed first.  We flush the whole
+ * cache rather than walk lines: coarse but always correct, and not a hot path.
+ * Requires supervisor mode.
+ */
+void flush_cache(unsigned long start, unsigned long size) { m68k_flush_caches(); }
+void flush_dcache_range(unsigned long start, unsigned long stop) { m68k_flush_caches(); }
