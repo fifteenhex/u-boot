@@ -6,12 +6,18 @@
  * proper from a SCSI disk.  Build-specific addresses come from --defsym.
  */
 
-	.cpu 68040
+	/* Assemble as 68030 so the 68030 MMU 'pmove' instructions are accepted;
+	 * the 68040-only ops (cpusha, movec %tc/%ittN/%dttN) are hand-encoded
+	 * below and are gated at runtime by the detected CPU. */
+	.cpu 68030
 	.text
 	.org 0
 
-.equ SCC_CTL_A,     0x5000c022
-.equ SCC_DAT_A,     0x5000c026
+/* Canonical classic-Mac SCC channel-A registers.  Every 68k Mac decodes its
+ * I/O at 0x50F0xxxx; QEMU q800 also aliases 0x5000xxxx to the same registers,
+ * but on real hardware 0x5000xxxx is undecoded and bus-errors, so use 0x50F0. */
+.equ SCC_CTL_A,     0x50f0c022
+.equ SCC_DAT_A,     0x50f0c026
 .equ _SCSIDispatch, 0xA815
 .equ _SCSIGet,      1
 .equ _SCSISelect,   2
@@ -51,6 +57,12 @@
 	move.w	(%sp)+, %d0
 .endm
 
+/* write SCC channel-A register \reg = \val (control port already in %a1) */
+.macro sccw reg, val
+	move.b	#\reg, (%a1)
+	move.b	#\val, (%a1)
+.endm
+
 begin:
 ID:		.short	0x4C4B
 Entry:		bra.w	start
@@ -71,19 +83,51 @@ SysHeapSize:	.long	0x00020000
 
 	.align	2
 start:
+	/* Detect the CPU (Gestalt processor type: 68030 = 4, 68040 = 5).  d7
+	 * carries it to the MMU/cache teardown below; nothing is live at entry. */
+	moveq	#5, %d7
+	move.l	#0x70726f63, %d0	/* 'proc' = gestaltProcessorType */
+	dc.w	0xA1AD			/* _Gestalt -> d0 = err, a0 = response */
+	tst.w	%d0
+	bne.s	7f
+	move.l	%a0, %d7
+7:
+	/* Transparent-translate the IO region (identity, cache-inhibited) and keep
+	 * it through the MMU teardown so the SPL and U-Boot see cache-inhibited
+	 * device registers.  68040: DTT0 via movec; 68030: TT0 via pmove. */
+	cmp.w	#5, %d7
+	bne.s	8f
 	move.l	#0x500fe060, %d1
 	.long	0x4e7b1006		/* movec %d1,%dtt0 */
 	nop
+	bra.s	9f
+8:	lea	tt0val(%pc), %a0
+	pmove	(%a0), %tt0		/* 68030 transparent translation reg 0 */
+9:
 
+	/* Fully initialise SCC channel A (modem port) for 9600 8N1 polled.  A
+	 * real Z8530 has no baud clock until the BRG is programmed, so we must
+	 * do this ourselves rather than rely on whatever the ROM left. */
 	movea.l	#SCC_CTL_A, %a1
-	tst.b	(%a1)
-	move.b	#0x05, (%a1)
-	move.b	#0x68, (%a1)
-	movea.l	#SCC_DAT_A, %a3
+	tst.b	(%a1)			/* reset the register pointer */
+	sccw	9, 0x80			/* channel A reset */
+	moveq	#63, %d0
+6:	tst.b	(%a1)			/* let the reset settle */
+	dbra	%d0, 6b
+	sccw	4, 0x44			/* x16 clock, 1 stop bit, no parity */
+	sccw	3, 0xc0			/* Rx 8 bits (not yet enabled) */
+	sccw	5, 0xe2			/* Tx 8 bits, DTR, RTS (not yet enabled) */
+	sccw	11, 0x50		/* Rx and Tx clock from the BRG */
+	sccw	12, 10			/* BRG time constant lo (9600, 3.6864MHz) */
+	sccw	13, 0			/* BRG time constant hi */
+	sccw	14, 1			/* BRG enable, source = RTxC (3.6864MHz baud clock) */
+	sccw	3, 0xc1			/* enable Rx */
+	sccw	5, 0xea			/* enable Tx */
+
 	lea	bbmsg(%pc), %a2
 1:	move.b	(%a2)+, %d0
 	beq.s	2f
-	move.b	%d0, (%a3)
+	bsr.w	bbputc
 	bra.s	1b
 2:
 	/* SCSI-read the SPL image into the staging buffer */
@@ -109,16 +153,29 @@ start:
 	 * so the SPL and U-Boot proper get the real model/RAM/framebuffer. */
 	build_bootinfo
 
-	/* mask interrupts + tear down MMU/caches -> flat physical */
+	/*
+	 * Mask interrupts and disable paging, keeping the IO region cache-inhibited
+	 * (DTT0 on the 68040, TT0 on the 68030) so the SPL and U-Boot still see
+	 * uncached device registers.  The 68040 movec %tc/%ittN/%dttN are
+	 * hand-encoded because they cannot be named under .cpu 68030.
+	 */
 	move.w	#0x2700, %sr
+	cmp.w	#5, %d7
+	bne.s	10f
 	moveq	#0, %d0
-	movec	%d0, %tc
-	movec	%d0, %itt0
-	movec	%d0, %itt1
-	movec	%d0, %dtt0
-	movec	%d0, %dtt1
+	.long	0x4e7b0003		/* movec %d0,%tc   */
+	.long	0x4e7b0004		/* movec %d0,%itt0 */
+	.long	0x4e7b0005		/* movec %d0,%itt1 */
+	.long	0x4e7b0007		/* movec %d0,%dtt1 */
 	.short	0xf478			/* cpusha bc */
 	nop
+	bra.s	11f
+10:	lea	zeroval(%pc), %a0
+	pmove	(%a0), %tc		/* 68030: disable paging */
+	pmove	(%a0), %tt1		/* clear TT1, keep TT0 */
+	move.l	#0x0808, %d0
+	movec	%d0, %cacr		/* clear I+D caches */
+11:
 
 	/* zero the RAM the SPL and U-Boot need clean (keep boot block + READBUF) */
 	movea.l	#0, %a1
@@ -139,11 +196,29 @@ start:
 5:	move.l	(%a0)+, (%a1)+
 	subq.l	#1, %d0
 	bne.s	5b
-	.short	0xf478
+	/* flush the freshly-copied SPL out of the caches before entering it */
+	cmp.w	#5, %d7
+	bne.s	12f
+	.short	0xf478			/* cpusha bc (68040) */
 	nop
-
+	bra.s	13f
+12:	move.l	#0x0808, %d0
+	movec	%d0, %cacr		/* 68030: clear I+D caches */
+13:
 	movea.l	#SPL_ENTRY, %a0
 	jmp	(%a0)
+
+/* Poll TX-empty and send the char in %d0.b out SCC channel A; clobbers a1/d1.
+ * Select RR0 (write 0 to the control port) each poll, since the ROM's SCSI
+ * manager may leave the SCC register pointer dirty. */
+bbputc:
+	movea.l	#SCC_CTL_A, %a1
+7:	move.b	#0, (%a1)		/* point at RR0 */
+	move.b	(%a1), %d1		/* read RR0 */
+	btst	#2, %d1
+	beq.s	7b
+	move.b	%d0, 4(%a1)
+	rts
 
 	.align 2
 CDB:	.byte	READ_10
@@ -166,6 +241,12 @@ TIB:	.short	op_inc
 stat:		.short	0
 message:	.short	0
 bbmsg:		.asciz	"\r\noldmac: loading SPL...\r\n"
+
+	/* 68030 TT0: base 0x50, mask 0x0f, E, CI, ignore R/W and function code
+	 * -> identity-map + cache-inhibit the whole 0x5xxxxxxx IO region. */
+	.align 2
+tt0val:		.long	0x500f8507
+zeroval:	.long	0
 
 	.org	1024, 0xda
 end:
