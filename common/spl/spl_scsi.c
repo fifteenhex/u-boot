@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * SPL loader: load U-Boot proper from a raw SCSI disk.
+ * SPL loader: load U-Boot proper from a raw SCSI medium.
  *
- * Scans the SCSI bus, then reads the U-Boot image from a fixed sector of the
- * first SCSI block device (no filesystem).  Modelled on common/spl/spl_sata.c.
+ * Scans the SCSI bus and reads the U-Boot image from a fixed sector.  When
+ * U-Boot lives on the same CD we booted from, prefer the CD-ROM so a hard disk
+ * on the bus (which becomes the lower device number) doesn't get read instead.
+ * Modelled on common/spl/spl_sata.c.
  */
 
 #include <spl.h>
 #include <scsi.h>
 #include <blk.h>
+#include <part.h>
 #include <image.h>
 #include <errno.h>
 #include <linux/string.h>
@@ -26,14 +29,31 @@ static int spl_scsi_load_image(struct spl_image_info *spl_image,
 	void *scratch = (void *)SPL_SCSI_SCRATCH;
 	struct blk_desc *bd;
 	unsigned long count;
-	int ret;
+	int ret, i;
 
-	/* bring up the SCSI bus and grab the first block device (which may be a
-	 * CD-ROM with 2048-byte blocks, e.g. when U-Boot lives on the same CD) */
+	/* bring up the SCSI bus */
 	ret = scsi_scan(false);
 	if (ret)
 		return ret;
-	bd = blk_get_devnum_by_uclass_id(UCLASS_SCSI, 0);
+
+	/*
+	 * Prefer the CD-ROM (the medium we booted from, 2048-byte blocks); fall
+	 * back to the first device.  This keeps us off any hard disk that scans
+	 * ahead of the CD.
+	 */
+	bd = NULL;
+	for (i = 0; ; i++) {
+		struct blk_desc *d = blk_get_devnum_by_uclass_id(UCLASS_SCSI, i);
+
+		if (!d)
+			break;
+		if (!bd)
+			bd = d;			/* fallback: first device */
+		if (d->type == DEV_TYPE_CDROM) {
+			bd = d;
+			break;
+		}
+	}
 	if (!bd)
 		return -ENODEV;
 
