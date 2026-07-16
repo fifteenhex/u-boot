@@ -19,6 +19,7 @@
 #include <video.h>
 #include <asm/bootinfo.h>
 #include <asm/global_data.h>
+#include <asm/io.h>
 #include <dm/platdata.h>
 #include <linux/sizes.h>
 
@@ -208,10 +209,38 @@ static void parse_bootinfo(void)
 		}
 		rec = (struct bi_record *)((ulong)rec + rec->size);
 	}
+
+	/* Keep a copy (including the terminating BI_LAST) for handing off to a
+	 * Linux/m68k kernel via bootelf; rec points at BI_LAST here. */
+	if (IS_ENABLED(CONFIG_CMD_ELF)) {
+		ulong size = (ulong)rec + rec->size - MAC_BOOTINFO_ADDR;
+
+		if (size <= sizeof(gd->arch.saved_bootinfo)) {
+			memcpy(gd->arch.saved_bootinfo,
+			       (void *)MAC_BOOTINFO_ADDR, size);
+			gd->arch.bootinfo_size = size;
+		}
+	}
 }
 
 int board_early_init_f(void)
 {
+	parse_bootinfo();
+	oldmac_apply_model();
+
+	return 0;
+}
+
+int board_init(void)
+{
+	/*
+	 * relocate_code() zeroes the relocated BSS, discarding the hardware
+	 * description board_early_init_f() parsed before relocation.  The Mac
+	 * bootinfo still sits at the fixed MAC_BOOTINFO_ADDR (low RAM, below the
+	 * relocated monitor), so re-read it here, in U-Boot proper's post-reloc
+	 * init (gated by CONFIG_BOARD_INIT), before any driver (SCSI/video/serial)
+	 * probes and needs it.
+	 */
 	parse_bootinfo();
 	oldmac_apply_model();
 
@@ -325,6 +354,65 @@ ulong oldmac_via_base(void)
 	const struct oldmac_model_info *m = oldmac_cur_model();
 
 	return (m && m->via_base) ? m->via_base : VIA1_DEFAULT;
+}
+
+/*
+ * Return the VIAs to a cold-reset state before entering an OS.  Our timer
+ * driver leaves VIA1 Timer 1 free-running, and the ROM/U-Boot (SCSI, etc.) may
+ * leave interrupt sources enabled on VIA2; a Linux/m68k kernel then takes a
+ * spurious interrupt ("unexpected interrupt from N") as it brings up its own
+ * VIA timer.  Stop the timers and disable + acknowledge all VIA interrupts so
+ * the kernel starts from the same state a cold machine would.  Called from the
+ * m68k bootelf hand-off (arch/m68k/lib/elf.c).  6522 registers are byte-wide,
+ * spaced 0x200 apart; ACR=11, IFR=13, IER=14 (write 0x7f = clear bits 0-6).
+ */
+void board_quiesce_devices(void)
+{
+	ulong via1 = oldmac_via_base();
+	const struct oldmac_model_info *m = oldmac_cur_model();
+
+	if (!via1)
+		return;
+
+	writeb(0x00, (void *)(via1 + 11 * 0x200));	/* ACR: stop timers   */
+	writeb(0x7f, (void *)(via1 + 14 * 0x200));	/* IER: disable IRQs   */
+	writeb(0x7f, (void *)(via1 + 13 * 0x200));	/* IFR: ack pending    */
+
+	/*
+	 * The Quadra GLUE routes device interrupts to CPU levels in one of two
+	 * modes selected by VIA1 port B bit 6 ("auxmode"): the cold-reset state
+	 * is low ("A/UX" mode) which is what Linux/m68k expects, but the Mac ROM
+	 * leaves it high ("Classic"/MacOS mode).  Booted that way, SCC/sound/etc.
+	 * arrive on the wrong IPL and the kernel spins on an unhandled level-5
+	 * "unexpected interrupt from 116".  Drive PB6 low to restore A/UX mode.
+	 * VIA1 register 0 = ORB, register 2 = DDRB; PB6 = 0x40.
+	 */
+	writeb(readb((void *)(via1 + 2 * 0x200)) | 0x40,
+	       (void *)(via1 + 2 * 0x200));		/* DDRB: PB6 = output */
+	writeb(readb((void *)(via1 + 0 * 0x200)) & ~0x40,
+	       (void *)(via1 + 0 * 0x200));		/* ORB:  PB6 = low    */
+
+	/* Quadra-class machines have a second VIA 0x2000 above the first
+	 * (SCSI/NuBus/etc. route through it). */
+	if (m && m->scsi_base) {
+		ulong via2 = via1 + 0x2000;
+		void *asc = (void *)(via1 + 0x14000);
+
+		writeb(0x00, (void *)(via2 + 11 * 0x200));
+		writeb(0x7f, (void *)(via2 + 14 * 0x200));
+		writeb(0x7f, (void *)(via2 + 13 * 0x200));
+
+		/*
+		 * Apple Sound Chip at IO+0x14000, on CPU level 5 in A/UX mode.
+		 * The ROM's startup chime leaves the ASC FIFO engine running, so
+		 * it keeps asserting level 5; Linux has no sound driver this early
+		 * and spins on "unexpected interrupt from 116" (vector 29 = auto-
+		 * vector 5).  Stop the engine (ASC_MODE=0, which also drops the
+		 * IRQ) and read the FIFO IRQ status to clear any latched flag.
+		 */
+		writeb(0x00, asc + 0x801);	/* ASC_MODE = 0: stop, drop IRQ */
+		(void)readb(asc + 0x804);	/* clear FIFO IRQ status        */
+	}
 }
 
 void reset_cpu(void)
