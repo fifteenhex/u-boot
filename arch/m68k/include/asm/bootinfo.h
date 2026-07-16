@@ -56,6 +56,7 @@ struct bi_record {
 /* Macintosh Gestalt model numbers (BI_MAC_MODEL) */
 #define MAC_MODEL_Q700          22
 #define MAC_MODEL_Q800          35
+#define MAC_MODEL_P475          89	/* LC 475 / Performa 475/476 */
 
 /*
  * Fixed physical address at which the oldmac boot block leaves the Mac bootinfo

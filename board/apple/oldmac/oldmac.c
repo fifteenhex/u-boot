@@ -96,6 +96,10 @@ static const struct oldmac_model_info oldmac_model_table[] = {
 	  0x50f0c020, 0x50f10000, 0x50f0a000, 0x50f08000 },
 	{ MAC_MODEL_Q800, "Quadra 800",
 	  0x50f0c020, 0x50f10000, 0x50f0a000, 0x50f08000 },
+	/* LC 475: Quadra-style ESP SCSI, but SCC-II serial (base comes from the
+	 * ROM) and no on-board Ethernet. */
+	{ MAC_MODEL_P475, "LC 475",
+	  0, 0x50f10000, 0, 0 },
 };
 
 static const struct oldmac_model_info *oldmac_cur_model(void)
