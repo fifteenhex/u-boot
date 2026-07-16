@@ -28,6 +28,13 @@ struct arch_global_data {
 #endif
 	/** @pci_clk: PCI clock rate in Hz */
 	unsigned long pci_clk;
+
+	/** @bootinfo_size: length of @saved_bootinfo, 0 if none */
+	unsigned long bootinfo_size;
+	/** @saved_bootinfo: copy of the ROM/firmware bootinfo record list,
+	 *  appended after a Linux/m68k kernel by bootelf (arch/m68k/lib/elf.c)
+	 */
+	u8 saved_bootinfo[256];
 };
 
 #include <asm-generic/global_data.h>

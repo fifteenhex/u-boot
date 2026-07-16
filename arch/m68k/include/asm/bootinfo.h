@@ -28,6 +28,16 @@ struct bi_record {
 #define BI_RAMDISK         0x0006
 #define BI_COMMAND_LINE    0x0007
 
+/*
+ * CPU/FPU/MMU type values (BI_CPUTYPE/BI_FPUTYPE/BI_MMUTYPE).  Only the 68040
+ * variants are defined: the m680x0 U-Boot is built for the 68040 exclusively,
+ * which is what every supported classic Mac (Quadra 700/800, LC 475) uses.
+ */
+#define CPU_68040          4
+#define FPU_68040          4
+#define MMU_68040          4
+#define CPUB_68040         2	/* BI_MAC_CPUID bit number for the 68040 */
+
 /* QEMU virt specific tags */
 #define BI_VIRT_QEMU_VERSION    0x8000
 #define BI_VIRT_GF_PIC_BASE     0x8001
