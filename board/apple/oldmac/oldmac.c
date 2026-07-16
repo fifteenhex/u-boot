@@ -84,6 +84,7 @@ struct oldmac_model_info {
 	ulong		via_base;	/* VIA1 6522 (timebase); 0x50F00000 on all */
 	ulong		scc_base;	/* Z8530 SCC; chA ctrl = base+2, data = base+6 */
 	ulong		scsi_base;	/* 53C9x ESP; 0 if not ESP-based (e.g. IIsi) */
+	ulong		scsi_pdma_reg;	/* QUADRA2 pseudo-DMA DRQ reg; 0 = via VIA2 */
 	ulong		sonic_base;	/* on-board DP8393x SONIC, 0 if none */
 	ulong		sonic_prom;	/* SONIC MAC-address PROM, 0 if none */
 };
@@ -91,17 +92,22 @@ struct oldmac_model_info {
 /*
  * Real-hardware (0x50F0xxxx) base addresses; QEMU q800 aliases the whole IO
  * region so these also work under emulation.  Quadra-class machines share the
- * SCC/ESP/SONIC layout; VIA1 sits at 0x50F00000 on every classic Mac.
+ * SCC/ESP/SONIC layout; VIA1 sits at 0x50F00000 on every classic Mac.  The
+ * Gestalt model numbers double as the Linux MAC_MODEL_* ids.
  */
 static const struct oldmac_model_info oldmac_model_table[] = {
+	/* Quadra 700: MAC_SCSI_QUADRA2 -- the ESP sits at 0x50F0F000 and its
+	 * pseudo-DMA DRQ is a register in NuBus/video space, not the VIA2. */
 	{ MAC_MODEL_Q700, "Quadra 700",
-	  0x50f00000, 0x50f0c020, 0x50f10000, 0x50f0a000, 0x50f08000 },
+	  0x50f00000, 0x50f0c020, 0x50f0f000, 0xf9800024, 0x50f0a000, 0x50f08000 },
 	{ MAC_MODEL_Q800, "Quadra 800",
-	  0x50f00000, 0x50f0c020, 0x50f10000, 0x50f0a000, 0x50f08000 },
-	/* LC 475: Quadra-style ESP SCSI, but SCC-II serial (base comes from the
-	 * ROM) and no on-board Ethernet. */
+	  0x50f00000, 0x50f0c020, 0x50f10000, 0, 0x50f0a000, 0x50f08000 },
+	/* LC 475 / Quadra 605: Quadra-class VIA2 + ESP SCSI (VIA2 DRQ), SCC base
+	 * taken from the ROM, and no on-board Ethernet. */
 	{ MAC_MODEL_P475, "LC 475",
-	  0x50f00000, 0, 0x50f10000, 0, 0 },
+	  0x50f00000, 0, 0x50f10000, 0, 0, 0 },
+	{ MAC_MODEL_Q605, "Quadra 605",
+	  0x50f00000, 0, 0x50f10000, 0, 0, 0 },
 };
 
 static const struct oldmac_model_info *oldmac_cur_model(void)
@@ -144,6 +150,22 @@ phys_addr_t board_esp_base(void)
 	const struct oldmac_model_info *m = oldmac_cur_model();
 
 	return m ? m->scsi_base : 0;
+}
+
+/* Pseudo-DMA DRQ register for QUADRA2-style SCSI (Quadra 700); 0 = use VIA2. */
+phys_addr_t board_esp_pdma_reg(void)
+{
+	const struct oldmac_model_info *m = oldmac_cur_model();
+
+	return m ? m->scsi_pdma_reg : 0;
+}
+
+/* The LC 475 / Quadra 605 use a 68LC040, which has no FPU. */
+u32 board_m68k_fputype(void)
+{
+	if (oldmac.model == MAC_MODEL_P475 || oldmac.model == MAC_MODEL_Q605)
+		return 0;
+	return FPU_68040;
 }
 
 /* Point the SCC serial platdata at the right registers: prefer the base the

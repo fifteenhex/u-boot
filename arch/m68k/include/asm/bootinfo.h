@@ -67,6 +67,7 @@ struct bi_record {
 #define MAC_MODEL_Q700          22
 #define MAC_MODEL_Q800          35
 #define MAC_MODEL_P475          89	/* LC 475 / Performa 475/476 */
+#define MAC_MODEL_Q605          94	/* Quadra 605 (rebadged LC 475) */
 
 /*
  * Fixed physical address at which the oldmac boot block leaves the Mac bootinfo
