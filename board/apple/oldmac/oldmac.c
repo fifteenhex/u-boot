@@ -223,10 +223,17 @@ static void parse_bootinfo(void)
 	}
 }
 
+static void oldmac_quiesce_devices(void);
+
 int board_early_init_f(void)
 {
 	parse_bootinfo();
 	oldmac_apply_model();
+
+	/* As soon as the machine is known, shut down anything the ROM left
+	 * running (interrupt sources, the startup-chime sound chip) so it can't
+	 * disturb U-Boot or a kernel we later hand off to. */
+	oldmac_quiesce_devices();
 
 	return 0;
 }
@@ -357,16 +364,23 @@ ulong oldmac_via_base(void)
 }
 
 /*
- * Return the VIAs to a cold-reset state before entering an OS.  Our timer
- * driver leaves VIA1 Timer 1 free-running, and the ROM/U-Boot (SCSI, etc.) may
- * leave interrupt sources enabled on VIA2; a Linux/m68k kernel then takes a
- * spurious interrupt ("unexpected interrupt from N") as it brings up its own
- * VIA timer.  Stop the timers and disable + acknowledge all VIA interrupts so
- * the kernel starts from the same state a cold machine would.  Called from the
- * m68k bootelf hand-off (arch/m68k/lib/elf.c).  6522 registers are byte-wide,
- * spaced 0x200 apart; ACR=11, IFR=13, IER=14 (write 0x7f = clear bits 0-6).
+ * Shut down the hardware the Mac ROM leaves active so it can't disturb U-Boot
+ * or a kernel we hand off to.  The ROM enables VIA interrupt sources and plays
+ * the startup chime through the Apple Sound Chip, whose IRQ (CPU level 5 in
+ * A/UX mode) then stays asserted; U-Boot runs polled so it never services them,
+ * and a Linux/m68k kernel with no driver up yet spins on "unexpected interrupt
+ * from N".  Disable and acknowledge all VIA interrupts, select the A/UX GLUE
+ * interrupt-routing mode Linux expects (VIA1 port B bit 6 low; the ROM leaves
+ * it high for Classic/MacOS mode), and stop the ASC.  The VIA timers are left
+ * running: U-Boot's timer driver uses VIA1 Timer 1 and the kernel reprograms
+ * it.  6522 registers are byte-wide, spaced 0x200 apart; ORB=0, DDRB=2, IFR=13,
+ * IER=14 (write 0x7f = clear enables/flags for bits 0-6).
+ *
+ * Run early from board_early_init_f() (once the model is known) so nothing the
+ * ROM left on bothers U-Boot, and again from board_quiesce_devices() before an
+ * OS is entered.
  */
-void board_quiesce_devices(void)
+static void oldmac_quiesce_devices(void)
 {
 	ulong via1 = oldmac_via_base();
 	const struct oldmac_model_info *m = oldmac_cur_model();
@@ -374,45 +388,41 @@ void board_quiesce_devices(void)
 	if (!via1)
 		return;
 
-	writeb(0x00, (void *)(via1 + 11 * 0x200));	/* ACR: stop timers   */
-	writeb(0x7f, (void *)(via1 + 14 * 0x200));	/* IER: disable IRQs   */
-	writeb(0x7f, (void *)(via1 + 13 * 0x200));	/* IFR: ack pending    */
+	writeb(0x7f, (void *)(via1 + 14 * 0x200));	/* VIA1 IER: disable */
+	writeb(0x7f, (void *)(via1 + 13 * 0x200));	/* VIA1 IFR: ack     */
 
-	/*
-	 * The Quadra GLUE routes device interrupts to CPU levels in one of two
-	 * modes selected by VIA1 port B bit 6 ("auxmode"): the cold-reset state
-	 * is low ("A/UX" mode) which is what Linux/m68k expects, but the Mac ROM
-	 * leaves it high ("Classic"/MacOS mode).  Booted that way, SCC/sound/etc.
-	 * arrive on the wrong IPL and the kernel spins on an unhandled level-5
-	 * "unexpected interrupt from 116".  Drive PB6 low to restore A/UX mode.
-	 * VIA1 register 0 = ORB, register 2 = DDRB; PB6 = 0x40.
-	 */
+	/* Restore the A/UX GLUE interrupt-routing mode (VIA1 PB6 low). */
 	writeb(readb((void *)(via1 + 2 * 0x200)) | 0x40,
 	       (void *)(via1 + 2 * 0x200));		/* DDRB: PB6 = output */
 	writeb(readb((void *)(via1 + 0 * 0x200)) & ~0x40,
 	       (void *)(via1 + 0 * 0x200));		/* ORB:  PB6 = low    */
 
 	/* Quadra-class machines have a second VIA 0x2000 above the first
-	 * (SCSI/NuBus/etc. route through it). */
+	 * (SCSI/NuBus route through it) and an Apple Sound Chip at IO+0x14000. */
 	if (m && m->scsi_base) {
 		ulong via2 = via1 + 0x2000;
 		void *asc = (void *)(via1 + 0x14000);
 
-		writeb(0x00, (void *)(via2 + 11 * 0x200));
-		writeb(0x7f, (void *)(via2 + 14 * 0x200));
-		writeb(0x7f, (void *)(via2 + 13 * 0x200));
+		writeb(0x7f, (void *)(via2 + 14 * 0x200));	/* VIA2 IER */
+		writeb(0x7f, (void *)(via2 + 13 * 0x200));	/* VIA2 IFR */
 
 		/*
-		 * Apple Sound Chip at IO+0x14000, on CPU level 5 in A/UX mode.
 		 * The ROM's startup chime leaves the ASC FIFO engine running, so
-		 * it keeps asserting level 5; Linux has no sound driver this early
-		 * and spins on "unexpected interrupt from 116" (vector 29 = auto-
-		 * vector 5).  Stop the engine (ASC_MODE=0, which also drops the
-		 * IRQ) and read the FIFO IRQ status to clear any latched flag.
+		 * it keeps asserting CPU level 5 (vector 29 -> "unexpected
+		 * interrupt from 116").  Stop the engine (ASC_MODE=0, which also
+		 * drops the IRQ) and read the FIFO IRQ status to clear it.
 		 */
 		writeb(0x00, asc + 0x801);	/* ASC_MODE = 0: stop, drop IRQ */
 		(void)readb(asc + 0x804);	/* clear FIFO IRQ status        */
 	}
+}
+
+/* U-Boot's pre-OS hook (bootm/bootelf).  Redo the shutdown here in case a
+ * driver re-enabled a source while U-Boot ran; board_early_init_f() already
+ * did it once the machine was detected. */
+void board_quiesce_devices(void)
+{
+	oldmac_quiesce_devices();
 }
 
 void reset_cpu(void)
