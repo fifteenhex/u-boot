@@ -46,10 +46,12 @@ U_BOOT_DRVINFO(oldmac_esp) = {
 
 /* On-board DP8393x SONIC Ethernet.  The driver probe gates itself on the
  * detected model via oldmac_sonic_base(), so this is inert on models without
- * a SONIC. */
+ * a SONIC.  Only bound when the Ethernet driver is built in (not in the SPL). */
+#if CONFIG_IS_ENABLED(DM_ETH)
 U_BOOT_DRVINFO(oldmac_sonic) = {
 	.name = "sonic_eth",
 };
+#endif
 
 /* Machine description discovered from the Mac bootinfo (built by the ROM boot
  * chain, or by QEMU's q800 -kernel path). */

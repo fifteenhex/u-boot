@@ -1826,12 +1826,14 @@ quiet_cmd_oldmac_iso = OLDMACCD $@
 oldmac.iso: u-boot.bin u-boot tools FORCE
 	$(call if_changed,oldmac_iso)
 
+# The SPL CD carries the SPL (loaded by the boot block) *and* U-Boot proper at a
+# second LBA, which the SPL then loads over SCSI off this same CD.
 quiet_cmd_oldmac_spl_iso = OLDMACCD $@
       cmd_oldmac_spl_iso = $(MACBOOT)/mkcd.sh "$(AS)" "$(OBJCOPY)" "$(NM)" \
 	$(objtree)/tools/mkoldmaccd 2048 spl/u-boot-spl spl/u-boot-spl.bin \
-	$(MACBOOT)/bootblock_spl.S $(MACBOOT)/driver.S $@
+	$(MACBOOT)/bootblock_spl.S $(MACBOOT)/driver.S $@ u-boot.bin
 
-oldmac-spl.iso: spl/u-boot-spl.bin spl/u-boot-spl tools FORCE
+oldmac-spl.iso: spl/u-boot-spl.bin spl/u-boot-spl u-boot.bin tools FORCE
 	$(call if_changed,oldmac_spl_iso)
 endif
 

@@ -11,11 +11,16 @@
 # able to emit a matching image).
 #
 # Usage:
-#   mkcd.sh AS OBJCOPY NM TOOL SECTOR PAYLOAD_ELF PAYLOAD_BIN BOOTBLOCK_S DRIVER_S OUT
+#   mkcd.sh AS OBJCOPY NM TOOL SECTOR PAYLOAD_ELF PAYLOAD_BIN BOOTBLOCK_S \
+#           DRIVER_S OUT [PAYLOAD2_BIN]
+#
+# PAYLOAD2_BIN, if given, is placed at a second fixed LBA for the SPL to load
+# (e.g. U-Boot proper when the SPL loads it off this same CD).
 set -e
 
 AS="$1"; OBJCOPY="$2"; NM="$3"; TOOL="$4"; SECTOR="$5"
 PAYLOAD_ELF="$6"; PAYLOAD_BIN="$7"; BOOTBLOCK_S="$8"; DRIVER_S="$9"; OUT="${10}"
+PAYLOAD2_BIN="${11}"
 
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
@@ -42,4 +47,5 @@ blocks=$(( (payload_bytes + SECTOR - 1) / SECTOR ))
 "$AS" -mcpu=68040 "$DRIVER_S" -o "$tmp/driver.o"
 "$OBJCOPY" -O binary "$tmp/driver.o" "$tmp/driver.bin"
 
-"$TOOL" -s "$SECTOR" "$tmp/bootblock.bin" "$tmp/driver.bin" "$OUT" "$PAYLOAD_BIN"
+"$TOOL" -s "$SECTOR" "$tmp/bootblock.bin" "$tmp/driver.bin" "$OUT" \
+	"$PAYLOAD_BIN" $PAYLOAD2_BIN
