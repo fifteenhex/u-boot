@@ -8,5 +8,6 @@
 lib-$(CONFIG_USE_PRIVATE_LIBGCC) += lshrdi3.o muldi3.o ashldi3.o ashrdi3.o
 
 obj-$(CONFIG_CMD_BOOTM) += bootm.o
+obj-$(CONFIG_CMD_ELF) += elf.o
 obj-$(CONFIG_ARCH_COLDFIRE) += cache.o interrupts.o time.o traps.o bdinfo.o fec.o
 obj-$(CONFIG_MCF5441x) += clock.o
