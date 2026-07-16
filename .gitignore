@@ -142,3 +142,7 @@ __pycache__
 
 # Clang's compilation database file
 /compile_commands.json
+
+# oldmac build artifacts
+/oldmac.iso
+/tools/mkoldmaccd
