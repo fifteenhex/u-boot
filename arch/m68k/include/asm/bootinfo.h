@@ -54,6 +54,7 @@ struct bi_record {
 #define BI_MAC_ROMBASE          0x800b  /* Mac system ROM base address */
 
 /* Macintosh Gestalt model numbers (BI_MAC_MODEL) */
+#define MAC_MODEL_Q700          22
 #define MAC_MODEL_Q800          35
 
 /*
