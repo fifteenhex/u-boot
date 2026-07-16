@@ -62,6 +62,7 @@ U_BOOT_DRVINFO(oldmac_sonic) = {
 static struct {
 	ulong model;		/* Gestalt model id */
 	ulong rombase;
+	ulong scc_base;		/* SCC read base from the ROM (0 if not provided) */
 	ulong video_addr;
 	ulong video_depth;
 	ulong video_width;
@@ -139,14 +140,19 @@ phys_addr_t board_esp_base(void)
 	return m ? m->scsi_base : 0;
 }
 
-/* Point the SCC serial platdata at the detected model's registers. */
+/* Point the SCC serial platdata at the right registers: prefer the base the
+ * ROM reported (works for any model), falling back to the model table.  Channel
+ * A control is base+2, data base+6. */
 static void oldmac_apply_model(void)
 {
 	const struct oldmac_model_info *m = oldmac_cur_model();
+	ulong scc = oldmac.scc_base;
 
-	if (m && m->scc_base) {
-		oldmac_scc_plat.ctrl = m->scc_base + 2;
-		oldmac_scc_plat.data = m->scc_base + 6;
+	if (!scc && m)
+		scc = m->scc_base;
+	if (scc) {
+		oldmac_scc_plat.ctrl = scc + 2;
+		oldmac_scc_plat.data = scc + 6;
 	}
 }
 
@@ -177,6 +183,9 @@ static void parse_bootinfo(void)
 			break;
 		case BI_MAC_ROMBASE:
 			oldmac.rombase = rec->data[0];
+			break;
+		case BI_MAC_SCCBASE:
+			oldmac.scc_base = rec->data[0];
 			break;
 		case BI_MAC_VADDR:
 			oldmac.video_addr = rec->data[0];
