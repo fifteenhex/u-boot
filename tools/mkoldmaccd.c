@@ -17,8 +17,12 @@
  * Empirically, the ROM only boots media whose DDR declares a loadable driver;
  * it then loads the driver and uses it to read the volume.
  *
- * Usage: mkoldmaccd [-s sector] bootblock.bin driver.bin out.iso [payload.bin]
+ * Usage: mkoldmaccd [-s sector] bootblock.bin driver.bin out.iso \
+ *                   [payload.bin] [payload2.bin]
  *   -s sector   logical block size (2048 for CD-ROM, 512 for hard disk)
+ *   payload     raw image read by the boot block (block 128) - U-Boot or SPL
+ *   payload2    second raw image (block 256) - e.g. U-Boot proper, when the
+ *               SPL loads it off this same CD
  */
 
 #include <stdio.h>
@@ -78,7 +82,7 @@ static void pmap(uint8_t *e, uint32_t mapcnt, uint32_t start, uint32_t count,
 
 int main(int argc, char **argv)
 {
-	const char *bb_path, *drv_path, *out_path, *pl_path = NULL;
+	const char *bb_path, *drv_path, *out_path, *pl_path = NULL, *pl2_path = NULL;
 	int a = 1;
 
 	if (a + 1 < argc && !strcmp(argv[a], "-s")) {
@@ -87,7 +91,7 @@ int main(int argc, char **argv)
 	}
 	if (argc - a < 3) {
 		fprintf(stderr,
-			"usage: %s [-s sector] bootblock.bin driver.bin out.iso [payload.bin]\n",
+			"usage: %s [-s sector] bootblock.bin driver.bin out.iso [payload.bin] [payload2.bin]\n",
 			argv[0]);
 		return 2;
 	}
@@ -96,6 +100,8 @@ int main(int argc, char **argv)
 	out_path = argv[a++];
 	if (a < argc)
 		pl_path = argv[a++];
+	if (a < argc)
+		pl2_path = argv[a++];
 
 	uint8_t bb[1024]; memset(bb, 0, sizeof bb);
 	FILE *f = fopen(bb_path, "rb");
@@ -173,15 +179,24 @@ int main(int argc, char **argv)
 	be32(mdb + 36, 16);                           /* drNxtCNID */
 	mdb[44] = 6; memcpy(mdb + 45, "oldmac", 6);   /* drVN */
 
-	/* raw payload at the fixed block the boot block reads */
-	const uint32_t payload_blk = 128;
+	/* raw payload(s) at fixed blocks read by the boot block / the SPL */
+	const uint32_t payload_blk = 128;	/* boot block reads this */
+	const uint32_t payload2_blk = 2048;	/* SPL reads this (U-Boot proper) */
 	if (pl_path) {
 		FILE *pf = fopen(pl_path, "rb");
 		if (!pf) { perror(pl_path); return 1; }
 		size_t pn = fread(img + payload_blk*SECTOR, 1,
-				  (total_blocks - payload_blk)*SECTOR, pf);
+				  (payload2_blk - payload_blk)*SECTOR, pf);
 		fclose(pf);
 		fprintf(stderr, "payload %zu bytes at blk %u\n", pn, payload_blk);
+	}
+	if (pl2_path) {
+		FILE *pf = fopen(pl2_path, "rb");
+		if (!pf) { perror(pl2_path); return 1; }
+		size_t pn = fread(img + payload2_blk*SECTOR, 1,
+				  (total_blocks - payload2_blk)*SECTOR, pf);
+		fclose(pf);
+		fprintf(stderr, "payload2 %zu bytes at blk %u\n", pn, payload2_blk);
 	}
 
 	f = fopen(out_path, "wb");
