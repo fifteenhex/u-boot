@@ -56,4 +56,12 @@ struct bi_record {
 /* Macintosh Gestalt model numbers (BI_MAC_MODEL) */
 #define MAC_MODEL_Q800          35
 
+/*
+ * Fixed physical address at which the oldmac boot block leaves the Mac bootinfo
+ * record list for U-Boot (and the SPL) to read.  It sits in the 0x500000..
+ * 0x700000 RAM gap the boot blocks preserve.  Keep in sync with MAC_BOOTINFO in
+ * board/apple/oldmac/macboot/macbootinfo.inc.
+ */
+#define MAC_BOOTINFO_ADDR       0x00501000
+
 #endif /* _ASM_M68K_BOOTINFO_H */

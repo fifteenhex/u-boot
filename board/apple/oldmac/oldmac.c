@@ -19,7 +19,6 @@
 #include <video.h>
 #include <asm/bootinfo.h>
 #include <asm/global_data.h>
-#include <asm-generic/sections.h>
 #include <dm/platdata.h>
 #include <linux/sizes.h>
 
@@ -117,13 +116,14 @@ ulong oldmac_sonic_prom(void)
 }
 
 /*
- * The Mac bootinfo is a list of {tag, size, data[]} records placed right after
- * the loaded image (_end), terminated by BI_LAST, exactly as the virt board and
- * QEMU's q800 -kernel path produce it.
+ * The Mac bootinfo is a list of {tag, size, data[]} records the boot block
+ * leaves at the fixed MAC_BOOTINFO_ADDR, terminated by BI_LAST.  Reading it from
+ * a fixed address (rather than just after _end) means the ROM-provided values
+ * reach U-Boot whether it is entered directly by the boot block or via the SPL.
  */
 static void parse_bootinfo(void)
 {
-	struct bi_record *rec = (struct bi_record *)ALIGN((ulong)&_end, 2);
+	struct bi_record *rec = (struct bi_record *)MAC_BOOTINFO_ADDR;
 	int loops = 0;
 
 	if (rec->tag != BI_MACHTYPE)
@@ -172,10 +172,14 @@ int board_early_init_f(void)
 #include <spl.h>
 
 /* Minimal SPL board_init_f: gd is already reserved by start.S; the SPL
- * board_init_r() (which start.S calls next) loads U-Boot proper. */
+ * board_init_r() (which start.S calls next) loads U-Boot proper.  Take the RAM
+ * size from the ROM-provided bootinfo the boot block left for us rather than
+ * hard-coding it. */
 void board_init_f(ulong bootflag)
 {
-	gd->ram_size = SZ_128M;
+	parse_bootinfo();
+	if (!gd->ram_size)
+		gd->ram_size = SZ_16M;
 }
 
 u32 spl_boot_device(void)

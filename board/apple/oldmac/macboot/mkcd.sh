@@ -29,17 +29,16 @@ trap 'rm -rf "$tmp"' EXIT
 # ignores these and uses its own .ifndef defaults (fixed SPL text base).
 img_end=$("$NM" "$PAYLOAD_ELF" | awk '/ __image_copy_end$/{print $1}')
 entry=$(  "$NM" "$PAYLOAD_ELF" | awk '/ _start$/{print $1}')
-bss_end=$("$NM" "$PAYLOAD_ELF" | awk '/ _end$/{print $1}')
 
 # Number of CD blocks (SECTOR bytes) needed to hold the payload, so the boot
 # block reads the whole (growing) image rather than a fixed-size prefix.
 payload_bytes=$(wc -c < "$PAYLOAD_BIN")
 blocks=$(( (payload_bytes + SECTOR - 1) / SECTOR ))
 
-"$AS" -mcpu=68040 \
+# -I so the boot block's `.include "macbootinfo.inc"` is found.
+"$AS" -mcpu=68040 -I "$(dirname "$BOOTBLOCK_S")" \
 	--defsym UBOOT_SIZE=0x${img_end:-0} \
 	--defsym UBOOT_ENTRY=0x${entry:-400} \
-	--defsym BOOTINFO_DEST=0x${bss_end:-0} \
 	--defsym UBOOT_BLOCKS=$blocks \
 	"$BOOTBLOCK_S" -o "$tmp/bootblock.o"
 "$OBJCOPY" -O binary "$tmp/bootblock.o" "$tmp/bootblock.bin"

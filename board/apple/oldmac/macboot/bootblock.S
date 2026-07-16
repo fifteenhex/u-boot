@@ -13,8 +13,10 @@
  *      the bootinfo right after u-boot (_end), and
  *   5. jump to u-boot _start.
  *
- * Build-specific addresses (UBOOT_SIZE = __image_copy_end, UBOOT_ENTRY = _start,
- * BOOTINFO_DEST = _end) are passed with --defsym from nm(u-boot); defaults below.
+ * Build-specific addresses (UBOOT_SIZE = __image_copy_end, UBOOT_ENTRY = _start)
+ * are passed with --defsym from nm(u-boot); defaults below.  The Mac bootinfo
+ * is emitted at the fixed MAC_BOOTINFO address (see macbootinfo.inc), which
+ * U-Boot reads directly, so no _end address is needed.
  */
 
 	.cpu 68040
@@ -29,29 +31,21 @@
 .equ _SCSICmd,      3
 .equ _SCSIComplete, 4
 .equ _SCSIRead,     5
-.equ _Gestalt,      0xA1AD
 .equ READ_10,       0x28
 
-.equ MACH_MAC,          3
-.equ gestaltMachineType, 0x6d616368	/* 'mach' */
-.equ MemTop,        0x0108		/* low-mem: top of RAM */
-.equ MainDevice,    0x08a4		/* low-mem: main GDevice handle */
+.include "macbootinfo.inc"
 
 .equ UBOOT_LBA,     128
 .ifndef UBOOT_BLOCKS
 .equ UBOOT_BLOCKS,  96			/* CD blocks of u-boot.bin to read */
 .endif
 .equ READBUF,       0x00600000
-.equ BOOTINFO_BUF,  0x00501000		/* scratch, in the preserved gap */
 
 .ifndef UBOOT_SIZE
 .equ UBOOT_SIZE,    0x00028218		/* __image_copy_end */
 .endif
 .ifndef UBOOT_ENTRY
 .equ UBOOT_ENTRY,   0x00000400		/* _start */
-.endif
-.ifndef BOOTINFO_DEST
-.equ BOOTINFO_DEST, 0x0002cb30		/* _end */
 .endif
 
 .macro pString str
@@ -65,14 +59,6 @@
 	move.w	#\sel, -(%sp)
 	dc.w	_SCSIDispatch
 	move.w	(%sp)+, %d0
-.endm
-
-/* emit one bootinfo record: tag, size (bytes incl. header), then long data.
- * uses %a4 as the running write pointer. */
-.macro BIREC tag, longval
-	move.w	#\tag, (%a4)+
-	move.w	#8, (%a4)+
-	move.l	\longval, (%a4)+
 .endm
 
 begin:
@@ -131,66 +117,9 @@ start:
 	move.l	#600, -(%sp)
 	SCSIDispatch _SCSIComplete
 
-	/* ---- build a Mac bootinfo record list in BOOTINFO_BUF ----
-	 * (ROM/Toolbox still alive; Gestalt preserves a3-a6/d3-d7). */
-	movea.l	#BOOTINFO_BUF, %a4
-
-	move.l	#MACH_MAC, %d3
-	BIREC	0x0001, %d3		/* BI_MACHTYPE */
-
-	/* BI_MEMCHUNK: base=0, size=MemTop */
-	move.w	#0x0005, (%a4)+
-	move.w	#12, (%a4)+
-	clr.l	(%a4)+
-	move.l	MemTop, (%a4)+
-
-	/* BI_MAC_MODEL = Gestalt(gestaltMachineType) */
-	moveq	#0, %d3
-	move.l	#gestaltMachineType, %d0
-	dc.w	_Gestalt		/* d0=err, a0=response */
-	tst.w	%d0
-	bne.s	3f
-	move.l	%a0, %d3
-3:	BIREC	0x8000, %d3		/* BI_MAC_MODEL */
-
-	/* framebuffer: MainDevice -> GDevice -> PixMap */
-	movea.l	MainDevice, %a0		/* GDHandle */
-	move.l	%a0, %d0
-	beq.s	4f
-	movea.l	(%a0), %a0		/* GDevice* */
-	movea.l	22(%a0), %a1		/* gdPMap (PixMapHandle) */
-	move.l	%a1, %d0
-	beq.s	4f
-	movea.l	(%a1), %a1		/* PixMap* */
-
-	move.l	(%a1), %d3		/* baseAddr @0 */
-	BIREC	0x8001, %d3		/* BI_MAC_VADDR */
-
-	moveq	#0, %d3
-	move.w	32(%a1), %d3		/* pixelSize @32 */
-	BIREC	0x8002, %d3		/* BI_MAC_VDEPTH */
-
-	moveq	#0, %d3
-	move.w	4(%a1), %d3		/* rowBytes @4 */
-	and.l	#0x3fff, %d3
-	BIREC	0x8003, %d3		/* BI_MAC_VROW */
-
-	moveq	#0, %d3
-	move.w	10(%a1), %d3		/* bounds.bottom @10 */
-	sub.w	6(%a1), %d3		/* - bounds.top @6 = height */
-	swap	%d3
-	move.w	12(%a1), %d4		/* bounds.right @12 */
-	sub.w	8(%a1), %d4		/* - bounds.left @8 = width */
-	move.w	%d4, %d3		/* d3 = (height<<16) | width */
-	BIREC	0x8004, %d3		/* BI_MAC_VDIM */
-4:
-	/* BI_LAST */
-	move.w	#0x0000, (%a4)+
-	move.w	#4, (%a4)+
-
-	/* d5 = bootinfo byte count */
-	move.l	%a4, %d5
-	sub.l	#BOOTINFO_BUF, %d5
+	/* Query the ROM/Toolbox and build the Mac bootinfo at MAC_BOOTINFO
+	 * (ROM/Toolbox still alive; U-Boot reads it from that fixed address). */
+	build_bootinfo
 
 	/* Mask interrupts before tearing down the ROM environment. */
 	move.w	#0x2700, %sr
@@ -226,15 +155,6 @@ start:
 7:	move.l	(%a0)+, (%a1)+
 	subq.l	#1, %d0
 	bne.s	7b
-
-	/* place the bootinfo right after u-boot (_end) */
-	movea.l	#BOOTINFO_BUF, %a0
-	movea.l	#BOOTINFO_DEST, %a1
-	add.l	#3, %d5
-	lsr.l	#2, %d5			/* longs, rounded up */
-8:	move.l	(%a0)+, (%a1)+
-	subq.l	#1, %d5
-	bne.s	8b
 
 	.short	0xf478			/* flush caches after writing code */
 	nop
