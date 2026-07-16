@@ -73,7 +73,6 @@ static void write_pix8(u8 *fb, uint bpix, enum video_format eformat,
 	} else if (bpix == 16) {
 		*(u16 *)fb = get_bmp_col_16bpp(palette[*bmap]);
 	} else {
-		/* Only support big endian */
 		struct bmp_color_table_entry *cte = &palette[*bmap];
 
 		if (bpix == 24) {
@@ -85,10 +84,16 @@ static void write_pix8(u8 *fb, uint bpix, enum video_format eformat,
 		} else if (eformat == VIDEO_RGBA8888) {
 			*(u32 *)fb = get_bmp_col_rgba8888(cte);
 		} else {
-			*fb++ = cte->blue;
-			*fb++ = cte->green;
-			*fb++ = cte->red;
-			*fb++ = 0;
+			/*
+			 * Write the pixel as a native word (0x00RRGGBB) like
+			 * video_index_to_colour() does, rather than a fixed
+			 * B,G,R,0 byte sequence: the latter only lands as XRGB
+			 * on a little-endian frame buffer and comes out with the
+			 * channels reversed on a big-endian one (e.g. the 68k
+			 * Macintosh), which shows as wrong logo colours.
+			 */
+			*(u32 *)fb = (cte->red << 16) | (cte->green << 8) |
+				     cte->blue;
 		}
 	}
 }
