@@ -4,9 +4,14 @@
  * Macintosh machines such as the Quadra 800, as emulated by QEMU's q800.
  *
  * The controller registers are byte-wide, spaced 16 bytes apart (it_shift=4);
- * data is moved through a separate pseudo-DMA window rather than real DMA:
- * every byte read from the window pops the ESP FIFO and every byte written
- * pushes it (see QEMU hw/scsi/esp.c).  This driver drives it synchronously.
+ * data is moved through a separate pseudo-DMA window rather than real DMA.
+ *
+ * On real hardware that window inserts bus wait-states until the ESP asserts its
+ * DMA request (DRQ), so touching it before a byte is ready stalls the CPU
+ * forever.  DRQ is exposed as bit 0 of the VIA2 interrupt flag register, so we
+ * poll that (and bail on an ESP interrupt = transfer done/aborted) before every
+ * window access.  QEMU models this same live DRQ bit (hw/misc/mac_via.c), so the
+ * one code path works on both QEMU q800 and a real Quadra.
  */
 
 #include <dm.h>
@@ -112,6 +117,30 @@ static int esp_reset(struct esp_priv *p)
 	return 0;
 }
 
+/*
+ * VIA2 interrupt flag register (VIA1 + 0x2000, 6522 register 13 at 16*0x200);
+ * bit 0 (CA2) reflects the live SCSI DRQ line on the Quadra.  Poll it before
+ * each pseudo-DMA window access so we never stall the bus waiting for a byte
+ * that is not yet in the ESP FIFO.
+ */
+#define VIA2_IFR	((void *)0x50f03a00)
+#define VIA2_SCSI_DRQ	0x01
+
+static int esp_wait_dreq(struct esp_priv *p)
+{
+	int timeout = 500000;
+
+	while (!(readb(VIA2_IFR) & VIA2_SCSI_DRQ)) {
+		if (esp_rd(p, ESP_STAT) & STAT_INT)
+			return 1;	/* ESP ended the transfer (done/aborted) */
+		if (--timeout <= 0)
+			return -ETIMEDOUT;
+		udelay(2);
+	}
+
+	return 0;
+}
+
 static int esp_data(struct esp_priv *p, struct scsi_cmd *cmd, bool in)
 {
 	unsigned long len = cmd->datalen;
@@ -123,13 +152,41 @@ static int esp_data(struct esp_priv *p, struct scsi_cmd *cmd, bool in)
 	esp_wr(p, ESP_TCHI, (len >> 16) & 0xff);
 	esp_wr(p, ESP_CMD, CMD_TI | CMD_DMA);
 
-	while (len--) {
+	/*
+	 * The pseudo-DMA moves a 16-bit word at a time: DRQ is asserted only while
+	 * the ESP FIFO holds a full word (>= 2 bytes), so drain/fill two bytes for
+	 * every DRQ.  A byte-at-a-time loop desyncs from that threshold and stalls.
+	 */
+	while (len >= 2) {
+		if (esp_wait_dreq(p))
+			goto out;	/* transfer ended early or timed out */
+		/*
+		 * One 16-bit access transfers a whole word: the Quadra pseudo-DMA
+		 * hardware pops two bytes from the ESP per bus cycle regardless of
+		 * access size, so a byte access would drain the ESP twice as fast
+		 * as it fills our buffer (dropping every other byte).  Use word
+		 * accesses like Linux's movew; __raw_* keeps the native byte order.
+		 */
+		if (in) {
+			u16 w = __raw_readw(p->pdma);
+
+			*buf++ = w >> 8;
+			*buf++ = w;
+		} else {
+			__raw_writew((buf[0] << 8) | buf[1], p->pdma);
+			buf += 2;
+		}
+		len -= 2;
+	}
+	/* trailing odd byte (rare; the word-threshold DRQ never fires for it) */
+	if (len) {
 		if (in)
 			*buf++ = readb(p->pdma);
 		else
 			writeb(*buf++, p->pdma);
 	}
 
+out:
 	return esp_wait_intr(p, &intr);
 }
 
