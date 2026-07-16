@@ -19,6 +19,7 @@
 .equ gestaltMachineType, 0x6d616368	/* 'mach' */
 .equ MemTop,        0x0108		/* low-mem: top of RAM */
 .equ MainDevice,    0x08a4		/* low-mem: main GDevice handle */
+.equ SCCRd,         0x01d8		/* low-mem: SCC read base (per model) */
 .equ MAC_BOOTINFO,  0x00501000		/* fixed, in the preserved gap */
 
 /* emit one bootinfo record: tag, size (bytes incl. header), long data.
@@ -82,6 +83,11 @@
 	move.w	%d4, %d3		/* d3 = (height<<16) | width */
 	BIREC	0x8004, %d3		/* BI_MAC_VDIM */
 78:
+	/* BI_MAC_SCCBASE = SCC read base from low memory (channel A ctrl is
+	 * base+2), so the serial console tracks the model without hard-coding. */
+	move.l	SCCRd, %d3
+	BIREC	0x8006, %d3		/* BI_MAC_SCCBASE */
+
 	/* BI_LAST */
 	move.w	#0x0000, (%a4)+
 	move.w	#4, (%a4)+
