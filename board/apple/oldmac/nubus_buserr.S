@@ -23,8 +23,8 @@
 nubus_buserr_begin:
 	movec	%vbr, %d0
 	move.l	%d0, saved_vbr
-	lea	nb_vectors, %a0
-	lea	nubus_buserr_handler, %a1
+	lea	nb_vectors(%pc), %a0
+	lea	nubus_buserr_handler(%pc), %a1
 	move.l	%a1, 8(%a0)		/* vector 2: bus error (access fault) */
 	move.l	%a1, 12(%a0)		/* vector 3: address error */
 	move.l	%a0, %d0
@@ -34,7 +34,7 @@ nubus_buserr_begin:
 /* void nubus_buserr_end(void): restore the previous VBR. */
 	.global nubus_buserr_end
 nubus_buserr_end:
-	move.l	saved_vbr, %d0
+	move.l	saved_vbr(%pc), %d0
 	movec	%d0, %vbr
 	rts
 
@@ -60,8 +60,8 @@ nubus_read_safe:
  * the recovery label.  We deliberately abandon the exception frame. */
 nubus_buserr_handler:
 	move.l	#1, nb_fault
-	move.l	nb_rec_sp, %sp
-	move.l	nb_rec_pc, %a0
+	move.l	nb_rec_sp(%pc), %sp
+	move.l	nb_rec_pc(%pc), %a0
 	jmp	(%a0)
 
 	.bss

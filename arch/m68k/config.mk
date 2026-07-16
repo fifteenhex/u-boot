@@ -4,7 +4,16 @@
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 
 PLATFORM_CPPFLAGS += -D__M68K__
-ifneq ($(CONFIG_M680x0),y)
+ifeq ($(CONFIG_M680x0),y)
+# On the 68040, U-Boot proper relocates itself to high RAM (see relocate_code),
+# which needs position-independent code with dynamic relocations.  The SPL runs
+# in place and does not apply relocations, so it must stay non-PIC.
+ifdef CONFIG_SPL_BUILD
+PLATFORM_CPPFLAGS += -fno-pic
+else
+PLATFORM_CPPFLAGS += -fPIC
+endif
+else
 PLATFORM_CPPFLAGS += -fPIC
 endif
 KBUILD_LDFLAGS    += -n -pie
