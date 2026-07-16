@@ -142,8 +142,6 @@ static int esp_exec(struct udevice *dev, struct scsi_cmd *cmd)
 	if (cmd->lun || cmd->target > 6)
 		return -EINVAL;
 
-	if (cmd->cmd[0] == 0x28)
-
 	/* load IDENTIFY + CDB into the FIFO and select the target with ATN */
 	esp_wr(p, ESP_CMD, CMD_FLUSH);
 	esp_wr(p, ESP_BUSID, cmd->target);
