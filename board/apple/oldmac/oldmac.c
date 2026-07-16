@@ -168,6 +168,14 @@ u32 board_m68k_fputype(void)
 	return FPU_68040;
 }
 
+/* The Mac IIsi is 68030-based; every other supported model is 68040-class.
+ * Selects the 68030 vs 68040 cache/MMU paths in the generic m68k code.  The
+ * model is parsed in board_early_init_f(), before relocate_code() runs. */
+int m68k_is_68040(void)
+{
+	return oldmac.model != MAC_MODEL_IISI;
+}
+
 /* Point the SCC serial platdata at the right registers: prefer the base the
  * ROM reported (works for any model), falling back to the model table.  Channel
  * A control is base+2, data base+6. */
