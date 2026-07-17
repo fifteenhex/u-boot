@@ -272,6 +272,7 @@ int board_early_init_f(void)
  * hardware is present, the same way the m68k virt board binds virtio.  A device
  * bound but failing to probe would sit at eth seq 0 and stop U-Boot's net stack
  * from auto-selecting the one that works. */
+#if CONFIG_IS_ENABLED(DM_ETH)
 static void oldmac_bind_eth(const char *drvname, void *plat)
 {
 	struct driver *drv = lists_driver_lookup_name(drvname);
@@ -279,6 +280,7 @@ static void oldmac_bind_eth(const char *drvname, void *plat)
 	if (drv)
 		device_bind(dm_root(), drv, drvname, plat, ofnode_null(), NULL);
 }
+#endif
 
 int board_early_init_r(void)
 {
@@ -286,7 +288,9 @@ int board_early_init_r(void)
 	if (oldmac_sonic_base())
 		oldmac_bind_eth("sonic_eth", NULL);
 #if defined(CONFIG_CMD_NUBUS)
-	{
+	/* 040-class only: the bus-error probe uses the 040-only DTT1 cache-inhibit,
+	 * and NuBus super-slots live on the Quadra/Centris-class machines. */
+	if (m68k_is_68040()) {
 		struct oldmac_eth_info info;
 
 		if (!nubus_find_eth(&info))
@@ -341,6 +345,34 @@ u32 spl_boot_device(void)
 void spl_board_init(void)
 {
 	preloader_console_init();
+
+	/*
+	 * Scan NuBus for a DP8390 Ethernet card here in the SPL, where we run
+	 * closest to the ROM's environment.  On the 040 Macs the ROM maps the
+	 * card's register window non-identity, so U-Boot proper (MMU off) cannot
+	 * reach it; the plan is to translate that window to a physical address in
+	 * the SPL while the ROM MMU is still on and hand it to proper.  This first
+	 * step proves the trimmed-down scanner (nubus_find_eth, no command/listing)
+	 * runs and finds the card in the SPL.  Gated to 040-class Macs: NuBus
+	 * super-slots and the bus-error probe's 040-only DTT1 cache-inhibit both
+	 * assume a 68040, and the 030 IIsi has neither.
+	 */
+	if (m68k_is_68040()) {
+		struct oldmac_eth_info info;
+
+		if (!nubus_find_eth(&info)) {
+			ulong base = info.slot_addr |
+				     ((ulong)(info.slot & 0xf) << 20);
+			ulong reg = base + info.minor_base + 0x10000;
+
+			printf("nubus: eth in slot %X, regs (logical) %08lx, "
+			       "MAC %02x:%02x:%02x:%02x:%02x:%02x\n",
+			       info.slot, reg,
+			       info.enetaddr[0], info.enetaddr[1],
+			       info.enetaddr[2], info.enetaddr[3],
+			       info.enetaddr[4], info.enetaddr[5]);
+		}
+	}
 }
 #endif
 
