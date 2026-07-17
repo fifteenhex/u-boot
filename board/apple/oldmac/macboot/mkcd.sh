@@ -10,11 +10,15 @@
 # the freshly built SPL here so it always matches the build.
 #
 # Usage:
-#   mkcd.sh AS OBJCOPY TOOL SECTOR SPL_BIN BOOTBLOCK_S DRIVER_S OUT UBOOT_BIN
+#   mkcd.sh AS OBJCOPY TOOL SECTOR SPL_BIN BOOTBLOCK_S DRIVER_S OUT UBOOT_BIN [KERNEL]
+#
+# The optional KERNEL (a raw ELF vmlinux) is placed at a third LBA that U-Boot
+# proper can `scsi read` and `bootelf`, for booting Linux off the same CD.
 set -e
 
 AS="$1"; OBJCOPY="$2"; TOOL="$3"; SECTOR="$4"
 SPL_BIN="$5"; BOOTBLOCK_S="$6"; DRIVER_S="$7"; OUT="$8"; UBOOT_BIN="$9"
+KERNEL="${10}"
 
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
@@ -36,6 +40,6 @@ spl_blocks=$(( (spl_bytes + SECTOR - 1) / SECTOR ))
 "$OBJCOPY" -O binary "$tmp/driver.o" "$tmp/driver.bin"
 
 # Payload at the first LBA = the SPL (read by the boot block); the second =
-# U-Boot proper (read by the SPL).
+# U-Boot proper (read by the SPL); the optional third = a Linux kernel.
 "$TOOL" -s "$SECTOR" "$tmp/bootblock.bin" "$tmp/driver.bin" "$OUT" \
-	"$SPL_BIN" "$UBOOT_BIN"
+	"$SPL_BIN" "$UBOOT_BIN" $KERNEL

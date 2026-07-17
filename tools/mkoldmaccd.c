@@ -83,6 +83,7 @@ static void pmap(uint8_t *e, uint32_t mapcnt, uint32_t start, uint32_t count,
 int main(int argc, char **argv)
 {
 	const char *bb_path, *drv_path, *out_path, *pl_path = NULL, *pl2_path = NULL;
+	const char *pl3_path = NULL;
 	int a = 1;
 
 	if (a + 1 < argc && !strcmp(argv[a], "-s")) {
@@ -91,7 +92,7 @@ int main(int argc, char **argv)
 	}
 	if (argc - a < 3) {
 		fprintf(stderr,
-			"usage: %s [-s sector] bootblock.bin driver.bin out.iso [payload.bin] [payload2.bin]\n",
+			"usage: %s [-s sector] bootblock.bin driver.bin out.iso [payload.bin] [payload2.bin] [payload3.bin]\n",
 			argv[0]);
 		return 2;
 	}
@@ -102,6 +103,8 @@ int main(int argc, char **argv)
 		pl_path = argv[a++];
 	if (a < argc)
 		pl2_path = argv[a++];
+	if (a < argc)
+		pl3_path = argv[a++];
 
 	uint8_t bb[1024]; memset(bb, 0, sizeof bb);
 	FILE *f = fopen(bb_path, "rb");
@@ -179,9 +182,10 @@ int main(int argc, char **argv)
 	be32(mdb + 36, 16);                           /* drNxtCNID */
 	mdb[44] = 6; memcpy(mdb + 45, "oldmac", 6);   /* drVN */
 
-	/* raw payload(s) at fixed blocks read by the boot block / the SPL */
+	/* raw payload(s) at fixed blocks read by the boot block / the SPL / U-Boot */
 	const uint32_t payload_blk = 128;	/* boot block reads this */
 	const uint32_t payload2_blk = 2048;	/* SPL reads this (U-Boot proper) */
+	const uint32_t payload3_blk = 4096;	/* U-Boot reads this (e.g. a kernel) */
 	if (pl_path) {
 		FILE *pf = fopen(pl_path, "rb");
 		if (!pf) { perror(pl_path); return 1; }
@@ -194,9 +198,18 @@ int main(int argc, char **argv)
 		FILE *pf = fopen(pl2_path, "rb");
 		if (!pf) { perror(pl2_path); return 1; }
 		size_t pn = fread(img + payload2_blk*SECTOR, 1,
-				  (total_blocks - payload2_blk)*SECTOR, pf);
+				  (payload3_blk - payload2_blk)*SECTOR, pf);
 		fclose(pf);
 		fprintf(stderr, "payload2 %zu bytes at blk %u\n", pn, payload2_blk);
+	}
+	if (pl3_path) {
+		FILE *pf = fopen(pl3_path, "rb");
+		if (!pf) { perror(pl3_path); return 1; }
+		size_t pn = fread(img + payload3_blk*SECTOR, 1,
+				  (total_blocks - payload3_blk)*SECTOR, pf);
+		fclose(pf);
+		fprintf(stderr, "payload3 %zu bytes at blk %u (%zu blocks)\n",
+			pn, payload3_blk, (pn + SECTOR - 1) / SECTOR);
 	}
 
 	f = fopen(out_path, "wb");

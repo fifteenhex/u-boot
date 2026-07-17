@@ -1819,10 +1819,14 @@ ifeq ($(CONFIG_TARGET_OLDMAC),y)
 # The boot block is assembled here against the freshly built SPL (see mkcd.sh).
 MACBOOT := $(srctree)/board/apple/oldmac/macboot
 
+# Pass OLDMAC_KERNEL=/path/to/vmlinux to also place a Linux kernel on the CD at a
+# third LBA (block 4096), which U-Boot proper can `scsi read` + `bootelf` - see
+# oldmac_defconfig's CONFIG_BOOTCOMMAND.
 quiet_cmd_oldmac_iso = OLDMACCD $@
       cmd_oldmac_iso = $(MACBOOT)/mkcd.sh "$(AS)" "$(OBJCOPY)" \
 	$(objtree)/tools/mkoldmaccd 2048 spl/u-boot-spl.bin \
-	$(MACBOOT)/bootblock_spl.S $(MACBOOT)/driver.S $@ u-boot.bin
+	$(MACBOOT)/bootblock_spl.S $(MACBOOT)/driver.S $@ u-boot.bin \
+	$(OLDMAC_KERNEL)
 
 oldmac.iso: spl/u-boot-spl.bin u-boot.bin tools FORCE
 	$(call if_changed,oldmac_iso)
