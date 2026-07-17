@@ -21,7 +21,11 @@
 #include <asm/global_data.h>
 #include <asm/io.h>
 #include <dm/platdata.h>
+#include <dm/lists.h>
+#include <dm/root.h>
+#include <dm/device-internal.h>
 #include <linux/sizes.h>
+#include "oldmac_eth.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -49,14 +53,10 @@ U_BOOT_DRVINFO(oldmac_esp) = {
 	.name = "esp_scsi",
 };
 
-/* On-board DP8393x SONIC Ethernet.  The driver probe gates itself on the
- * detected model via oldmac_sonic_base(), so this is inert on models without
- * a SONIC.  Only bound when the Ethernet driver is built in (not in the SPL). */
-#if CONFIG_IS_ENABLED(DM_ETH)
-U_BOOT_DRVINFO(oldmac_sonic) = {
-	.name = "sonic_eth",
-};
-#endif
+/* The on-board DP8393x SONIC and a NuBus DP8390 card are both bound manually in
+ * board_early_init_r(), each only when actually present, so a machine that has
+ * neither (or only one) does not end up with a dead eth device at seq 0 that
+ * blocks auto-selection of the working one. */
 
 /* Machine description discovered from the Mac bootinfo (built by the ROM boot
  * chain, or by QEMU's q800 -kernel path). */
@@ -265,6 +265,35 @@ int board_early_init_f(void)
 	 * disturb U-Boot or a kernel we later hand off to. */
 	oldmac_quiesce_devices();
 
+	return 0;
+}
+
+/* Bind the Ethernet drivers manually (no device tree), each only when its
+ * hardware is present, the same way the m68k virt board binds virtio.  A device
+ * bound but failing to probe would sit at eth seq 0 and stop U-Boot's net stack
+ * from auto-selecting the one that works. */
+static void oldmac_bind_eth(const char *drvname, void *plat)
+{
+	struct driver *drv = lists_driver_lookup_name(drvname);
+
+	if (drv)
+		device_bind(dm_root(), drv, drvname, plat, ofnode_null(), NULL);
+}
+
+int board_early_init_r(void)
+{
+#if CONFIG_IS_ENABLED(DM_ETH)
+	if (oldmac_sonic_base())
+		oldmac_bind_eth("sonic_eth", NULL);
+#if defined(CONFIG_CMD_NUBUS)
+	{
+		struct oldmac_eth_info info;
+
+		if (!nubus_find_eth(&info))
+			oldmac_bind_eth("mac8390", NULL);
+	}
+#endif
+#endif
 	return 0;
 }
 

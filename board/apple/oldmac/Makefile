@@ -10,5 +10,5 @@ obj-$(CONFIG_$(PHASE_)TIMER) += via_timer.o
 ifndef CONFIG_SPL_BUILD
 obj-$(CONFIG_CMD_NUBUS) += nubus.o nubus_buserr.o
 obj-$(CONFIG_DM_KEYBOARD) += adb.o
-obj-$(CONFIG_DM_ETH) += sonic.o
+obj-$(CONFIG_DM_ETH) += sonic.o mac8390.o
 endif
