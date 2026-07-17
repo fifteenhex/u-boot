@@ -118,6 +118,57 @@ nubus_buserr_handler:
 	move.l	nb_rec_pc(%pc), %a0
 	jmp	(%a0)
 
+/* int board_m68k_has_fpu(void)
+ *   Returns 1 if the CPU has a working FPU (full 68040), 0 if not (68LC040).
+ *
+ *   Detects the actual chip rather than trusting the model, because many Macs
+ *   that shipped with an FPU-less 68LC040 were later upgraded to a full 68040
+ *   (gaining an FPU).  Probes by executing an FPU no-op with a temporary
+ *   Line-1111 ("F-line") handler installed: a CPU with no FPU cannot execute
+ *   F-line instructions, so fnop traps to vector 11 and we report 0; a CPU with
+ *   an FPU executes it and we report 1.  Uses the same full-vector-table / VBR /
+ *   masked-interrupt discipline as the bus-error probe above so any unrelated
+ *   exception taken mid-probe still reaches its real handler, and unwinds out of
+ *   the trap via a saved SP (an rte would just re-run the faulting fnop). */
+	.global board_m68k_has_fpu
+board_m68k_has_fpu:
+	move.w	%sr, -(%sp)
+	move.w	#0x2700, %sr		/* mask interrupts for the probe */
+	movec	%vbr, %d0
+	move.l	%d0, fpu_saved_vbr
+	movea.l	%d0, %a0		/* src = live vector table */
+	lea	fpu_vectors(%pc), %a1	/* dst = our 1 KiB copy */
+	move.w	#255, %d1
+1:	move.l	(%a0)+, (%a1)+		/* copy all 256 vectors */
+	dbra	%d1, 1b
+	lea	fpu_vectors(%pc), %a1
+	lea	fpu_fline_handler(%pc), %a0
+	move.l	%a0, 0x2c(%a1)		/* vector 11: Line 1111 (F-line) */
+	move.l	%a1, %d0
+	movec	%d0, %vbr
+	lea	.Lno_fpu(%pc), %a0	/* recovery point for the F-line trap */
+	move.l	%a0, fpu_rec_pc
+	move.l	%sp, fpu_rec_sp
+	nop				/* commit the recovery state to memory */
+	fnop				/* F-line: traps to vector 11 if no FPU */
+	moveq	#1, %d0			/* fell through -> FPU present */
+	bra.s	.Lfpu_done
+.Lno_fpu:
+	moveq	#0, %d0
+.Lfpu_done:
+	move.l	fpu_saved_vbr(%pc), %d1
+	movec	%d1, %vbr		/* restore the vector base */
+	move.w	(%sp)+, %sr		/* restore the interrupt mask */
+	rts
+
+/* F-line handler: no FPU.  Abandon the exception frame and unwind to the saved
+ * SP / recovery PC, exactly like the bus-error handler - we must not rte, as the
+ * frame's PC is the faulting fnop and it would re-trap forever. */
+fpu_fline_handler:
+	move.l	fpu_rec_sp(%pc), %sp
+	move.l	fpu_rec_pc(%pc), %a0
+	jmp	(%a0)
+
 	.bss
 	.balign 16
 nb_vectors:	.space 1024		/* full 256-entry vector table */
@@ -127,3 +178,7 @@ saved_dtt1:	.space 4
 nb_fault:	.space 4
 nb_rec_sp:	.space 4
 nb_rec_pc:	.space 4
+fpu_vectors:	.space 1024		/* full 256-entry vector table (FPU probe) */
+fpu_saved_vbr:	.space 4
+fpu_rec_sp:	.space 4
+fpu_rec_pc:	.space 4

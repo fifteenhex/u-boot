@@ -160,12 +160,19 @@ phys_addr_t board_esp_pdma_reg(void)
 	return m ? m->scsi_pdma_reg : 0;
 }
 
-/* The LC 475 / Quadra 605 use a 68LC040, which has no FPU. */
+/*
+ * Report the FPU to Linux by probing the actual chip, not the model.  The LC
+ * 475 / Quadra 605 shipped with an FPU-less 68LC040, but - like many 68LC040
+ * Macs - are often upgraded to a full 68040 (which has an FPU), so keying off
+ * the model would deny Linux an FPU that is really there (or promise one that
+ * is not).  board_m68k_has_fpu() (nubus_buserr.S) executes an FPU no-op under a
+ * temporary F-line trap to see whether the CPU actually has an FPU.
+ */
+int board_m68k_has_fpu(void);
+
 u32 board_m68k_fputype(void)
 {
-	if (oldmac.model == MAC_MODEL_P475 || oldmac.model == MAC_MODEL_Q605)
-		return 0;
-	return FPU_68040;
+	return board_m68k_has_fpu() ? FPU_68040 : 0;
 }
 
 /* Physical framebuffer address the SPL resolved (ptestr through the ROM page
