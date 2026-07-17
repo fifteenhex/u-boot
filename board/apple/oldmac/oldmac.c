@@ -20,6 +20,7 @@
 #include <asm/bootinfo.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
+#include <asm/unaligned.h>
 #include <dm/platdata.h>
 #include <dm/lists.h>
 #include <dm/root.h>
@@ -485,6 +486,94 @@ int dram_init(void)
  * whose index 0 and 255 map to opposite ends of the greyscale ramp, so text
  * renders legibly without us reprogramming the (model-specific) DAC.
  */
+/*
+ * DAFB colour lookup table (Quadra 700 / 800 built-in video).  Registers, and
+ * the write-from-index-0-only protocol, are those of Linux's macfb dafb driver:
+ * a long write to the reset register rewinds the CLUT write pointer to entry 0,
+ * then R,G,B are streamed one byte at a time (the DAFB cannot address a single
+ * CLUT entry).  QEMU's macfb models the same registers at the same addresses.
+ */
+#define DAFB_CMAP_RESET		0xf9800200
+#define DAFB_CMAP_LUT		0xf9800213
+
+/* Only the Quadra-class machines have the DAFB; the LC 475 / Quadra 605 use a
+ * different (Valkyrie/CSC) video chip whose CLUT is elsewhere. */
+static bool oldmac_has_dafb(void)
+{
+	return oldmac.model == MAC_MODEL_Q700 || oldmac.model == MAC_MODEL_Q800;
+}
+
+/*
+ * At 8bpp the framebuffer holds palette indices, so what shows on screen
+ * depends entirely on the DAFB CLUT.  U-Boot never programmed it, so the boot
+ * logo (a palettised BMP) relied on whatever CLUT the Mac ROM happened to leave
+ * loaded: on QEMU that is a colour table that renders it correctly, but on real
+ * hardware it is a greyscale ramp, so the logo came out with the wrong colours
+ * (the text console only writes index 0 and 255, so it stayed legible).
+ *
+ * Load the logo BMP's own palette into the CLUT so its indices map to their
+ * intended colours regardless of the ROM, reserving index 0 = black and 255 =
+ * white for the text console (which at 8bpp only ever writes those two).
+ */
+static void oldmac_program_dafb_clut(void)
+{
+	u8 rgb[256][3];
+	const u8 *bmp = NULL;
+	u32 saved_dtt1;
+	int i;
+
+	memset(rgb, 0, sizeof(rgb));		/* default every entry to black */
+
+	if (CONFIG_IS_ENABLED(VIDEO_LOGO))
+		bmp = video_get_u_boot_logo();
+
+	if (bmp && bmp[0] == 'B' && bmp[1] == 'M' &&
+	    get_unaligned_le16(bmp + 28) == 8) {
+		u32 hdrsz = get_unaligned_le32(bmp + 14);
+		u32 ncol = get_unaligned_le32(bmp + 46);
+		const u8 *pal = bmp + 14 + hdrsz;	/* B,G,R,0 entries */
+
+		if (!ncol || ncol > 256)
+			ncol = 256;
+		for (i = 0; i < ncol; i++) {
+			rgb[i][0] = pal[i * 4 + 2];	/* red   */
+			rgb[i][1] = pal[i * 4 + 1];	/* green */
+			rgb[i][2] = pal[i * 4 + 0];	/* blue  */
+		}
+	}
+
+	/* Console background (index 0) black; foreground (index 255) white. */
+	rgb[0][0] = rgb[0][1] = rgb[0][2] = 0x00;
+	rgb[255][0] = rgb[255][1] = rgb[255][2] = 0xff;
+
+	/*
+	 * The DAFB CLUT registers live in the 0xF9xxxxxx video region, which
+	 * U-Boot otherwise leaves cacheable; cache-inhibit it via DTT1 for the
+	 * duration (base 0xF0, mask 0x0F, enable, cache-inhibit) so the byte
+	 * stream reaches the DAC in order, then restore DTT1 so the framebuffer
+	 * keeps its cached-with-flush behaviour.
+	 */
+	__asm__ __volatile__(".chip 68040\n\t"
+			     "movec %%dtt1,%0\n\t"
+			     "movec %1,%%dtt1\n\t"
+			     "nop\n\t"
+			     ".chip 68k"
+			     : "=d" (saved_dtt1) : "d" (0xf00fe060) : "memory");
+
+	writel(0, (void *)DAFB_CMAP_RESET);	/* rewind CLUT write pointer */
+	for (i = 0; i < 256; i++) {
+		writeb(rgb[i][0], (void *)DAFB_CMAP_LUT);
+		writeb(rgb[i][1], (void *)DAFB_CMAP_LUT);
+		writeb(rgb[i][2], (void *)DAFB_CMAP_LUT);
+	}
+
+	__asm__ __volatile__(".chip 68040\n\t"
+			     "movec %0,%%dtt1\n\t"
+			     "nop\n\t"
+			     ".chip 68k"
+			     : : "d" (saved_dtt1) : "memory");
+}
+
 static int oldmac_video_probe(struct udevice *dev)
 {
 	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
@@ -535,6 +624,14 @@ static int oldmac_video_probe(struct udevice *dev)
 	}
 
 	video_set_flush_dcache(dev, true);
+
+	/*
+	 * Program the DAFB CLUT now, before the uclass draws the boot logo in
+	 * video_post_probe(), so the logo's palette indices map to the right
+	 * colours on real hardware instead of the ROM's leftover CLUT.
+	 */
+	if (uc_priv->bpix == VIDEO_BPP8 && oldmac_has_dafb())
+		oldmac_program_dafb_clut();
 
 	return 0;
 }
