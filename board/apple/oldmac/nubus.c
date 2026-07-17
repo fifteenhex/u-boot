@@ -136,6 +136,7 @@ static u8 *nubus_dirptr(const struct nubus_dirent *e, int map)
 	return p;
 }
 
+#ifndef CONFIG_SPL_BUILD
 static void nubus_read_str(u8 *p, int map, char *dst, int max)
 {
 	int i = 0, err;
@@ -150,6 +151,7 @@ static void nubus_read_str(u8 *p, int map, char *dst, int max)
 	}
 	dst[i] = '\0';
 }
+#endif /* !CONFIG_SPL_BUILD */
 
 /* Determine which byte lanes a slot's decl ROM uses; 0 means no card. */
 static int nubus_probe_slot(int slot)
@@ -173,6 +175,7 @@ static int nubus_probe_slot(int slot)
 	return 0;
 }
 
+#ifndef CONFIG_SPL_BUILD
 /* Dump the board sResource sub-directory (name + type words). */
 static void nubus_dump_board(u8 *dir, int map)
 {
@@ -204,6 +207,7 @@ static void nubus_dump_board(u8 *dir, int map)
 		}
 	}
 }
+#endif /* !CONFIG_SPL_BUILD */
 
 /* NuBus category/type and resource IDs used to locate an Ethernet card. */
 #define NUBUS_CAT_NETWORK	0x0004
@@ -311,6 +315,7 @@ int nubus_find_eth(struct oldmac_eth_info *info)
 	return cache.found ? 0 : -ENODEV;
 }
 
+#ifndef CONFIG_SPL_BUILD
 static int nubus_scan(void)
 {
 	int slot, found = 0;
@@ -387,3 +392,4 @@ static int do_nubus(struct cmd_tbl *cmdtp, int flag, int argc,
 U_BOOT_CMD(nubus, 1, 1, do_nubus,
 	   "probe NuBus slots and list declaration ROMs",
 	   "");
+#endif /* !CONFIG_SPL_BUILD */
