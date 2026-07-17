@@ -131,28 +131,6 @@ start:
 	bsr.w	bbputc
 	bra.s	1b
 2:
-	/* DEBUG(temp): one line confirming CPU detection (Gestalt proc: 4=68030,
-	 * 5=68040) and the ROM's per-model SCC base (SCCRd/SCCWr), e.g. on a IIsi:
-	 * "bb cpu/sccrd/sccwr: 00000004 50f04000 50f04000". */
-	lea	dbgmsg(%pc), %a2
-14:	move.b	(%a2)+, %d0
-	beq.s	15f
-	bsr.w	bbputc
-	bra.s	14b
-15:	move.l	%d7, %d0		/* Gestalt processor type */
-	bsr.w	bbputhex
-	moveq	#' ', %d0
-	bsr.w	bbputc
-	move.l	0x1d8.w, %d0		/* SCCRd */
-	bsr.w	bbputhex
-	moveq	#' ', %d0
-	bsr.w	bbputc
-	move.l	0x1dc.w, %d0		/* SCCWr */
-	bsr.w	bbputhex
-	moveq	#13, %d0
-	bsr.w	bbputc
-	moveq	#10, %d0
-	bsr.w	bbputc
 	/* SCSI-read the SPL image into the staging buffer */
 	clr.w	-(%sp)
 	SCSIDispatch _SCSIGet
@@ -187,8 +165,6 @@ start:
 	 * IO region cache-inhibited throughout.
 	 */
 	move.w	#0x2700, %sr
-	moveq	#'M', %d0		/* DEBUG(temp): entering cache flush / SPL entry */
-	bsr.w	bbputc
 	cmp.w	#5, %d7
 	bne.s	10f
 	.short	0xf478			/* cpusha bc (68040): flush caches, keep MMU on */
@@ -196,30 +172,13 @@ start:
 	bra.s	11f
 10:	/* 68030 (Mac IIsi): the boot block runs MMU-translated with logical !=
 	 * physical (confirmed: disabling paging is fatal, and EMILE translates all
-	 * addresses via logical2physical).  So DON'T disable the MMU.  Dump the live
-	 * MMU state for the record, then just clear the caches and leave the ROM's
-	 * mapping + our TT0 (IO cache-inhibit) in place.  The SPL/U-Boot run in the
-	 * ROM's logical space; IO stays identity+uncached through TT0. */
-	moveq	#'t', %d0		/* DEBUG(temp): "t" then TC hex (bit31=MMU on) */
-	bsr.w	bbputc
-	lea	mmuscratch(%pc), %a0
-	pmove	%tc, (%a0)
-	move.l	(%a0), %d0
-	bsr.w	bbputhex		/* TC */
-	moveq	#13, %d0
-	bsr.w	bbputc
-	moveq	#10, %d0
-	bsr.w	bbputc
+	 * addresses via logical2physical).  So DON'T disable the MMU; just clear the
+	 * caches and leave the ROM's mapping + our TT0 (IO cache-inhibit) in place.
+	 * The SPL/U-Boot run in the ROM's logical space; IO stays identity+uncached
+	 * through TT0. */
 	move.l	#0x0808, %d0
 	movec	%d0, %cacr		/* 68030: clear I+D caches (keep MMU + TT0) */
 11:
-	moveq	#'D', %d0		/* DEBUG(temp): teardown survived (paging off) */
-	bsr.w	bbputc
-	moveq	#13, %d0
-	bsr.w	bbputc
-	moveq	#10, %d0
-	bsr.w	bbputc
-
 	/* Both CPU families now keep the ROM MMU on into the SPL, and its page
 	 * tables live in RAM at addresses we don't know, so we must NOT blanket-zero
 	 * RAM here - that would corrupt them.  The SPL and U-Boot clear their own
@@ -241,10 +200,6 @@ start:
 12:	move.l	#0x0808, %d0
 	movec	%d0, %cacr		/* 68030: clear I+D caches */
 13:
-	/* DEBUG(temp): 'J' = SPL copied, jumping.  Low RAM (incl. 0x1d8/SCCRd) is no
-	 * longer zeroed, so the console still works on both CPUs here. */
-	moveq	#'J', %d0
-	bsr.w	bbputc
 	movea.l	#SPL_ENTRY, %a0
 	jmp	(%a0)
 
@@ -259,21 +214,6 @@ bbputc:
 	btst	#2, %d1
 	beq.s	7b
 	move.b	%d0, 4(%a1)
-	rts
-
-/* DEBUG(temp): print d0.l as 8 hex digits; clobbers d0-d3/a1 (bbputc) */
-bbputhex:
-	move.l	%d0, %d3
-	moveq	#7, %d2
-7:	rol.l	#4, %d3
-	move.l	%d3, %d0
-	andi.l	#0x0f, %d0
-	cmpi.b	#10, %d0
-	blt.s	8f
-	addi.b	#('a'-'0'-10), %d0
-8:	addi.b	#'0', %d0
-	bsr.w	bbputc
-	dbra	%d2, 7b
 	rts
 
 	.align 2
@@ -297,9 +237,7 @@ TIB:	.short	op_inc
 stat:		.short	0
 message:	.short	0
 bbmsg:		.asciz	"\r\noldmac: loading SPL...\r\n"
-dbgmsg:		.asciz	"bb[a11c04] cpu/sccrd/sccwr: "	/* DEBUG(temp): bump token each build */
 	.align 2
-mmuscratch:	.space	4				/* DEBUG(temp): pmove read target */
 
 	/* 68030 TT0: base 0x50, mask 0x0f, E, CI, ignore R/W and function code
 	 * -> identity-map + cache-inhibit the whole 0x5xxxxxxx IO region. */
