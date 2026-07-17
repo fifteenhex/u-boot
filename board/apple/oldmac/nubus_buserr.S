@@ -58,12 +58,16 @@ nubus_buserr_end:
  *   returns 0 and stores the byte on success, -1 on bus error. */
 	.global nubus_read_safe
 nubus_read_safe:
-	move.l	4(%sp), %a0		/* addr */
-	move.l	8(%sp), %a1		/* out  */
-	lea	.Lrecover(%pc), %a2
-	move.l	%a2, nb_rec_pc
+	/* Use only scratch registers (d0/d1, a0/a1): a2-a6 and d2-d7 are
+	 * callee-saved, and the fault path longjmps out without restoring them, so
+	 * touching one would corrupt a caller's live variable (e.g. a probe loop
+	 * counter) on every caught bus error. */
+	lea	.Lrecover(%pc), %a1
+	move.l	%a1, nb_rec_pc
 	move.l	%sp, nb_rec_sp
 	clr.l	nb_fault
+	move.l	4(%sp), %a0		/* addr */
+	move.l	8(%sp), %a1		/* out  */
 	nop				/* commit the recovery state to memory */
 	move.b	(%a0), %d0		/* the risky access */
 	move.b	%d0, (%a1)

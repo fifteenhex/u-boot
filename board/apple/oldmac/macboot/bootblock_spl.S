@@ -108,7 +108,8 @@ start:
 	/* Fully initialise SCC channel A (modem port) for 9600 8N1 polled.  A
 	 * real Z8530 has no baud clock until the BRG is programmed, so we must
 	 * do this ourselves rather than rely on whatever the ROM left. */
-	movea.l	#SCC_CTL_A, %a1
+	movea.l	0x1d8.w, %a1		/* SCCRd: ROM's per-model SCC base */
+	addq.l	#2, %a1			/* -> channel A control (base+2) */
 	tst.b	(%a1)			/* reset the register pointer */
 	sccw	9, 0x80			/* channel A reset */
 	moveq	#63, %d0
@@ -130,6 +131,28 @@ start:
 	bsr.w	bbputc
 	bra.s	1b
 2:
+	/* DEBUG(temp): one line confirming CPU detection (Gestalt proc: 4=68030,
+	 * 5=68040) and the ROM's per-model SCC base (SCCRd/SCCWr), e.g. on a IIsi:
+	 * "bb cpu/sccrd/sccwr: 00000004 50f04000 50f04000". */
+	lea	dbgmsg(%pc), %a2
+14:	move.b	(%a2)+, %d0
+	beq.s	15f
+	bsr.w	bbputc
+	bra.s	14b
+15:	move.l	%d7, %d0		/* Gestalt processor type */
+	bsr.w	bbputhex
+	moveq	#' ', %d0
+	bsr.w	bbputc
+	move.l	0x1d8.w, %d0		/* SCCRd */
+	bsr.w	bbputhex
+	moveq	#' ', %d0
+	bsr.w	bbputc
+	move.l	0x1dc.w, %d0		/* SCCWr */
+	bsr.w	bbputhex
+	moveq	#13, %d0
+	bsr.w	bbputc
+	moveq	#10, %d0
+	bsr.w	bbputc
 	/* SCSI-read the SPL image into the staging buffer */
 	clr.w	-(%sp)
 	SCSIDispatch _SCSIGet
@@ -160,6 +183,8 @@ start:
 	 * hand-encoded because they cannot be named under .cpu 68030.
 	 */
 	move.w	#0x2700, %sr
+	moveq	#'M', %d0		/* DEBUG(temp): entering MMU/cache teardown */
+	bsr.w	bbputc
 	cmp.w	#5, %d7
 	bne.s	10f
 	moveq	#0, %d0
@@ -170,14 +195,38 @@ start:
 	.short	0xf478			/* cpusha bc */
 	nop
 	bra.s	11f
-10:	lea	zeroval(%pc), %a0
-	pmove	(%a0), %tc		/* 68030: disable paging */
-	pmove	(%a0), %tt1		/* clear TT1, keep TT0 */
+10:	/* 68030 (Mac IIsi): the boot block runs MMU-translated with logical !=
+	 * physical (confirmed: disabling paging is fatal, and EMILE translates all
+	 * addresses via logical2physical).  So DON'T disable the MMU.  Dump the live
+	 * MMU state for the record, then just clear the caches and leave the ROM's
+	 * mapping + our TT0 (IO cache-inhibit) in place.  The SPL/U-Boot run in the
+	 * ROM's logical space; IO stays identity+uncached through TT0. */
+	moveq	#'t', %d0		/* DEBUG(temp): "t" then TC hex (bit31=MMU on) */
+	bsr.w	bbputc
+	lea	mmuscratch(%pc), %a0
+	pmove	%tc, (%a0)
+	move.l	(%a0), %d0
+	bsr.w	bbputhex		/* TC */
+	moveq	#13, %d0
+	bsr.w	bbputc
+	moveq	#10, %d0
+	bsr.w	bbputc
 	move.l	#0x0808, %d0
-	movec	%d0, %cacr		/* clear I+D caches */
+	movec	%d0, %cacr		/* 68030: clear I+D caches (keep MMU + TT0) */
 11:
+	moveq	#'D', %d0		/* DEBUG(temp): teardown survived (paging off) */
+	bsr.w	bbputc
+	moveq	#13, %d0
+	bsr.w	bbputc
+	moveq	#10, %d0
+	bsr.w	bbputc
 
-	/* zero the RAM the SPL and U-Boot need clean (keep boot block + READBUF) */
+	/* zero the RAM the SPL and U-Boot need clean (keep boot block + READBUF).
+	 * 68030 keeps the ROM MMU on, whose page tables live in RAM at unknown
+	 * (logical) addresses, so skip the blanket zero there — U-Boot clears its
+	 * own BSS. */
+	cmp.w	#5, %d7
+	bne.s	20f
 	movea.l	#0, %a1
 	move.l	#0x00500000/4, %d0
 3:	clr.l	(%a1)+
@@ -188,6 +237,7 @@ start:
 4:	clr.l	(%a1)+
 	subq.l	#1, %d0
 	bne.s	4b
+20:
 
 	/* copy the SPL to its text base */
 	movea.l	#READBUF, %a0
@@ -205,19 +255,41 @@ start:
 12:	move.l	#0x0808, %d0
 	movec	%d0, %cacr		/* 68030: clear I+D caches */
 13:
-	movea.l	#SPL_ENTRY, %a0
+	/* DEBUG(temp): 'J' = SPL copied, jumping.  68030 only: the 68040 zeroed
+	 * 0x1d8 (SCCRd) in the RAM-zero above, so bbputc would hang there. */
+	cmp.w	#5, %d7
+	beq.s	21f
+	moveq	#'J', %d0
+	bsr.w	bbputc
+21:	movea.l	#SPL_ENTRY, %a0
 	jmp	(%a0)
 
 /* Poll TX-empty and send the char in %d0.b out SCC channel A; clobbers a1/d1.
  * Select RR0 (write 0 to the control port) each poll, since the ROM's SCSI
  * manager may leave the SCC register pointer dirty. */
 bbputc:
-	movea.l	#SCC_CTL_A, %a1
+	movea.l	0x1d8.w, %a1		/* SCCRd -> +2 = channel A control */
+	addq.l	#2, %a1
 7:	move.b	#0, (%a1)		/* point at RR0 */
 	move.b	(%a1), %d1		/* read RR0 */
 	btst	#2, %d1
 	beq.s	7b
 	move.b	%d0, 4(%a1)
+	rts
+
+/* DEBUG(temp): print d0.l as 8 hex digits; clobbers d0-d3/a1 (bbputc) */
+bbputhex:
+	move.l	%d0, %d3
+	moveq	#7, %d2
+7:	rol.l	#4, %d3
+	move.l	%d3, %d0
+	andi.l	#0x0f, %d0
+	cmpi.b	#10, %d0
+	blt.s	8f
+	addi.b	#('a'-'0'-10), %d0
+8:	addi.b	#'0', %d0
+	bsr.w	bbputc
+	dbra	%d2, 7b
 	rts
 
 	.align 2
@@ -241,6 +313,9 @@ TIB:	.short	op_inc
 stat:		.short	0
 message:	.short	0
 bbmsg:		.asciz	"\r\noldmac: loading SPL...\r\n"
+dbgmsg:		.asciz	"bb[d51a0c] cpu/sccrd/sccwr: "	/* DEBUG(temp): bump token each build */
+	.align 2
+mmuscratch:	.space	4				/* DEBUG(temp): pmove read target */
 
 	/* 68030 TT0: base 0x50, mask 0x0f, E, CI, ignore R/W and function code
 	 * -> identity-map + cache-inhibit the whole 0x5xxxxxxx IO region. */
