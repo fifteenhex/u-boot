@@ -283,11 +283,9 @@ static int mac8390_probe(struct udevice *dev)
 
 	/*
 	 * Linux mac8390 (Apple/sane layout): the shared RAM sits MinorBaseOS into
-	 * the slot's minor space and the DP8390 registers 0x10000 above it.  Those
-	 * are logical addresses in the ROM's MMU mapping; on the 040 Macs the ROM
-	 * maps the register window non-identity, so U-Boot proper (MMU off) cannot
-	 * reach it there.  The SPL translated both windows to physical while the ROM
-	 * MMU was still on and left them at OLDMAC_ETH_XLATE_ADDR - prefer those.
+	 * the slot's minor space and the DP8390 registers 0x10000 above it.  If the
+	 * SPL translated these windows to physical (for a card the ROM maps
+	 * non-identity), prefer those; otherwise use the identity addresses.
 	 */
 	base_addr = info.slot_addr | ((ulong)(info.slot & 0xf) << 20);
 	priv->mem_start = base_addr + info.minor_base;
@@ -305,10 +303,18 @@ static int mac8390_probe(struct udevice *dev)
 	}
 
 	/*
-	 * If the register window still is not reachable (no SPL translation, or a
-	 * machine where the SPL did not run), probe it bus-error-safe and
-	 * self-disable rather than register a dead eth device that only ever times
-	 * out.
+	 * KNOWN LIMITATION (LC 475, Asante/Dayna-LC card): the card is fully
+	 * identified from its declaration ROM and its shared RAM is reachable and
+	 * writable, but the DP8390 register window is not.  Probing showed this
+	 * card decodes only a small aliased space - shared RAM at MinorBaseOS and
+	 * one inert region - while the standard register address (mem + 0x10000)
+	 * lands in an undecoded, bus-erroring part of the slot; the declaration ROM
+	 * carries no MajorBaseOS, primary-init, or flags to relocate/enable it.
+	 * Confirmed: mainline Linux's mac8390 computes the identical base and
+	 * *oopses* writing reg0 at feee003c (bus error) - it does not work there
+	 * either.  So we self-disable rather than fault: probe the register window
+	 * bus-error-safe and bail rather than register a dead eth device.  Making
+	 * this card work would require reverse-engineering its non-standard decode.
 	 */
 	{
 		u16 w;
@@ -318,7 +324,7 @@ static int mac8390_probe(struct udevice *dev)
 		reachable = nubus_read16_safe((void *)priv->reg_base, &w) == 0;
 		nubus_buserr_end();
 		if (!reachable) {
-			printf("mac8390: slot %X DP8390 MAC %pM: registers unreachable (SPL translation missing?)\n",
+			printf("mac8390: slot %X DP8390 MAC %pM: register window not reachable, disabling\n",
 			       info.slot, pdata->enetaddr);
 			return -ENODEV;
 		}
