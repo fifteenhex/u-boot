@@ -12,29 +12,6 @@
 .section .text
 
 /*
- * DEBUG(temp): emit one character out the classic-Mac SCC, inline (no stack, no
- * BSS), guarded on the ROM's SCCRd low-mem global at 0x1d8.  On the Mac IIsi the
- * boot block keeps the MMU on and leaves low memory intact, so 0x1d8 holds the
- * real SCC base and these fire; on the Quadra the boot block zeroed 0x1d8, so
- * the guard skips them.  Lets us trace the SPL entry on the IIsi.  Clobbers
- * d0/d1/d2/a1 (all caller-saved / scratch here); preserves d7 (gd).
- */
-.macro DBGPUTC ch
-	move.l	0x1d8.w, %d1
-	beq.s	.Ldbgskip\@
-	movea.l	%d1, %a1
-	addq.l	#2, %a1			/* SCC channel-A control */
-	moveq	#\ch, %d0
-.Ldbgpoll\@:
-	move.b	#0, (%a1)
-	move.b	(%a1), %d2
-	btst	#2, %d2
-	beq.s	.Ldbgpoll\@
-	move.b	%d0, 4(%a1)
-.Ldbgskip\@:
-.endm
-
-/*
  * Vector Table
  * m68k uses the first 1KB for the exception vector table.
  */
@@ -61,8 +38,6 @@ _vectors:
 ENTRY(_start)
 	/* Disable Interrupts */
 	move.w	#0x2700, %sr
-
-	DBGPUTC 'S'			/* DEBUG(temp): SPL _start reached */
 
 	/* Setup initial stack pointer */
 	move.l	#CFG_SYS_INIT_SP_ADDR, %sp
@@ -106,14 +81,10 @@ ENTRY(_start)
 2:
 #endif
 
-	DBGPUTC 'U'			/* DEBUG(temp): stack+gd set up, entering board_init_f */
-
 	/* Enter board_init_f(0) */
 	clr.l	-(%sp)
 	bsr.l	board_init_f
 	addq.l	#4, %sp
-
-	DBGPUTC 'V'			/* DEBUG(temp): board_init_f returned */
 
 #ifdef CONFIG_SPL_BUILD
 	/*
