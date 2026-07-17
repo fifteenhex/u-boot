@@ -594,11 +594,12 @@ static int do_scsi_scan_one(struct udevice *dev, int id, int lun, bool verbose)
 	memcpy(&bdesc->vendor, &bd.vendor, sizeof(bd.vendor));
 	memcpy(&bdesc->product, &bd.product, sizeof(bd.product));
 	memcpy(&bdesc->revision, &bd.revision,	sizeof(bd.revision));
-	if (IS_ENABLED(CONFIG_SYS_BIG_ENDIAN)) {
-		ata_swap_buf_le16((u16 *)&bdesc->vendor, sizeof(bd.vendor) / 2);
-		ata_swap_buf_le16((u16 *)&bdesc->product, sizeof(bd.product) / 2);
-		ata_swap_buf_le16((u16 *)&bdesc->revision, sizeof(bd.revision) / 2);
-	}
+	/*
+	 * SCSI INQUIRY vendor/product/revision are byte-ordered ASCII fields, not
+	 * 16-bit words like ATA IDENTIFY, so they must NOT be endian-swapped: doing
+	 * so garbles them on big-endian hosts (e.g. m68k printed MATSHITA as
+	 * AMSTIHAT).
+	 */
 
 	ret = blk_probe_or_unbind(bdev);
 	if (ret < 0)
