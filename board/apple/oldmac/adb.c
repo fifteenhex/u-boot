@@ -88,7 +88,14 @@ static void adb_init(void)
 /* Wait for the shift register to signal a byte, then clear the flag. */
 static int adb_wait_sr(void)
 {
-	int timeout = 100000;
+	/*
+	 * ~10ms.  This fires on every idle keyboard poll (a TALK reg 0 with no key
+	 * pressed, or no keyboard attached at all — common when driving the box
+	 * over serial), so it must be short or the console input loop crawls: at
+	 * the old 500ms it only checked serial ~twice a second.  A real ADB reply
+	 * arrives within ~1-2ms, so 10ms keeps keystrokes reliable.
+	 */
+	int timeout = 2000;
 
 	while (!(vrd(R_IFR) & SR_INT)) {
 		if (--timeout <= 0)
@@ -197,8 +204,20 @@ static int adb_kbd_probe(struct udevice *dev)
 	struct stdio_dev *sdev = &uc_priv->sdev;
 	struct input_config *input = &uc_priv->input;
 	int ret;
+	u8 buf[8];
 
 	adb_init();
+
+	/*
+	 * Only register the keyboard if one actually answers (TALK register 3
+	 * returns its address/handler).  Without this, a machine driven purely
+	 * over serial with no ADB keyboard attached still gets "adb-kbd" in stdin,
+	 * and the console input loop then polls the missing keyboard on every getc
+	 * wait — each poll burning a full ADB timeout — which makes the serial
+	 * console crawl.
+	 */
+	if (adb_talk(ADB_TALK(ADB_ADDR_KEYBOARD, 3), buf, sizeof(buf)) <= 0)
+		return -ENODEV;
 
 	input_init(input, false);
 	input_add_tables(input, false);
