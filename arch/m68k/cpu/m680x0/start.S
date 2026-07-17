@@ -89,6 +89,23 @@ ENTRY(_start)
 	bsr.l	m68k_virt_init_reserve
 	addq.l	#4, %sp
 
+#ifdef CONFIG_SPL_BUILD
+	/*
+	 * Clear the BSS.  U-Boot proper zeroes it during relocation, but the SPL
+	 * does not relocate, so it must do it itself - and on oldmac the boot block
+	 * no longer blanket-zeroes low RAM (it would corrupt the ROM MMU page
+	 * tables it now leaves live).  The BSS is in identity-mapped low RAM, so
+	 * this is safe with the ROM MMU still on.
+	 */
+	move.l	#__bss_start, %a0
+	move.l	#__bss_end, %a1
+1:	cmp.l	%a0, %a1
+	bls.s	2f
+	clr.l	(%a0)+
+	bra.s	1b
+2:
+#endif
+
 	DBGPUTC 'U'			/* DEBUG(temp): stack+gd set up, entering board_init_f */
 
 	/* Enter board_init_f(0) */
