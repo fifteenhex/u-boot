@@ -303,6 +303,16 @@ u32 spl_boot_device(void)
 {
 	return BOOT_DEVICE_SCSI;
 }
+
+/* Bring up the DM serial console in the SPL so its progress and any boot-device
+ * error print through the model-correct SCC base that oldmac_apply_model()
+ * selected in board_init_f().  Without this the SPL falls back to the early
+ * debug UART, whose base is a fixed Quadra address (0x50f0c022) that is wrong,
+ * and potentially bus-faulting, on a Mac IIsi (SCC at 0x50f04000). */
+void spl_board_init(void)
+{
+	preloader_console_init();
+}
 #endif
 
 int dram_init(void)
@@ -329,6 +339,18 @@ static int oldmac_video_probe(struct udevice *dev)
 	struct video_priv *uc_priv = dev_get_uclass_priv(dev);
 
 	if (!oldmac.video_addr || !oldmac.video_width || !oldmac.video_height)
+		return -ENODEV;
+
+	/*
+	 * The LC 475 / Quadra 605 onboard video framebuffer address the ROM
+	 * reports (e.g. 0x51901000) is not usable with the MMU off: the ROM maps
+	 * it non-identity (logical != physical), so writing it as a physical
+	 * address bus-errors and hangs the framebuffer clear.  Disable the video
+	 * console on these models for now; the serial console still works.
+	 * TODO: translate the framebuffer to its physical address (EMILE-style
+	 * logical2physical) or keep the ROM MMU on to restore video here.
+	 */
+	if (oldmac.model == MAC_MODEL_P475 || oldmac.model == MAC_MODEL_Q605)
 		return -ENODEV;
 
 	plat->base = oldmac.video_addr;
