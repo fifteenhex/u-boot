@@ -11,6 +11,7 @@
 #include <elf.h>
 #include <env.h>
 #include <bootm.h>
+#include <vsprintf.h>
 #include <asm/global_data.h>
 #include <asm/bootinfo.h>
 #include <linux/string.h>
@@ -101,6 +102,27 @@ unsigned long bootelf_exec(ulong (*entry)(int, char * const[]),
 		rec = bi_put(rec, BI_MMUTYPE, &mmutype, sizeof(mmutype));
 		rec = bi_put(rec, BI_MAC_CPUID, &cpuid, sizeof(cpuid));
 		rec = bi_put(rec, BI_MAC_MEMSIZE, &memsize, sizeof(memsize));
+
+		/*
+		 * If the boot script loaded a ramdisk/initramfs into memory and set
+		 * initrd_start / initrd_size, pass it to Linux via BI_RAMDISK (the
+		 * kernel reserves it and unpacks it as the initramfs).  Both are
+		 * hex; the address is physical (U-Boot runs with the MMU off).
+		 */
+		{
+			const char *rs = env_get("initrd_start");
+			const char *rn = env_get("initrd_size");
+
+			if (rs && rn) {
+				struct { u32 addr; u32 size; } rd;
+
+				rd.addr = simple_strtoul(rs, NULL, 16);
+				rd.size = simple_strtoul(rn, NULL, 16);
+				if (rd.addr && rd.size)
+					rec = bi_put(rec, BI_RAMDISK, &rd,
+						     sizeof(rd));
+			}
+		}
 
 		if (args && *args)
 			rec = bi_put(rec, BI_COMMAND_LINE, args, strlen(args) + 1);
