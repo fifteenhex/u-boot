@@ -94,8 +94,10 @@ unsigned long bootelf_exec(ulong (*entry)(int, char * const[]),
 		/*
 		 * The Mac bootinfo the ROM boot chain builds describes the
 		 * machine but not the CPU, so Linux/m68k would read -1 for the
-		 * CPU/FPU/MMU type and mis-configure paging.  Supply them (the
-		 * m680x0 build is 68040-only).
+		 * CPU/FPU/MMU type and mis-configure paging.  Supply them: the
+		 * m680x0 build is 68040-class, and board_m68k_fputype() probes
+		 * the actual chip for an FPU (a 68LC040 has none, but is often
+		 * upgraded to a full 68040 that does).
 		 */
 		rec = bi_put(rec, BI_CPUTYPE, &cputype, sizeof(cputype));
 		rec = bi_put(rec, BI_FPUTYPE, &fputype, sizeof(fputype));
