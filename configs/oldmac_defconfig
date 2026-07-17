@@ -13,7 +13,7 @@ CONFIG_BOARD_INIT=y
 CONFIG_DISPLAY_BOARDINFO=y
 CONFIG_BOOTDELAY=2
 CONFIG_USE_BOOTCOMMAND=y
-CONFIG_BOOTCOMMAND="scsi scan; scsi read 0x1000000 0x1000 0x900; setenv autostart yes; setenv bootargs console=ttyS0; bootelf -p 0x1000000"
+CONFIG_BOOTCOMMAND="scsi scan; scsi read 0x1000000 0x1000 0x900; setenv autostart yes; setenv bootargs console=ttyS0,${baudrate}; bootelf -p 0x1000000"
 CONFIG_CMD_ELF=y
 CONFIG_CMD_SCSI=y
 CONFIG_CMD_PART=y
