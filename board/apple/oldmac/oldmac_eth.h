@@ -44,6 +44,7 @@ struct oldmac_eth_xlate {
 	u32	slot;		/* NuBus slot this translation is for */
 	u32	reg_phys;	/* DP8390 register window, physical (0 = unresolved) */
 	u32	mem_phys;	/* shared-RAM window, physical (0 = unresolved) */
+	u32	fb_phys;	/* framebuffer, physical (0 = unresolved/unreachable) */
 };
 
 /*

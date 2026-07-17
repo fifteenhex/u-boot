@@ -168,6 +168,38 @@ u32 board_m68k_fputype(void)
 	return FPU_68040;
 }
 
+/* Physical framebuffer address the SPL resolved (ptestr through the ROM page
+ * tables) for a board whose ROM reports a non-identity framebuffer, or 0 if it
+ * did not resolve to a reachable address.  Left in the SPL hand-off stash. */
+ulong oldmac_fb_phys(void)
+{
+	const struct oldmac_eth_xlate *x = (const void *)OLDMAC_ETH_XLATE_ADDR;
+
+	return x->magic == OLDMAC_ETH_XLATE_MAGIC ? x->fb_phys : 0;
+}
+
+/*
+ * The LC 475 / Quadra 605 report their framebuffer at a non-identity logical
+ * address (0x51901000) that bus-errors with the MMU off, which hangs Linux's
+ * unguarded early framebuffer console.  The SPL resolves its real physical
+ * address (0xf9000000, a dedicated video region outside RAM); hand that to
+ * Linux so it uses the actual framebuffer.  If it did not resolve, fall back to
+ * a scratch region carved from the top of RAM so the kernel at least boots on
+ * the serial console instead of dying before any output.
+ */
+ulong board_m68k_video_scratch(u32 *memsize_mb)
+{
+	if (oldmac.model == MAC_MODEL_P475 || oldmac.model == MAC_MODEL_Q605) {
+		ulong fb = oldmac_fb_phys();
+
+		if (fb)
+			return fb;			/* real framebuffer */
+		*memsize_mb -= 4;			/* reserve the top 4 MiB */
+		return (ulong)*memsize_mb << 20;	/* scratch fb = new RAM top */
+	}
+	return 0;
+}
+
 /* The Mac IIsi is 68030-based; every other supported model is 68040-class.
  * Selects the 68030 vs 68040 cache/MMU paths in the generic m68k code.  The
  * model is parsed in board_early_init_f(), before relocate_code() runs. */
@@ -320,6 +352,11 @@ int board_init(void)
 #ifdef CONFIG_SPL_BUILD
 #include <spl.h>
 
+/* Bus-error-safe probe (nubus_buserr.S) to check a translated address is live. */
+int nubus_read_safe(void *addr, unsigned char *out);
+void nubus_buserr_begin(void);
+void nubus_buserr_end(void);
+
 /* Minimal SPL board_init_f: gd is already reserved by start.S; the SPL
  * board_init_r() (which start.S calls next) loads U-Boot proper.  Take the RAM
  * size from the ROM-provided bootinfo the boot block left for us rather than
@@ -348,6 +385,16 @@ void board_init_f(ulong bootflag)
 		struct oldmac_eth_info info;
 
 		x->magic = 0;
+		x->slot = 0;
+		x->reg_phys = 0;
+		x->mem_phys = 0;
+
+		/* Resolve the framebuffer (non-identity on the LC475/Q605) to its
+		 * physical address through the ROM page tables, for both U-Boot's
+		 * video console and Linux's early framebuffer console. */
+		x->fb_phys = oldmac.video_addr ?
+			     oldmac_mmu_xlate(oldmac.video_addr) : 0;
+
 		if (!nubus_find_eth(&info)) {
 			ulong base = info.slot_addr |
 				     ((ulong)(info.slot & 0xf) << 20);
@@ -357,10 +404,22 @@ void board_init_f(ulong bootflag)
 			x->slot = info.slot;
 			x->reg_phys = oldmac_mmu_xlate(reg);
 			x->mem_phys = oldmac_mmu_xlate(mem);
-			x->magic = OLDMAC_ETH_XLATE_MAGIC;
 		}
+		x->magic = OLDMAC_ETH_XLATE_MAGIC;
 
 		oldmac_mmu_disable();
+
+		/* With the MMU now off, drop the framebuffer translation unless it
+		 * resolved to a reachable address, so the video driver and Linux
+		 * fall back safely (e.g. QEMU's q800 maps it to a bogus address). */
+		if (x->fb_phys) {
+			u8 b;
+
+			nubus_buserr_begin();
+			if (nubus_read_safe((void *)x->fb_phys, &b))
+				x->fb_phys = 0;
+			nubus_buserr_end();
+		}
 	}
 }
 
@@ -388,10 +447,15 @@ void spl_board_init(void)
 		const struct oldmac_eth_xlate *x =
 			(const void *)OLDMAC_ETH_XLATE_ADDR;
 
-		if (x->magic == OLDMAC_ETH_XLATE_MAGIC)
+		if (x->magic != OLDMAC_ETH_XLATE_MAGIC)
+			return;
+		if (x->slot)
 			printf("nubus: eth in slot %X, regs phys %08x, "
 			       "ram phys %08x\n",
 			       x->slot, x->reg_phys, x->mem_phys);
+		if (x->fb_phys)
+			printf("video: fb %08lx -> phys %08x\n",
+			       oldmac.video_addr, x->fb_phys);
 	}
 }
 #endif
@@ -422,19 +486,24 @@ static int oldmac_video_probe(struct udevice *dev)
 	if (!oldmac.video_addr || !oldmac.video_width || !oldmac.video_height)
 		return -ENODEV;
 
+	plat->base = oldmac.video_addr;
+
 	/*
 	 * The LC 475 / Quadra 605 onboard video framebuffer address the ROM
-	 * reports (e.g. 0x51901000) is not usable with the MMU off: the ROM maps
-	 * it non-identity (logical != physical), so writing it as a physical
-	 * address bus-errors and hangs the framebuffer clear.  Disable the video
-	 * console on these models for now; the serial console still works.
-	 * TODO: translate the framebuffer to its physical address (EMILE-style
-	 * logical2physical) or keep the ROM MMU on to restore video here.
+	 * reports (0x51901000) is not usable with the MMU off: the ROM maps it
+	 * non-identity, so writing it as a physical address bus-errors.  The SPL
+	 * resolved the real physical framebuffer (0xf9000000) via the ROM page
+	 * tables while its MMU was on; use that.  If it did not resolve, disable
+	 * the video console (the serial console still works).
 	 */
-	if (oldmac.model == MAC_MODEL_P475 || oldmac.model == MAC_MODEL_Q605)
-		return -ENODEV;
+	if (oldmac.model == MAC_MODEL_P475 || oldmac.model == MAC_MODEL_Q605) {
+		ulong fb = oldmac_fb_phys();
 
-	plat->base = oldmac.video_addr;
+		if (!fb)
+			return -ENODEV;
+		plat->base = fb;
+	}
+
 	plat->size = 0;		/* external framebuffer; nothing to reserve */
 
 	uc_priv->xsize = oldmac.video_width;

@@ -35,6 +35,20 @@ __weak u32 board_m68k_fputype(void)
 	return FPU_68040;
 }
 
+/*
+ * Boards whose ROM framebuffer address is unusable with the MMU off (e.g. the
+ * LC 475's non-identity 0x51901000, which bus-errors) override this to relocate
+ * Linux's early framebuffer console to a scratch area carved from the top of
+ * RAM.  head.S's console_init()/console_putc() write to BI_MAC_VADDR very early,
+ * before the serial console is up and with no guard, so a bad address hangs the
+ * kernel silently.  Returns the scratch framebuffer physical address and lowers
+ * *memsize_mb to exclude it, or 0 to keep the ROM's framebuffer as-is.
+ */
+__weak ulong board_m68k_video_scratch(u32 *memsize_mb)
+{
+	return 0;
+}
+
 unsigned long bootelf_exec(ulong (*entry)(int, char * const[]),
 			   ulong end, int argc, char *const argv[])
 {
@@ -45,12 +59,36 @@ unsigned long bootelf_exec(ulong (*entry)(int, char * const[]),
 		const u32 fputype = board_m68k_fputype();
 		const u32 mmutype = MMU_68040;
 		const u32 cpuid = CPUB_68040;
-		const u32 memsize = gd->ram_size >> 20;	/* in MiB */
+		u32 memsize = gd->ram_size >> 20;	/* in MiB */
+		ulong fb = board_m68k_video_scratch(&memsize);
+		struct bi_record *src;
 
-		/* copy the saved records except the terminating BI_LAST */
-		memcpy(rec, gd->arch.saved_bootinfo, gd->arch.bootinfo_size - 4);
-		rec = (struct bi_record *)((u8 *)rec +
-					   gd->arch.bootinfo_size - 4);
+		/*
+		 * Copy the saved records (up to, but not including, BI_LAST).
+		 * When the board relocated the early console framebuffer to
+		 * scratch RAM, rewrite BI_MAC_VADDR to it and shrink the
+		 * BI_MEMCHUNK size so Linux does not use that reserved region;
+		 * copy every other record verbatim.
+		 */
+		src = (struct bi_record *)gd->arch.saved_bootinfo;
+		for (; src->tag != BI_LAST;
+		     src = (struct bi_record *)((u8 *)src + src->size)) {
+			int dlen = src->size - sizeof(*src);
+
+			if (fb && src->tag == BI_MAC_VADDR) {
+				u32 v = fb;
+
+				rec = bi_put(rec, BI_MAC_VADDR, &v, sizeof(v));
+			} else if (fb && src->tag == BI_MEMCHUNK && dlen >= 8) {
+				u32 mc[2];
+
+				memcpy(mc, src->data, sizeof(mc));
+				mc[1] = (u32)memsize << 20;	/* shrunk size */
+				rec = bi_put(rec, BI_MEMCHUNK, mc, sizeof(mc));
+			} else {
+				rec = bi_put(rec, src->tag, src->data, dlen);
+			}
+		}
 
 		/*
 		 * The Mac bootinfo the ROM boot chain builds describes the
