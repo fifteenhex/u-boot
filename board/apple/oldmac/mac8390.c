@@ -283,29 +283,32 @@ static int mac8390_probe(struct udevice *dev)
 
 	/*
 	 * Linux mac8390 (Apple/sane layout): the shared RAM sits MinorBaseOS into
-	 * the slot's minor space and the DP8390 registers 0x10000 above it.
+	 * the slot's minor space and the DP8390 registers 0x10000 above it.  Those
+	 * are logical addresses in the ROM's MMU mapping; on the 040 Macs the ROM
+	 * maps the register window non-identity, so U-Boot proper (MMU off) cannot
+	 * reach it there.  The SPL translated both windows to physical while the ROM
+	 * MMU was still on and left them at OLDMAC_ETH_XLATE_ADDR - prefer those.
 	 */
 	base_addr = info.slot_addr | ((ulong)(info.slot & 0xf) << 20);
 	priv->mem_start = base_addr + info.minor_base;
 	priv->reg_base = priv->mem_start + 0x10000;
 
-	mem_size = mac8390_memsize(priv);
-	priv->tx_start_page = 0;
-	priv->rx_start_page = TX_PAGES;
-	priv->stop_page = mem_size >> 8;
+	{
+		const struct oldmac_eth_xlate *x =
+			(const void *)OLDMAC_ETH_XLATE_ADDR;
 
-	memcpy(pdata->enetaddr, info.enetaddr, 6);
+		if (x->magic == OLDMAC_ETH_XLATE_MAGIC && x->slot == info.slot &&
+		    x->reg_phys && x->mem_phys) {
+			priv->reg_base = x->reg_phys;
+			priv->mem_start = x->mem_phys;
+		}
+	}
 
 	/*
-	 * KNOWN LIMITATION.  On a machine that runs U-Boot with the MMU off (the
-	 * LC475 and every other 68040 Mac here) the ROM maps this card's register
-	 * window non-identity, so it is unreachable at its physical address - a
-	 * plain access bus-errors.  The card is fully identified and its shared RAM
-	 * is reachable, and the DP8390 init/TX/RX code below is complete, but the
-	 * registers can only be reached once U-Boot keeps the ROM's MMU mapping -
-	 * the same change the Mac IIsi bring-up needs.  Probe the register window
-	 * bus-error-safe and self-disable rather than register a dead eth device
-	 * that only ever times out.
+	 * If the register window still is not reachable (no SPL translation, or a
+	 * machine where the SPL did not run), probe it bus-error-safe and
+	 * self-disable rather than register a dead eth device that only ever times
+	 * out.
 	 */
 	{
 		u16 w;
@@ -315,11 +318,19 @@ static int mac8390_probe(struct udevice *dev)
 		reachable = nubus_read16_safe((void *)priv->reg_base, &w) == 0;
 		nubus_buserr_end();
 		if (!reachable) {
-			printf("mac8390: slot %X DP8390 MAC %pM: registers unreachable with the MMU off (needs the ROM MMU mapping)\n",
+			printf("mac8390: slot %X DP8390 MAC %pM: registers unreachable (SPL translation missing?)\n",
 			       info.slot, pdata->enetaddr);
 			return -ENODEV;
 		}
 	}
+
+	/* Registers reachable: size the ring RAM and set up the page layout. */
+	mem_size = mac8390_memsize(priv);
+	priv->tx_start_page = 0;
+	priv->rx_start_page = TX_PAGES;
+	priv->stop_page = mem_size >> 8;
+
+	memcpy(pdata->enetaddr, info.enetaddr, 6);
 
 	printf("mac8390: slot %X DP8390, regs %08lx ram %08lx (%luK), MAC %pM\n",
 	       info.slot, priv->reg_base, priv->mem_start, mem_size >> 10,

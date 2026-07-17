@@ -12,6 +12,12 @@ obj-$(CONFIG_$(PHASE_)TIMER) += via_timer.o
 # command and slot listing (both compiled out of the size-limited SPL).
 obj-y += nubus.o nubus_buserr.o
 
+# SPL-only 68040 MMU helpers: translate NuBus/video windows to physical while
+# the ROM MMU is on, then tear it down for U-Boot proper.
+ifdef CONFIG_SPL_BUILD
+obj-y += mmu040.o
+endif
+
 # Bonus peripherals are only for U-Boot proper; keep them (and their DMA
 # buffers) out of the size-constrained SPL, which only needs serial + SCSI.
 ifndef CONFIG_SPL_BUILD

@@ -330,6 +330,38 @@ void board_init_f(ulong bootflag)
 	oldmac_apply_model();
 	if (!gd->ram_size)
 		gd->ram_size = SZ_16M;
+
+	/*
+	 * The boot block now leaves the ROM's MMU on into the SPL.  This is the
+	 * last SPL C hook that runs before the SPL framework (board_init_r) starts
+	 * assuming the flat physical addressing U-Boot expects - which faults with
+	 * the ROM mapping still active.  So on the 040 Macs do the MMU-on work here:
+	 * scan NuBus, translate the card's non-identity register + shared-RAM
+	 * windows to physical via the ROM page tables (ptestr), stash them for
+	 * proper at OLDMAC_ETH_XLATE_ADDR, then tear the ROM MMU down so everything
+	 * after this runs MMU-off exactly as it did before.  Silent (no console
+	 * yet); spl_board_init() reports the result once the console is up.  The 030
+	 * IIsi keeps the ROM MMU on for good and never runs any of this.
+	 */
+	if (m68k_is_68040()) {
+		struct oldmac_eth_xlate *x = (void *)OLDMAC_ETH_XLATE_ADDR;
+		struct oldmac_eth_info info;
+
+		x->magic = 0;
+		if (!nubus_find_eth(&info)) {
+			ulong base = info.slot_addr |
+				     ((ulong)(info.slot & 0xf) << 20);
+			ulong mem = base + info.minor_base;
+			ulong reg = mem + 0x10000;
+
+			x->slot = info.slot;
+			x->reg_phys = oldmac_mmu_xlate(reg);
+			x->mem_phys = oldmac_mmu_xlate(mem);
+			x->magic = OLDMAC_ETH_XLATE_MAGIC;
+		}
+
+		oldmac_mmu_disable();
+	}
 }
 
 u32 spl_boot_device(void)
@@ -347,31 +379,19 @@ void spl_board_init(void)
 	preloader_console_init();
 
 	/*
-	 * Scan NuBus for a DP8390 Ethernet card here in the SPL, where we run
-	 * closest to the ROM's environment.  On the 040 Macs the ROM maps the
-	 * card's register window non-identity, so U-Boot proper (MMU off) cannot
-	 * reach it; the plan is to translate that window to a physical address in
-	 * the SPL while the ROM MMU is still on and hand it to proper.  This first
-	 * step proves the trimmed-down scanner (nubus_find_eth, no command/listing)
-	 * runs and finds the card in the SPL.  Gated to 040-class Macs: NuBus
-	 * super-slots and the bus-error probe's 040-only DTT1 cache-inhibit both
-	 * assume a 68040, and the 030 IIsi has neither.
+	 * Report the NuBus Ethernet translation board_init_f() captured while the
+	 * ROM MMU was on, now that the console is up.  reg/ram show the physical
+	 * addresses proper's mac8390 will use in place of the ROM's non-identity
+	 * logical windows.
 	 */
 	if (m68k_is_68040()) {
-		struct oldmac_eth_info info;
+		const struct oldmac_eth_xlate *x =
+			(const void *)OLDMAC_ETH_XLATE_ADDR;
 
-		if (!nubus_find_eth(&info)) {
-			ulong base = info.slot_addr |
-				     ((ulong)(info.slot & 0xf) << 20);
-			ulong reg = base + info.minor_base + 0x10000;
-
-			printf("nubus: eth in slot %X, regs (logical) %08lx, "
-			       "MAC %02x:%02x:%02x:%02x:%02x:%02x\n",
-			       info.slot, reg,
-			       info.enetaddr[0], info.enetaddr[1],
-			       info.enetaddr[2], info.enetaddr[3],
-			       info.enetaddr[4], info.enetaddr[5]);
-		}
+		if (x->magic == OLDMAC_ETH_XLATE_MAGIC)
+			printf("nubus: eth in slot %X, regs phys %08x, "
+			       "ram phys %08x\n",
+			       x->slot, x->reg_phys, x->mem_phys);
 	}
 }
 #endif
