@@ -1820,13 +1820,14 @@ ifeq ($(CONFIG_TARGET_OLDMAC),y)
 MACBOOT := $(srctree)/board/apple/oldmac/macboot
 
 # Pass OLDMAC_KERNEL=/path/to/vmlinux to also place a Linux kernel on the CD at a
-# third LBA (block 4096), which U-Boot proper can `scsi read` + `bootelf` - see
-# oldmac_defconfig's CONFIG_BOOTCOMMAND.
+# third LBA (block 4096), and OLDMAC_INITRD=/path/to/initramfs for an initramfs at
+# a fourth LBA (block 8192), which U-Boot proper `scsi read`s + `bootelf`s (with a
+# BI_RAMDISK bootinfo record) - see oldmac_defconfig's CONFIG_BOOTCOMMAND.
 quiet_cmd_oldmac_iso = OLDMACCD $@
       cmd_oldmac_iso = $(MACBOOT)/mkcd.sh "$(AS)" "$(OBJCOPY)" \
 	$(objtree)/tools/mkoldmaccd 2048 spl/u-boot-spl.bin \
 	$(MACBOOT)/bootblock_spl.S $(MACBOOT)/driver.S $@ u-boot.bin \
-	$(OLDMAC_KERNEL)
+	$(OLDMAC_KERNEL) $(OLDMAC_INITRD)
 
 oldmac.iso: spl/u-boot-spl.bin u-boot.bin tools FORCE
 	$(call if_changed,oldmac_iso)
