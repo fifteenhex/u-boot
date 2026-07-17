@@ -31,6 +31,16 @@
 nubus_buserr_begin:
 	move.w	%sr, saved_sr
 	move.w	#0x2700, %sr		/* mask interrupts for the probe */
+	/* Cache-inhibit the NuBus super-slot region (0xF0000000-0xFFFFFFFF) via
+	 * DTT1 for the duration of the probe.  U-Boot otherwise leaves 0xF
+	 * cacheable, so a byte read of a card's slow byte-wide declaration ROM
+	 * pulls a 16-byte 68040 burst line-fill the ROM can't service, corrupting
+	 * the bytes (they read back as 0xff on the lanes the burst couldn't
+	 * refill).  base 0xF0, mask 0x0F, E=1, cache-inhibit. */
+	movec	%dtt1, %d0
+	move.l	%d0, saved_dtt1
+	move.l	#0xf00fe060, %d0
+	movec	%d0, %dtt1
 	movec	%vbr, %d0
 	move.l	%d0, saved_vbr
 	movea.l	%d0, %a0		/* src = live vector table */
@@ -51,6 +61,8 @@ nubus_buserr_begin:
 nubus_buserr_end:
 	move.l	saved_vbr(%pc), %d0
 	movec	%d0, %vbr
+	move.l	saved_dtt1(%pc), %d0
+	movec	%d0, %dtt1		/* restore the transparent translation */
 	move.w	saved_sr(%pc), %sr	/* restore the interrupt mask */
 	rts
 
@@ -77,6 +89,26 @@ nubus_read_safe:
 	moveq	#-1, %d0
 	rts
 
+/* int nubus_read16_safe(void *addr, unsigned short *out)
+ *   as nubus_read_safe() but a 16-bit access, to probe strict-16-bit regions
+ *   that bus-error on a byte access. */
+	.global nubus_read16_safe
+nubus_read16_safe:
+	lea	.Lrecover16(%pc), %a1
+	move.l	%a1, nb_rec_pc
+	move.l	%sp, nb_rec_sp
+	clr.l	nb_fault
+	move.l	4(%sp), %a0
+	move.l	8(%sp), %a1
+	nop
+	move.w	(%a0), %d0		/* 16-bit risky access */
+	move.w	%d0, (%a1)
+	moveq	#0, %d0
+	rts
+.Lrecover16:
+	moveq	#-1, %d0
+	rts
+
 /* Bus-error handler: flag the fault, unwind to the saved SP, jump to recovery.
  * The faulting access is a byte read and the nop above drained earlier writes,
  * so abandoning the format-$7 frame leaves no pending state behind. */
@@ -91,6 +123,7 @@ nubus_buserr_handler:
 nb_vectors:	.space 1024		/* full 256-entry vector table */
 saved_vbr:	.space 4
 saved_sr:	.space 4
+saved_dtt1:	.space 4
 nb_fault:	.space 4
 nb_rec_sp:	.space 4
 nb_rec_pc:	.space 4

@@ -13,8 +13,11 @@
  */
 
 #include <command.h>
+#include <errno.h>
 #include <stdio.h>
 #include <linux/types.h>
+#include <linux/string.h>
+#include "oldmac_eth.h"
 
 #define NUBUS_TEST_PATTERN	0x5A932BC7
 #define FORMAT_BLOCK_SIZE	20
@@ -202,6 +205,112 @@ static void nubus_dump_board(u8 *dir, int map)
 	}
 }
 
+/* NuBus category/type and resource IDs used to locate an Ethernet card. */
+#define NUBUS_CAT_NETWORK	0x0004
+#define NUBUS_TYPE_ETHERNET	0x0001
+#define RID_MINOR_BASEOS	0x0a
+#define RID_MAC_ADDRESS		0x80
+
+/* Find the resource with ID @rid in the sResource directory starting at @dir. */
+static int nubus_find_rsrc(u8 *dir, int map, u8 rid, struct nubus_dirent *out)
+{
+	struct nubus_dirent e;
+	int n = 0;
+
+	while (n++ < 32 && nubus_readdir(&dir, map, &e) == 0) {
+		if (e.type == rid) {
+			*out = e;
+			return 0;
+		}
+	}
+	return -1;
+}
+
+/*
+ * Scan NuBus slots for a Network/Ethernet functional sResource and pull out the
+ * card's DrSW/DrHW, its DP8390 register+RAM base offset (MinorBaseOS) and its
+ * station address, so the board can bind the mac8390 driver.  Cached.
+ */
+int nubus_find_eth(struct oldmac_eth_info *info)
+{
+	static struct oldmac_eth_info cache;
+	static int scanned;
+	int slot;
+
+	if (scanned) {
+		*info = cache;
+		return cache.found ? 0 : -ENODEV;
+	}
+	scanned = 1;
+	memset(&cache, 0, sizeof(cache));
+
+	nubus_buserr_begin();
+	for (slot = 9; slot <= 14 && !cache.found; slot++) {
+		int map = nubus_probe_slot(slot);
+		u8 *fblock, *rp, *rootdir;
+		long doffset;
+		struct nubus_dirent e;
+		int err = 0;
+
+		if (!map)
+			continue;
+		rp = nubus_slot_top(slot);
+		rewind_lanes(&rp, FORMAT_BLOCK_SIZE, map);
+		fblock = rp;
+		doffset = get_rom(&rp, 4, map, &err);
+		if (err)
+			continue;
+
+		rootdir = fblock;
+		move_lanes(&rootdir, expand32(doffset), map);
+
+		/* Each root entry is an sResource with its own sub-directory. */
+		while (nubus_readdir(&rootdir, map, &e) == 0) {
+			u8 *sub = nubus_dirptr(&e, map);
+			struct nubus_dirent te, be, me;
+			u8 *tp;
+			ulong cat, type;
+
+			if (nubus_find_rsrc(sub, map, RID_TYPE, &te))
+				continue;
+			tp = nubus_dirptr(&te, map);
+			cat  = get_rom(&tp, 2, map, &err);
+			type = get_rom(&tp, 2, map, &err);
+			if (err || cat != NUBUS_CAT_NETWORK ||
+			    type != NUBUS_TYPE_ETHERNET)
+				continue;
+
+			cache.dr_sw = get_rom(&tp, 2, map, &err);
+			cache.dr_hw = get_rom(&tp, 2, map, &err);
+
+			if (nubus_find_rsrc(sub, map, RID_MINOR_BASEOS,
+					    &be) == 0) {
+				u8 *bp = nubus_dirptr(&be, map);
+
+				cache.minor_base = get_rom(&bp, 4, map, &err);
+			}
+			if (nubus_find_rsrc(sub, map, RID_MAC_ADDRESS,
+					    &me) == 0) {
+				u8 *mp = nubus_dirptr(&me, map);
+				int i;
+
+				for (i = 0; i < 6; i++)
+					cache.enetaddr[i] =
+						get_rom(&mp, 1, map, &err);
+			}
+
+			cache.slot = slot;
+			cache.slot_addr = 0xF0000000UL | ((ulong)slot << 24);
+			cache.found = !err;
+			break;
+		}
+	}
+	nubus_buserr_end();
+
+	*info = cache;
+	return cache.found ? 0 : -ENODEV;
+}
+
 static int nubus_scan(void)
 {
 	int slot, found = 0;
@@ -209,13 +318,14 @@ static int nubus_scan(void)
 	nubus_buserr_begin();
 
 	for (slot = 9; slot <= 14; slot++) {
-		int map = nubus_probe_slot(slot);
+		int map;
 		u8 *fblock, *rp;
 		long doffset;
 		ulong test;
 		u8 rev, format;
 		int err = 0;
 
+		map = nubus_probe_slot(slot);
 		if (!map)
 			continue;
 
@@ -230,18 +340,21 @@ static int nubus_scan(void)
 		format = get_rom(&rp, 1, map, &err);
 		test = get_rom(&rp, 4, map, &err);
 
-		printf("Slot %X: card at %p (lanes 0x%02x)\n",
-		       slot, nubus_slot_top(slot), map);
-		if (err || test != NUBUS_TEST_PATTERN) {
-			printf("    bad declaration ROM (test pattern 0x%08lx)\n",
-			       test);
+		if (err) {
+			printf("Slot %X: declaration ROM read faulted\n", slot);
 			continue;
 		}
-		printf("    format %u, rev %u\n", format, rev);
+		printf("Slot %X: card at %p (lanes 0x%02x), format %u, rev %u\n",
+		       slot, nubus_slot_top(slot), map, format, rev);
+		/* Some NuBus-alike LC-PDS cards don't fill in a correct test
+		 * pattern; Linux only warns and parses anyway, so do the same. */
+		if (test != NUBUS_TEST_PATTERN)
+			printf("    warning: test pattern 0x%08lx (expected 0x%08x)\n",
+			       test, NUBUS_TEST_PATTERN);
 		found++;
 
-		/* Walk the root sResource directory; the first entry is the
-		 * board sResource whose sub-directory names the card. */
+		/* Walk the root sResource directory; the board sResource names the
+		 * card, the functional sResource(s) describe its function. */
 		{
 			u8 *dir = fblock;
 			struct nubus_dirent e;
@@ -252,7 +365,7 @@ static int nubus_scan(void)
 					nubus_dump_board(nubus_dirptr(&e, map),
 							 map);
 				else
-					printf("    rsrc 0x%02x\n", e.type);
+					printf("    sResource 0x%02x\n", e.type);
 			}
 		}
 	}
