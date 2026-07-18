@@ -131,3 +131,23 @@ with an FPU-less 68LC040 (such as the LC 475 and Quadra 605) were later upgraded
 to a full 68040, so U-Boot executes a floating-point no-op under a temporary trap
 handler to find out whether an FPU is actually present, and reports that to Linux
 instead of guessing from the model name.
+
+Booting Linux
+-------------
+
+U-Boot boots a Linux/m68k kernel with ``bootelf``.  It hands the kernel a
+Macintosh bootinfo record list describing the CPU, FPU, MMU, RAM and framebuffer,
+enters it with the caches flushed and the MMU turned off as the kernel's
+``head.S`` expects, and can pass an initramfs through a ``BI_RAMDISK`` record.
+
+A kernel and initramfs can be placed on the boot media automatically by passing
+them to the image build:
+
+.. code-block:: bash
+
+    $ make oldmac_defconfig
+    $ make OLDMAC_KERNEL=/path/to/vmlinux \
+           OLDMAC_INITRD=/path/to/rootfs.cpio.lz4
+
+The default boot command loads and boots them with the kernel console on
+``ttyS0``.
