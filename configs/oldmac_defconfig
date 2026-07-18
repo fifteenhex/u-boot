@@ -13,8 +13,9 @@ CONFIG_BOARD_INIT=y
 CONFIG_DISPLAY_BOARDINFO=y
 CONFIG_BOOTDELAY=2
 CONFIG_SYS_CBSIZE=1024
+CONFIG_HUSH_PARSER=y
 CONFIG_USE_BOOTCOMMAND=y
-CONFIG_BOOTCOMMAND="scsi scan; scsi read 0x900000 0x60 1; setexpr isz *0x900004; setexpr icnt *0x900008; scsi read 0x1000000 0x1000 0x900; scsi read 0x2000000 0x2000 ${icnt}; setenv autostart yes; setenv initrd_start 0x2000000; setenv initrd_size ${isz}; setenv bootargs console=ttyS0,${baudrate}; bootelf -p 0x1000000"
+CONFIG_BOOTCOMMAND="scsi scan; if fatload scsi 0:4 0x1000000 vmlinux; then fatload scsi 0:4 0x2000000 initrd; setenv initrd_start 0x2000000; setenv initrd_size ${filesize}; else scsi read 0x900000 0x60 1; setexpr isz *0x900004; setexpr icnt *0x900008; scsi read 0x1000000 0x1000 0x900; scsi read 0x2000000 0x2000 ${icnt}; setenv initrd_start 0x2000000; setenv initrd_size ${isz}; fi; setenv autostart yes; setenv bootargs console=ttyS0,${baudrate}; bootelf -p 0x1000000"
 CONFIG_CMD_ELF=y
 CONFIG_CMD_SCSI=y
 CONFIG_CMD_PART=y
@@ -24,11 +25,16 @@ CONFIG_CMD_FS_GENERIC=y
 CONFIG_CMD_NUBUS=y
 CONFIG_DOS_PARTITION=y
 CONFIG_ISO_PARTITION=y
+CONFIG_MAC_PARTITION=y
 CONFIG_FS_FAT=y
 CONFIG_FS_EXT4=y
 CONFIG_FAT_WRITE=y
-# The SPL only reads raw sectors; keep partition/fs/crypto out of it.
-# CONFIG_SPL_PARTITIONS is not set
+# The SPL reads a raw sector on CD, or a file from the FAT partition on a hard
+# disk; enable Apple partition + FAT support in the SPL for the latter.
+CONFIG_SPL_PARTITIONS=y
+CONFIG_SPL_MAC_PARTITION=y
+CONFIG_SPL_FS_FAT=y
+CONFIG_SPL_FS_LOAD_PAYLOAD_NAME="u-boot.bin"
 # CONFIG_SPL_DOS_PARTITION is not set
 # CONFIG_SPL_ISO_PARTITION is not set
 # CONFIG_SPL_SHA1 is not set

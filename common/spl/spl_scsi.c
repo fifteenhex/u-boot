@@ -12,6 +12,7 @@
 #include <scsi.h>
 #include <blk.h>
 #include <part.h>
+#include <fat.h>
 #include <image.h>
 #include <errno.h>
 #include <linux/string.h>
@@ -36,10 +37,49 @@ static int spl_scsi_load_image(struct spl_image_info *spl_image,
 	if (ret)
 		return ret;
 
+#if CONFIG_IS_ENABLED(FS_FAT)
 	/*
-	 * Prefer the CD-ROM (the medium we booted from, 2048-byte blocks); fall
-	 * back to the first device.  This keeps us off any hard disk that scans
-	 * ahead of the CD.
+	 * A hard disk carries U-Boot proper as a file in a FAT partition (the CD
+	 * still uses a raw sector, below).  Try loading it by name from every
+	 * hard-disk device's FAT partition FIRST - before the CD raw path - so an
+	 * empty/phantom CD-ROM that also sits on the bus (QEMU presents one, and
+	 * real Macs have both a disk and a CD) cannot hijack the boot.  The oldmac
+	 * layout puts U-Boot in partition 4, so try that first.
+	 *
+	 * Read the raw U-Boot image into the scratch buffer and copy it down to
+	 * its load address, rather than letting the filesystem write straight to
+	 * it: the load address is 0 and the pseudo-DMA corrupts the low vector
+	 * page if it transfers there directly (the raw path below does the same).
+	 */
+	for (i = 0; ; i++) {
+		struct blk_desc *d = blk_get_devnum_by_uclass_id(UCLASS_SCSI, i);
+		static const char part_order[] = { 4, 1, 2, 3 };
+		int p;
+
+		if (!d)
+			break;
+		if (d->type == DEV_TYPE_CDROM)
+			continue;
+		for (p = 0; p < (int)sizeof(part_order); p++) {
+			loff_t actread;
+
+			if (fat_register_device(d, part_order[p]))
+				continue;
+			if (fat_read_file(CONFIG_SPL_FS_LOAD_PAYLOAD_NAME, scratch,
+					  0, CONFIG_SYS_MONITOR_LEN, &actread) ||
+			    !actread)
+				continue;
+			if (spl_parse_image_header(spl_image, bootdev, scratch))
+				continue;
+			memcpy((void *)spl_image->load_addr, scratch, actread);
+			return 0;
+		}
+	}
+#endif
+
+	/*
+	 * Raw path (CD boot): prefer the CD-ROM we booted from, falling back to
+	 * the first device.
 	 */
 	bd = NULL;
 	for (i = 0; ; i++) {
