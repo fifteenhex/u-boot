@@ -1831,6 +1831,22 @@ quiet_cmd_oldmac_iso = OLDMACCD $@
 
 oldmac.iso: spl/u-boot-spl.bin u-boot.bin tools FORCE
 	$(call if_changed,oldmac_iso)
+
+# Bootable hard-disk image (512-byte blocks): same Apple boot structure as the
+# CD, but with a trailing FAT16 partition holding U-Boot proper (u-boot.img,
+# which the SPL loads by name) and, when OLDMAC_KERNEL / OLDMAC_INITRD are given,
+# the kernel and initramfs as the files "vmlinux" and "initrd" that U-Boot proper
+# fatloads.  Build with: make oldmac-hd.img OLDMAC_KERNEL=... OLDMAC_INITRD=...
+# OLDMAC_SPARE=<size> (e.g. 64M) adds an empty partition after the FAT partition.
+quiet_cmd_oldmac_hd = OLDMACHD $@
+      cmd_oldmac_hd = OLDMAC_SPARE="$(OLDMAC_SPARE)" $(MACBOOT)/mkcd.sh --fat \
+	"$(AS)" "$(OBJCOPY)" \
+	$(objtree)/tools/mkoldmaccd 512 spl/u-boot-spl.bin \
+	$(MACBOOT)/bootblock_spl.S $(MACBOOT)/driver.S $@ u-boot.bin \
+	$(OLDMAC_KERNEL) $(OLDMAC_INITRD)
+
+oldmac-hd.img: spl/u-boot-spl.bin u-boot.bin tools FORCE
+	$(call if_changed,oldmac_hd)
 endif
 
 ifeq ($(CONFIG_ARCH_LPC32XX)$(CONFIG_SPL),yy)

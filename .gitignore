@@ -146,3 +146,4 @@ __pycache__
 # oldmac build artifacts
 /oldmac.iso
 /tools/mkoldmaccd
+/oldmac-hd.img

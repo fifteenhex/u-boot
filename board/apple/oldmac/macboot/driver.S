@@ -25,6 +25,11 @@
 .equ _SCSIRead,     5
 .equ BOOTBUF,       0x00500000	/* where to load the boot block (above u-boot) */
 .equ READ_10,       0x28
+.ifndef SECTOR
+.equ SECTOR,        2048			/* device block size (2048 CD, 512 HD) */
+.endif
+/* device blocks needed to cover the 1024-byte boot block (1 on CD, 2 on HD) */
+.equ BB_BLOCKS,     (1024 + SECTOR - 1) / SECTOR
 
 .macro SCSIDispatch sel
 	move.w	#\sel, -(%sp)
@@ -111,7 +116,7 @@ CDB:	.byte	READ_10
 	.byte	0
 	.long	0			/* LBA (patched) */
 	.byte	0
-	.short	1			/* transfer length = 1 block */
+	.short	BB_BLOCKS		/* transfer length (blocks covering the boot block) */
 	.byte	0
 
 .equ op_inc,  1
@@ -119,7 +124,7 @@ CDB:	.byte	READ_10
 	.align 2
 TIB:	.short	op_inc
 	.long	BOOTBUF			/* destination buffer */
-	.long	2048			/* bytes to transfer (one CD sector) */
+	.long	BB_BLOCKS * SECTOR	/* bytes to transfer (whole boot block) */
 	.short	op_stop
 	.long	0
 	.long	0
