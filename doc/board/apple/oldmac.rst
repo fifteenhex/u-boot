@@ -81,3 +81,21 @@ the detected machine:
   DRQ read from the VIA2 interrupt-flag register.
 * Quadra 700 (``MAC_SCSI_QUADRA2``): ESP at ``0x50F0F000``, DRQ read from a
   pseudo-DMA register in NuBus/video space.
+
+Video console
+-------------
+
+When the ROM reports a framebuffer, U-Boot brings up a video console on it
+alongside the serial console.  The address, depth, dimensions and stride come
+from the Mac bootinfo, and U-Boot draws straight into the display's own memory
+rather than reserving RAM for it.
+
+At 8bpp the framebuffer holds colour-lookup-table indices, so what appears on
+screen depends on the CLUT.  On the Quadra 700 and 800 U-Boot programs the DAFB
+CLUT itself, so the boot logo and text come out in their intended colours
+regardless of the palette the ROM happened to leave loaded.
+
+The LC 475 / Quadra 605 report their built-in video at a logical address that is
+only valid while the ROM's MMU is on.  The SPL resolves it to the real physical
+framebuffer before paging is turned off, so both U-Boot's console and Linux's
+early framebuffer console keep working.
