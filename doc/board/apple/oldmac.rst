@@ -63,3 +63,21 @@ The console is the Zilog 8530 SCC channel A - the Macintosh modem port - running
 at 9600 baud, 8N1.  On Quadra-class machines it lives at ``0x50F0C020``; the SPL
 and U-Boot proper take the real base from the ROM where a model places it
 elsewhere.
+
+Storage (SCSI)
+--------------
+
+Mass storage is the AMD 53C9x ("ESP") SCSI controller fitted to
+Quadra/Centris-class machines, driven in polled pseudo-DMA mode: the Macintosh
+has no scatter/gather DMA engine for it, so data is moved a 16-bit word at a
+time whenever the controller raises DRQ.  The usual ``scsi scan`` and
+``scsi read`` commands work, and both the SPL and U-Boot proper load from the
+bus this way.
+
+The controller base and the DRQ source are model-specific and are chosen from
+the detected machine:
+
+* Quadra 800, LC 475, Quadra 605 (``MAC_SCSI_QUADRA``): ESP at ``0x50F10000``,
+  DRQ read from the VIA2 interrupt-flag register.
+* Quadra 700 (``MAC_SCSI_QUADRA2``): ESP at ``0x50F0F000``, DRQ read from a
+  pseudo-DMA register in NuBus/video space.
