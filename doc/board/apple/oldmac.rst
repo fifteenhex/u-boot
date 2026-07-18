@@ -151,3 +151,39 @@ them to the image build:
 
 The default boot command loads and boots them with the kernel console on
 ``ttyS0``.
+
+Disk images
+-----------
+
+The boot media is produced by the in-tree ``tools/mkoldmaccd`` host tool, which
+writes the Apple driver-descriptor record, partition map, SCSI driver and boot
+block by hand, with no external ISO/HFS/FAT utilities.
+
+The default target is a CD image, ``oldmac.iso``, whose payloads (the SPL, U-Boot
+proper and any kernel/initramfs) live at fixed raw blocks.
+
+A hard-disk image can be built instead:
+
+.. code-block:: bash
+
+    $ make oldmac-hd.img OLDMAC_KERNEL=/path/to/vmlinux \
+           OLDMAC_INITRD=/path/to/rootfs.cpio.lz4
+
+It uses 512-byte blocks and a trailing FAT16 partition holding U-Boot proper, the
+kernel and the initramfs as ordinary files (``u-boot.bin``, ``vmlinux`` and
+``initrd``); the SPL loads U-Boot from that filesystem and U-Boot ``fatload``s
+the kernel and initramfs.  An additional empty partition - for a root filesystem,
+say - can be appended with ``OLDMAC_SPARE``:
+
+.. code-block:: bash
+
+    $ make oldmac-hd.img ... OLDMAC_SPARE=256M
+
+Under QEMU the hard-disk image is attached as a SCSI disk:
+
+.. code-block:: bash
+
+    $ qemu-system-m68k -M q800 -bios MacROM.bin \
+          -device scsi-hd,drive=hd0,scsi-id=0 \
+          -drive id=hd0,if=none,file=oldmac-hd.img,format=raw \
+          -serial mon:stdio -display none
