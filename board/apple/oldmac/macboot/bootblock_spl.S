@@ -30,7 +30,10 @@
 
 .equ PAYLOAD_LBA,   128
 .ifndef PAYLOAD_BLOCKS
-.equ PAYLOAD_BLOCKS,64			/* CD blocks of the SPL to read */
+.equ PAYLOAD_BLOCKS,64			/* device blocks of the SPL to read */
+.endif
+.ifndef SECTOR
+.equ SECTOR,        2048			/* device block size (2048 CD, 512 HD) */
 .endif
 .equ READBUF,       0x00600000
 
@@ -229,7 +232,7 @@ CDB:	.byte	READ_10
 	.align 2
 TIB:	.short	op_inc
 	.long	READBUF
-	.long	PAYLOAD_BLOCKS * 2048
+	.long	PAYLOAD_BLOCKS * SECTOR
 	.short	op_stop
 	.long	0
 	.long	0
