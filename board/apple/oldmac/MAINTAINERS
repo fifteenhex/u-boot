@@ -2,5 +2,6 @@ APPLE OLDMAC BOARD
 M:	U-Boot m68k
 S:	Maintained
 F:	board/apple/oldmac/
+F:	doc/board/apple/oldmac.rst
 F:	include/configs/oldmac.h
 F:	configs/oldmac_defconfig
