@@ -33,6 +33,27 @@ static int part_mac_read_pdb(struct blk_desc *desc, int part,
 			     mac_partition_t *pdb_p);
 
 /*
+ * The Apple driver descriptor and each partition-map entry are 512-byte
+ * structures at the start of a device block.  On media with a larger block size
+ * (e.g. a 2048-byte CD-ROM) blk_dread() transfers a whole block, so reading
+ * directly into the 512-byte struct would overrun it and smash the stack.
+ * Bounce through a full-block buffer and copy out the 512 bytes we need.
+ */
+#define MAC_MAX_BLKSZ	4096
+
+static int read_mac_block(struct blk_desc *desc, lbaint_t blk, void *out)
+{
+	ALLOC_CACHE_ALIGN_BUFFER(unsigned char, buf, MAC_MAX_BLKSZ);
+
+	if (desc->blksz > MAC_MAX_BLKSZ)
+		return -1;
+	if (blk_dread(desc, blk, 1, buf) != 1)
+		return -1;
+	memcpy(out, buf, 512);
+	return 0;
+}
+
+/*
  * Test for a valid MAC partition
  */
 static int part_test_mac(struct blk_desc *desc)
@@ -51,7 +72,7 @@ static int part_test_mac(struct blk_desc *desc)
 
 	n = 1;	/* assuming at least one partition */
 	for (i=1; i<=n; ++i) {
-		if ((blk_dread(desc, i, 1, (ulong *)mpart) != 1) ||
+		if (read_mac_block(desc, i, mpart) ||
 		    mpart->signature != MAC_PARTITION_MAGIC) {
 			return (-1);
 		}
@@ -61,7 +82,7 @@ static int part_test_mac(struct blk_desc *desc)
 	return (0);
 }
 
-static void part_print_mac(struct blk_desc *desc)
+static void __maybe_unused part_print_mac(struct blk_desc *desc)
 {
 	ulong i, n;
 	ALLOC_CACHE_ALIGN_BUFFER(mac_driver_desc_t, ddesc, 1);
@@ -105,7 +126,7 @@ static void part_print_mac(struct blk_desc *desc)
 		char c;
 
 		printf ("%4ld: ", i);
-		if (blk_dread(desc, i, 1, (ulong *)mpart) != 1) {
+		if (read_mac_block(desc, i, mpart)) {
 			printf ("** Can't read Partition Map on %d:%ld **\n",
 				desc->devnum, i);
 			return;
@@ -150,7 +171,7 @@ static void part_print_mac(struct blk_desc *desc)
  */
 static int part_mac_read_ddb(struct blk_desc *desc, mac_driver_desc_t *ddb_p)
 {
-	if (blk_dread(desc, 0, 1, (ulong *)ddb_p) != 1) {
+	if (read_mac_block(desc, 0, ddb_p)) {
 		debug("** Can't read Driver Descriptor Block **\n");
 		return (-1);
 	}
@@ -175,7 +196,7 @@ static int part_mac_read_pdb(struct blk_desc *desc, int part,
 		 * partition 1 first since this is the only way to
 		 * know how many partitions we have.
 		 */
-		if (blk_dread(desc, n, 1, (ulong *)pdb_p) != 1) {
+		if (read_mac_block(desc, n, pdb_p)) {
 			printf("** Can't read Partition Map on %d:%d **\n",
 			       desc->devnum, n);
 			return (-1);
@@ -192,9 +213,12 @@ static int part_mac_read_pdb(struct blk_desc *desc, int part,
 			return (0);
 
 		if ((part < 1) || (part > pdb_p->map_count)) {
-			printf("** Invalid partition %d:%d [%d:1...%d:%d only]\n",
-			       desc->devnum, part, desc->devnum, desc->devnum,
-			       pdb_p->map_count);
+			/* Out-of-range indices are normal while callers
+			 * enumerate partitions (part_init, lookup-by-name), so
+			 * keep quiet rather than spamming for every empty slot. */
+			debug("** Invalid partition %d:%d [%d:1...%d:%d only]\n",
+			      desc->devnum, part, desc->devnum, desc->devnum,
+			      pdb_p->map_count);
 			return (-1);
 		}
 
@@ -232,6 +256,6 @@ U_BOOT_PART_TYPE(mac) = {
 	.part_type	= PART_TYPE_MAC,
 	.max_entries	= MAC_ENTRY_NUMBERS,
 	.get_info	= part_get_info_mac,
-	.print		= part_print_mac,
+	.print		= part_print_ptr(part_print_mac),
 	.test		= part_test_mac,
 };

@@ -34,7 +34,13 @@ struct block_drvr {
 /* maximum number of partition entries supported by search */
 #define DOS_ENTRY_NUMBERS	8
 #define ISO_ENTRY_NUMBERS	64
-#define MAC_ENTRY_NUMBERS	64
+/*
+ * The Apple partition map is walked one block at a time, so auto-enumerating
+ * every possible entry is slow on a slow bus (e.g. the 68k Mac's polled SCSI);
+ * a bootable Mac disk only has a handful of partitions.  On-demand access to a
+ * higher-numbered partition still works via part_get_info().
+ */
+#define MAC_ENTRY_NUMBERS	16
 #define AMIGA_ENTRY_NUMBERS	8
 #define MTD_ENTRY_NUMBERS	64
 #define UBI_ENTRY_NUMBERS	UBI_MAX_VOLUMES
