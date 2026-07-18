@@ -99,3 +99,22 @@ The LC 475 / Quadra 605 report their built-in video at a logical address that is
 only valid while the ROM's MMU is on.  The SPL resolves it to the real physical
 framebuffer before paging is turned off, so both U-Boot's console and Linux's
 early framebuffer console keep working.
+
+Networking
+----------
+
+The on-board National DP8393x ("SONIC") Ethernet of the Quadra 700 and 800 is
+supported; ``dhcp``, ``ping`` and ``tftp`` work once the link is up.  The driver
+is bound only on machines that actually have the controller, so a model without
+it does not end up with a dead network device.
+
+U-Boot also scans the NuBus slots by reading each card's declaration ROM and can
+enumerate a DP8390-based NuBus Ethernet card, though that card's datapath is not
+yet functional.
+
+Keyboard (ADB)
+--------------
+
+An Apple Desktop Bus keyboard attached through the VIA can be used as a U-Boot
+input device, so the machine can be driven from its own keyboard and framebuffer
+rather than a serial terminal.  ``stdin`` defaults to ``serial,adb-kbd``.
