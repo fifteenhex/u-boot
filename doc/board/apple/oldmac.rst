@@ -118,3 +118,16 @@ Keyboard (ADB)
 An Apple Desktop Bus keyboard attached through the VIA can be used as a U-Boot
 input device, so the machine can be driven from its own keyboard and framebuffer
 rather than a serial terminal.  ``stdin`` defaults to ``serial,adb-kbd``.
+
+Machine and CPU detection
+-------------------------
+
+The peripheral layout is chosen at runtime from the Gestalt machine type the ROM
+records in the Mac bootinfo, so a single image serves every supported model, and
+bringing up another Quadra/Centris-class machine is mostly a table entry.
+
+The FPU is probed rather than assumed from the model.  Many machines that shipped
+with an FPU-less 68LC040 (such as the LC 475 and Quadra 605) were later upgraded
+to a full 68040, so U-Boot executes a floating-point no-op under a temporary trap
+handler to find out whether an FPU is actually present, and reports that to Linux
+instead of guessing from the model name.
