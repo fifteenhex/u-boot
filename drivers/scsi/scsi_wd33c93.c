@@ -264,6 +264,19 @@ static void wd33c93_scsi_wait_int(struct wd33c93_scsi_priv *priv, u8* scsi_statu
 {
 	u8 status;
 
+	/*
+	 * The chip does not update its status the instant the command
+	 * register is written: for a short while it still reads back as
+	 * idle before it asserts Command-In-Progress / Busy.  Wait for
+	 * the command to be acknowledged (CIP, Busy or an interrupt)
+	 * before looking for completion, otherwise we sample that stale
+	 * idle status and wrongly decide the command already finished.
+	 * Previously this was masked by the delay of the debug prints.
+	 */
+	do {
+		status = wd33c93_scsi_read_status(priv);
+	} while (!(status & (STATUS_CIP | STATUS_BUSY | STATUS_INT)));
+
 	do {
 		status = wd33c93_scsi_read_status(priv);
 
