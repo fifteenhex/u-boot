@@ -49,6 +49,41 @@ _module_pc:
 	.long _start
 #endif
 
+#if defined(CONFIG_TARGET_MVME147) && defined(CONFIG_SPL_BUILD)
+/*
+ * 147Bug ROMboot module header.  At power-up 147Bug scans ROM bank 2 for
+ * a "BOOT" module, verifies the checksum over its header region and jumps
+ * to the module entry.  Placing this at the very start of the SPL image
+ * makes the image itself a ROMboot module: 147Bug enters the relocator
+ * below (running in place from ROM bank 2), which copies the image down
+ * to the SPL text base and jumps to _start.
+ *
+ * The checksummed region [_romboot, _romboot_cksum_end) is fixed (all the
+ * relocator's operands are constants), so the checksum word is a compile-
+ * time constant: 147Bug XORs the 16-bit words of the region seeded with
+ * 0xffff and requires the result to be 0, i.e. the words must XOR to
+ * 0xffff.  If the relocator below changes, recompute this word.
+ */
+	.globl _romboot
+_romboot:
+	.ascii "BOOT"					/* +0x00 signature */
+	.long  _romboot_entry - _romboot		/* +0x04 entry offset */
+	.long  _romboot_cksum_end - _romboot		/* +0x08 checksummed length */
+	.word  0x5662					/* +0x0c checksum (see note above) */
+	.word  0x0000					/* +0x0e pad */
+_romboot_entry:						/* +0x10 */
+	move.l	#0xffa00000, %a0			/* source: module in ROM bank 2 */
+	move.l	#CONFIG_SPL_TEXT_BASE, %a1		/* dest: SPL text base */
+	move.l	#(CONFIG_SPL_MAX_SIZE / 4), %d0		/* fixed copy length (constant) */
+1:	move.l	%a0@+, %a1@+
+	subq.l	#1, %d0
+	bne.b	1b
+	move.l	#_start, %a0
+	jmp	%a0@
+_romboot_cksum_end:
+	.balign 4
+#endif
+
 #if !defined(CONFIG_SPL_BUILD) && !defined(CONFIG_TARGET_MVME147)
 .text
 _vectors:
