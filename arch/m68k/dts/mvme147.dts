@@ -25,7 +25,7 @@
 
 		uart0: serial@fffe3002 {
 			compatible = "zilog,scc";
-			u-boot,dm-pre-reloc;
+			bootph-all;
 			reg = <0xfffe3002 0x2>;
 			scc,vector=<(0x40 + 32)>;
 			interrupts-extended = <&intc_user 40>,
@@ -66,7 +66,7 @@
 		pcc32: syscon@fffe1000 {
 			compatible = "motorola,mvme147-pcc", "syscon";
 			reg = <0xfffe1000 0xf>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 			reg-io-width = <4>;
 			status = "okay";
 		};	
@@ -74,7 +74,7 @@
 		pcc16: syscon@fffe1010 {
 			compatible = "motorola,mvme147-pcc", "syscon";
 			reg = <0xfffe1010 0xf>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 			reg-io-width = <2>;
 			status = "okay";
 		};
@@ -82,7 +82,7 @@
 		pcc8: syscon@fffe1018 {
 			compatible = "motorola,mvme147-pcc", "syscon";
 			reg = <0xfffe1018 0x30>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 			reg-io-width = <1>;
 			status = "okay";
 		};
@@ -108,7 +108,7 @@
 
 		scsi: scsi@fffe4000 {
 			compatible = "wdc,wd33c93b";
-			u-boot,dm-pre-reloc;
+			bootph-all;
 			reg = <0xfffe4000 0x20>;
 			/* clk == 10MHz *///
 			pcc32 = <&pcc32>;
@@ -125,7 +125,7 @@
 
 	timer0: timer@0 {
 		compatible = "motorola,mvme147-pcc-timer";
-		u-boot,dm-pre-reloc;
+		bootph-all;
 		interrupts-extended = <&intc_user 8>;
 		clock-frequency = <160000>;
 		pcc16 = <&pcc16>;
@@ -135,7 +135,7 @@
 
 	timer1: timer@1 {
 		compatible = "motorola,mvme147-pcc-timer";
-		u-boot,dm-pre-reloc;
+		bootph-all;
 		interrupts-extended = <&intc_user 9>;
 		clock-frequency = <160000>;
 		pcc16 = <&pcc16>;
