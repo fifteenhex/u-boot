@@ -5,9 +5,12 @@
 #define CFG_SYS_INIT_RAM_ADDR 0
 #define CFG_SYS_INIT_RAM_SIZE 0x200000
 #endif
-#if 0
+/*
+ * Autoboot: scan the SCSI bus, load vmlinux from the FAT partition on
+ * disk 0 and boot it.  0x800000 is above U-Boot (CONFIG_TEXT_BASE
+ * 0x600000) and leaves the low RAM for the kernel's own load addresses;
+ * the board only has 16 MiB, so the vmlinux load address has to stay
+ * under that.
+ */
 #define CFG_EXTRA_ENV_SETTINGS \
-		"bootcmd=virtio scan; fatload virtio 1:1 0x3000000 vmlinux.virt\; bootelf 0x3000000\0" \
-		"autostart=yes\0" \
-		"bootargs=console=ttyGF0 root=/dev/vda rootfstype=squashfs\0"
-#endif
+		"bootcmd=scsi scan; fatload scsi 0:1 0x800000 vmlinux; bootelf 0x800000\0"
