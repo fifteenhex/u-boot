@@ -3,7 +3,7 @@
 # (C) Copyright 2000-2002
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 
-PLATFORM_CPPFLAGS += -D__M68K__ -fPIC
+PLATFORM_CPPFLAGS += -D__M68K__ -fPIC -fno-plt -fvisibility=hidden
 PLATFORM_RELFLAGS += -ffixed-d7 -msep-data
 PLATFORM_ELFFLAGS += -B m68k -O elf32-m68k
 

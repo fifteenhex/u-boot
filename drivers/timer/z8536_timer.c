@@ -4,7 +4,6 @@
 
 #include <asm/io.h>
 #include <clk-uclass.h>
-#include <common.h>
 #include <div64.h>
 #include <dm.h>
 #include <errno.h>
@@ -76,7 +75,7 @@ static void z8536_timer_reset(struct z8536_timer_priv *priv)
 {
 	/* Put state machine into known state */
 	readb(priv->base + Z8536_PORT_CONTROL);
-	writeb(priv->base + Z8536_PORT_CONTROL, 0);
+	writeb(0, priv->base + Z8536_PORT_CONTROL);
 	readb(priv->base + Z8536_PORT_CONTROL);
 
 	/* Do reset */

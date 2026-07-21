@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright Contributors to the U-Boot project.
 
+#include <inttypes.h>
 #include "imagetool.h"
 #include <u-boot/sha256.h>
 

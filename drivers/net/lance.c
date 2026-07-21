@@ -537,11 +537,11 @@ static int lance_32_check_rmds(struct lance *priv, uchar **packetp)
 static void lance_32_free_rmd(struct lance *priv, void *packet)
 {
 	for (int i = 0; i < lance_32_nrmd(priv); i++) {
-		const struct lance_32_rmd *rmd = lance_32_rmd(priv, i);
+		struct lance_32_rmd *rmd = lance_32_rmd(priv, i);
 
 		if ((u32) packet == (u32) rmd->addr) {
 			debug("Freeing RX descriptor %d\n", i);
-			lance_32_set_rmd(rmd, rmd->addr, DESCRIPTOR_OWN);
+			lance_32_set_rmd(rmd, (void *)rmd->addr, DESCRIPTOR_OWN);
 			priv->processedrmds[i] = false;
 			break;
 		}

@@ -91,3 +91,34 @@ int dcache_status(void)
 	return dcache_status_mc68040();
 }
 #endif
+
+void invalidate_dcache_all(void)
+{
+	asm volatile ("nop\n\tcinva %dc\n\tnop");
+}
+
+void invalidate_dcache_range(unsigned long start, unsigned long stop)
+{
+	invalidate_dcache_all();
+}
+
+void flush_dcache_all(void)
+{
+	asm volatile ("nop\n\tcpusha %dc\n\tnop");
+}
+
+void flush_dcache_range(unsigned long start, unsigned long stop)
+{
+	flush_dcache_all();
+}
+
+void invalidate_icache_all(void)
+{
+	asm volatile ("nop\n\tcinva %ic\n\tnop");
+}
+
+void flush_cache(ulong start_addr, ulong size)
+{
+	flush_dcache_all();
+	invalidate_icache_all();
+}
